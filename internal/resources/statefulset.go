@@ -1,0 +1,141 @@
+package resources
+
+import (
+	"fmt"
+
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
+
+	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+)
+
+// StatefulSetName returns the deterministic name.
+func StatefulSetName(inst *hermesv1.HermesInstance) string { return inst.Name }
+
+// BuildStatefulSet constructs the desired StatefulSet. Every k8s server-side
+// default is set explicitly to avoid metadata.generation thrash on reconcile.
+func BuildStatefulSet(inst *hermesv1.HermesInstance) *appsv1.StatefulSet {
+	labels := LabelsForInstance(inst)
+	selector := map[string]string{
+		"app.kubernetes.io/name":     "hermes-agent",
+		"app.kubernetes.io/instance": inst.Name,
+	}
+	image := imageRef(inst)
+
+	return &appsv1.StatefulSet{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      StatefulSetName(inst),
+			Namespace: inst.Namespace,
+			Labels:    labels,
+		},
+		Spec: appsv1.StatefulSetSpec{
+			ServiceName:          ServiceName(inst),
+			Replicas:             Ptr(int32(1)),
+			RevisionHistoryLimit: Ptr(int32(10)),
+			Selector:             &metav1.LabelSelector{MatchLabels: selector},
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{Labels: labels},
+				Spec: corev1.PodSpec{
+					RestartPolicy:                 corev1.RestartPolicyAlways,
+					DNSPolicy:                     corev1.DNSClusterFirst,
+					SchedulerName:                 "default-scheduler",
+					TerminationGracePeriodSeconds: Ptr(int64(30)),
+					SecurityContext: &corev1.PodSecurityContext{
+						RunAsNonRoot: Ptr(true),
+						RunAsUser:    Ptr(int64(1000)),
+						RunAsGroup:   Ptr(int64(1000)),
+						FSGroup:      Ptr(int64(1000)),
+						SeccompProfile: &corev1.SeccompProfile{
+							Type: corev1.SeccompProfileTypeRuntimeDefault,
+						},
+					},
+					Containers: []corev1.Container{{
+						Name:                     "hermes",
+						Image:                    image,
+						ImagePullPolicy:          pullPolicy(inst),
+						TerminationMessagePath:   "/dev/termination-log",
+						TerminationMessagePolicy: corev1.TerminationMessageReadFile,
+						Ports: []corev1.ContainerPort{{
+							Name:          "gateway",
+							ContainerPort: 8443,
+							Protocol:      corev1.ProtocolTCP,
+						}},
+						SecurityContext: &corev1.SecurityContext{
+							AllowPrivilegeEscalation: Ptr(false),
+							ReadOnlyRootFilesystem:   Ptr(true),
+							Capabilities: &corev1.Capabilities{
+								Drop: []corev1.Capability{"ALL"},
+							},
+						},
+						VolumeMounts: []corev1.VolumeMount{
+							{Name: "data", MountPath: "/home/hermes/.hermes"},
+							{
+								Name:      "config",
+								MountPath: "/home/hermes/.hermes/config.yaml",
+								SubPath:   "config.yaml",
+								ReadOnly:  true,
+							},
+							{Name: "tmp", MountPath: "/tmp"},
+						},
+						ReadinessProbe: &corev1.Probe{
+							ProbeHandler: corev1.ProbeHandler{
+								TCPSocket: &corev1.TCPSocketAction{Port: intstr.FromString("gateway")},
+							},
+							InitialDelaySeconds: 5,
+							PeriodSeconds:       10,
+							TimeoutSeconds:      1,
+							FailureThreshold:    3,
+							SuccessThreshold:    1, // explicit k8s default
+						},
+					}},
+					Volumes: []corev1.Volume{
+						{
+							Name: "config",
+							VolumeSource: corev1.VolumeSource{
+								ConfigMap: &corev1.ConfigMapVolumeSource{
+									LocalObjectReference: corev1.LocalObjectReference{Name: ConfigMapName(inst)},
+									DefaultMode:          Ptr(int32(0o644)),
+								},
+							},
+						},
+						{
+							Name: "data",
+							VolumeSource: corev1.VolumeSource{
+								PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+									ClaimName: PVCName(inst),
+								},
+							},
+						},
+						{
+							Name: "tmp",
+							VolumeSource: corev1.VolumeSource{
+								EmptyDir: &corev1.EmptyDirVolumeSource{},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func imageRef(inst *hermesv1.HermesInstance) string {
+	repo := inst.Spec.Image.Repository
+	if repo == "" {
+		repo = "ghcr.io/stubbi/hermes-agent"
+	}
+	tag := inst.Spec.Image.Tag
+	if tag == "" {
+		tag = "latest"
+	}
+	return fmt.Sprintf("%s:%s", repo, tag)
+}
+
+func pullPolicy(inst *hermesv1.HermesInstance) corev1.PullPolicy {
+	if inst.Spec.Image.PullPolicy == "" {
+		return corev1.PullIfNotPresent
+	}
+	return corev1.PullPolicy(inst.Spec.Image.PullPolicy)
+}

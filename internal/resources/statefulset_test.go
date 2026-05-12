@@ -1,0 +1,78 @@
+package resources
+
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
+func TestBuildStatefulSet_NameNamespaceLabels(t *testing.T) {
+	sts := BuildStatefulSet(minimalInstance())
+	assert.Equal(t, "demo", sts.Name)
+	assert.Equal(t, "agents", sts.Namespace)
+	assert.Equal(t, "hermes-agent", sts.Labels["app.kubernetes.io/name"])
+	assert.Equal(t, "demo", sts.Spec.ServiceName, "matches Service name for stable DNS")
+}
+
+func TestBuildStatefulSet_ContainerImage(t *testing.T) {
+	inst := minimalInstance()
+	inst.Spec.Image.Repository = "ghcr.io/stubbi/hermes-agent"
+	inst.Spec.Image.Tag = "v1.0.0"
+	sts := BuildStatefulSet(inst)
+	require := sts.Spec.Template.Spec.Containers
+	assert.Len(t, require, 1)
+	assert.Equal(t, "ghcr.io/stubbi/hermes-agent:v1.0.0", require[0].Image)
+	assert.Equal(t, corev1.PullIfNotPresent, require[0].ImagePullPolicy, "explicit default")
+}
+
+func TestBuildStatefulSet_ExplicitK8sDefaults(t *testing.T) {
+	sts := BuildStatefulSet(minimalInstance())
+	podSpec := sts.Spec.Template.Spec
+
+	assert.NotNil(t, sts.Spec.RevisionHistoryLimit)
+	assert.Equal(t, int32(10), *sts.Spec.RevisionHistoryLimit)
+	assert.Equal(t, corev1.RestartPolicyAlways, podSpec.RestartPolicy)
+	assert.Equal(t, corev1.DNSClusterFirst, podSpec.DNSPolicy)
+	assert.Equal(t, "default-scheduler", podSpec.SchedulerName)
+	assert.NotNil(t, podSpec.TerminationGracePeriodSeconds)
+	assert.Equal(t, int64(30), *podSpec.TerminationGracePeriodSeconds)
+
+	c := podSpec.Containers[0]
+	assert.Equal(t, "/dev/termination-log", c.TerminationMessagePath)
+	assert.Equal(t, corev1.TerminationMessageReadFile, c.TerminationMessagePolicy)
+}
+
+func TestBuildStatefulSet_HardenedPodSecurity(t *testing.T) {
+	sts := BuildStatefulSet(minimalInstance())
+	pc := sts.Spec.Template.Spec.SecurityContext
+	require := sts.Spec.Template.Spec.Containers[0].SecurityContext
+	assert.NotNil(t, pc.RunAsNonRoot)
+	assert.True(t, *pc.RunAsNonRoot)
+	assert.NotNil(t, require.AllowPrivilegeEscalation)
+	assert.False(t, *require.AllowPrivilegeEscalation)
+	assert.NotNil(t, require.ReadOnlyRootFilesystem)
+	assert.True(t, *require.ReadOnlyRootFilesystem)
+	assert.Equal(t, []corev1.Capability{"ALL"}, require.Capabilities.Drop)
+}
+
+func TestBuildStatefulSet_VolumesAndMounts(t *testing.T) {
+	sts := BuildStatefulSet(minimalInstance())
+	c := sts.Spec.Template.Spec.Containers[0]
+
+	mountNames := map[string]string{}
+	for _, m := range c.VolumeMounts {
+		mountNames[m.Name] = m.MountPath
+	}
+	assert.Equal(t, "/home/hermes/.hermes", mountNames["data"], "PVC mounted at hermes home")
+	assert.Equal(t, "/home/hermes/.hermes/config.yaml", mountNames["config"], "configmap subPath at config.yaml")
+	assert.Equal(t, "/tmp", mountNames["tmp"], "writable /tmp for read-only rootfs")
+}
+
+func minimalInstance() *hermesv1.HermesInstance {
+	return &hermesv1.HermesInstance{
+		ObjectMeta: metav1.ObjectMeta{Name: "demo", Namespace: "agents"},
+	}
+}
