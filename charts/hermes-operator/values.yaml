@@ -19,3 +19,13 @@ resources:
   limits:
     cpu: 500m
     memory: 256Mi
+
+webhook:
+  enabled: true
+  port: 9443
+  certManager:
+    enabled: true
+    issuerKind: Issuer
+    issuerName: hermes-operator-selfsigned
+  caBundle: ""
+  servingCertSecretName: hermes-operator-webhook-server-cert
