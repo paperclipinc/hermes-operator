@@ -475,6 +475,80 @@ var _ = Describe("HermesInstance reconciler — Honcho profile store", func() {
 	})
 })
 
+var _ = Describe("HermesInstance reconciler — idempotency canary (Plan 3 surface)", func() {
+	const (
+		instName = "canary-plan3"
+		ns       = "default"
+	)
+
+	AfterEach(func() {
+		ctx := context.Background()
+		_ = k8sClient.Delete(ctx, &hermesv1.HermesInstance{ObjectMeta: metav1.ObjectMeta{Name: instName, Namespace: ns}})
+		_ = k8sClient.Delete(ctx, &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: "tg", Namespace: ns}})
+		_ = k8sClient.Delete(ctx, &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: "honcho", Namespace: ns}})
+	})
+
+	It("does not bump StatefulSet generation after 10 reconciles with full Plan 3 spec", func() {
+		ctx := context.Background()
+		_ = k8sClient.Create(ctx, &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{Name: "tg", Namespace: ns},
+			Data:       map[string][]byte{"token": []byte("x")},
+		})
+		_ = k8sClient.Create(ctx, &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{Name: "honcho", Namespace: ns},
+			Data:       map[string][]byte{"api-key": []byte("k")},
+		})
+
+		inst := &hermesv1.HermesInstance{
+			ObjectMeta: metav1.ObjectMeta{Name: instName, Namespace: ns},
+			Spec: hermesv1.HermesInstanceSpec{
+				Image:   hermesv1.ImageSpec{Repository: "ghcr.io/stubbi/hermes-agent"},
+				Storage: hermesv1.StorageSpec{Persistence: hermesv1.PersistenceSpec{Size: "1Gi"}},
+				Runtime: hermesv1.RuntimeSpec{
+					UV:               hermesv1.UVSpec{Enabled: Ptr(true)},
+					ExtraPipPackages: []string{"polars"},
+				},
+				Gateways: hermesv1.GatewaysSpec{
+					Telegram: hermesv1.TelegramGatewaySpec{
+						Enabled:           Ptr(true),
+						BotTokenSecretRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "tg"}, Key: "token"},
+						AllowedUserIDs:    []int64{42, 1337},
+					},
+				},
+				ProfileStore: hermesv1.ProfileStoreSpec{
+					Honcho: hermesv1.HonchoSpec{
+						Enabled:         Ptr(true),
+						APIKeySecretRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "honcho"}, Key: "api-key"},
+					},
+				},
+			},
+		}
+		Expect(k8sClient.Create(ctx, inst)).To(Succeed())
+
+		var stsAfterFirst appsv1.StatefulSet
+		Eventually(func(g Gomega) {
+			g.Expect(k8sClient.Get(ctx, types.NamespacedName{Name: instName, Namespace: ns}, &stsAfterFirst)).To(Succeed())
+			g.Expect(stsAfterFirst.Generation).To(BeNumerically(">=", int64(1)))
+		}, "30s", "250ms").Should(Succeed())
+
+		for i := 0; i < 10; i++ {
+			var live hermesv1.HermesInstance
+			Expect(k8sClient.Get(ctx, types.NamespacedName{Name: instName, Namespace: ns}, &live)).To(Succeed())
+			if live.Annotations == nil {
+				live.Annotations = map[string]string{}
+			}
+			live.Annotations["hermes.agent/canary-tick"] = fmt.Sprintf("%d-%d", i, time.Now().UnixNano())
+			Expect(k8sClient.Update(ctx, &live)).To(Succeed())
+			time.Sleep(300 * time.Millisecond)
+		}
+
+		var stsAfterTen appsv1.StatefulSet
+		Expect(k8sClient.Get(ctx, types.NamespacedName{Name: instName, Namespace: ns}, &stsAfterTen)).To(Succeed())
+		Expect(stsAfterTen.Generation).To(Equal(stsAfterFirst.Generation),
+			"StatefulSet generation must not advance under repeat reconciles with unchanged spec")
+	})
+})
+
 func maximalInstance(name, namespace string) *hermesv1.HermesInstance {
 	tp := int32(8443)
 	mi := intstr.FromString("50%")
