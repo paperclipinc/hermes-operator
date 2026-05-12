@@ -130,6 +130,12 @@ type HermesInstanceSpec struct {
 	// ghcr.io/stubbi/hermes-agent image.
 	// +optional
 	Runtime RuntimeSpec `json:"runtime,omitempty"`
+
+	// Gateways configures the platform-side messaging bindings (Telegram, Discord,
+	// Slack, WhatsApp, Signal). Each gateway is opt-in and references its own
+	// Secret(s) so tokens are rotatable independently.
+	// +optional
+	Gateways GatewaysSpec `json:"gateways,omitempty"`
 }
 
 // ImageSpec selects an OCI image.
@@ -894,6 +900,102 @@ type RipgrepSpec struct {
 	// +kubebuilder:default=true
 	// +optional
 	Enabled *bool `json:"enabled,omitempty"`
+}
+
+// GatewaysSpec is the union of all supported messaging-platform bindings.
+type GatewaysSpec struct {
+	// +optional
+	Telegram TelegramGatewaySpec `json:"telegram,omitempty"`
+	// +optional
+	Discord DiscordGatewaySpec `json:"discord,omitempty"`
+	// +optional
+	Slack SlackGatewaySpec `json:"slack,omitempty"`
+	// +optional
+	WhatsApp WhatsAppGatewaySpec `json:"whatsapp,omitempty"`
+	// +optional
+	Signal SignalGatewaySpec `json:"signal,omitempty"`
+}
+
+// TelegramGatewaySpec binds the agent to a Telegram Bot API token.
+type TelegramGatewaySpec struct {
+	// +kubebuilder:default=false
+	// +optional
+	Enabled *bool `json:"enabled,omitempty"`
+
+	// BotTokenSecretRef points at the Secret holding the Bot API token.
+	// Required when Enabled.
+	// +optional
+	BotTokenSecretRef *corev1.SecretKeySelector `json:"botTokenSecretRef,omitempty"`
+
+	// AllowedUserIDs is an optional allow-list of Telegram user IDs.
+	// +listType=atomic
+	// +optional
+	AllowedUserIDs []int64 `json:"allowedUserIDs,omitempty"`
+
+	// WebhookURL is the public HTTPS URL to register with Telegram. When empty
+	// the agent runs in long-poll mode.
+	// +optional
+	WebhookURL string `json:"webhookURL,omitempty"`
+}
+
+// DiscordGatewaySpec binds the agent to a Discord bot application.
+type DiscordGatewaySpec struct {
+	// +kubebuilder:default=false
+	// +optional
+	Enabled *bool `json:"enabled,omitempty"`
+
+	// +optional
+	BotTokenSecretRef *corev1.SecretKeySelector `json:"botTokenSecretRef,omitempty"`
+
+	// ApplicationID is the Discord application's snowflake.
+	// +optional
+	ApplicationID string `json:"applicationID,omitempty"`
+
+	// GuildIDs scopes slash-command registration to specific guilds.
+	// +listType=atomic
+	// +optional
+	GuildIDs []string `json:"guildIDs,omitempty"`
+}
+
+// SlackGatewaySpec binds the agent to a Slack workspace via the bolt SDK.
+type SlackGatewaySpec struct {
+	// +kubebuilder:default=false
+	// +optional
+	Enabled *bool `json:"enabled,omitempty"`
+
+	// +optional
+	BotTokenSecretRef *corev1.SecretKeySelector `json:"botTokenSecretRef,omitempty"`
+
+	// +optional
+	AppTokenSecretRef *corev1.SecretKeySelector `json:"appTokenSecretRef,omitempty"`
+
+	// +optional
+	SigningSecretRef *corev1.SecretKeySelector `json:"signingSecretRef,omitempty"`
+}
+
+// WhatsAppGatewaySpec binds the agent to a WhatsApp provider (Twilio,
+// Meta Cloud API, etc.).
+type WhatsAppGatewaySpec struct {
+	// +kubebuilder:default=false
+	// +optional
+	Enabled *bool `json:"enabled,omitempty"`
+
+	// +optional
+	ProviderSecretRef *corev1.SecretKeySelector `json:"providerSecretRef,omitempty"`
+}
+
+// SignalGatewaySpec binds the agent to signal-cli-rest-api running as a sidecar
+// or external service.
+type SignalGatewaySpec struct {
+	// +kubebuilder:default=false
+	// +optional
+	Enabled *bool `json:"enabled,omitempty"`
+
+	// +optional
+	PhoneNumberSecretRef *corev1.SecretKeySelector `json:"phoneNumberSecretRef,omitempty"`
+
+	// +optional
+	AuthTokenSecretRef *corev1.SecretKeySelector `json:"authTokenSecretRef,omitempty"`
 }
 
 func init() {
