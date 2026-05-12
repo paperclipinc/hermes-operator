@@ -33,6 +33,9 @@ var _ = BeforeSuite(func() {
 		logs, _ := kubectl("logs", "-l", "app.kubernetes.io/name=hermes-operator", "-n", "hermes-system", "--all-containers=true", "--tail=200")
 		Fail("helm upgrade failed: " + out + "\n\n--- deploy describe ---\n" + desc + "\n\n--- pods ---\n" + pods + "\n\n--- operator logs ---\n" + logs)
 	}
+	By("installing MinIO for backup/restore e2e")
+	InstallMinIO()
+	CreateHermesS3CredsSecret("default")
 })
 
 func run(cmd string, args ...string) (string, error) {
