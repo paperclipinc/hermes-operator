@@ -47,6 +47,16 @@ rules:
   - update
   - watch
 - apiGroups:
+  - batch
+  resources:
+  - jobs
+  verbs:
+  - create
+  - get
+  - list
+  - patch
+  - watch
+- apiGroups:
   - hermes.agent
   resources:
   - hermesclusterdefaults
@@ -61,6 +71,7 @@ rules:
   resources:
   - hermesclusterdefaults/status
   - hermesinstances/status
+  - hermesselfconfigs/status
   verbs:
   - get
   - patch
@@ -69,6 +80,7 @@ rules:
   - hermes.agent
   resources:
   - hermesinstances
+  - hermesselfconfigs
   verbs:
   - create
   - delete
@@ -81,6 +93,7 @@ rules:
   - hermes.agent
   resources:
   - hermesinstances/finalizers
+  - hermesselfconfigs/finalizers
   verbs:
   - update
 - apiGroups:

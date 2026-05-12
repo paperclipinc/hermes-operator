@@ -10,11 +10,11 @@ import (
 	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
 )
 
-func TestSelfConfigValidator_Stub_AlwaysAllows(t *testing.T) {
+func TestSelfConfigValidator_RejectsEmptyInstanceRef(t *testing.T) {
 	t.Parallel()
+	// Client is nil — skips parent lookup, but instanceRef="" is still rejected.
 	v := &HermesSelfConfigValidator{}
 	sc := &hermesv1.HermesSelfConfig{ObjectMeta: metav1.ObjectMeta{Name: "demo"}}
-	warns, err := v.ValidateCreate(context.Background(), sc)
-	assert.NoError(t, err)
-	assert.NotEmpty(t, warns, "stub emits a Plan-4-TODO warning")
+	_, err := v.ValidateCreate(context.Background(), sc)
+	assert.Error(t, err, "empty instanceRef must be rejected by the real validator")
 }
