@@ -17,6 +17,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	"github.com/stubbi/hermes-operator/internal/resources"
 )
 
 // SelfConfigFieldManager is the SSA field manager string the operator uses
@@ -96,4 +97,27 @@ func formatAppliedFieldSkill(source string) string {
 }
 func formatAppliedFieldFile(path string) string {
 	return fmt.Sprintf("workspace-configmap.data[path=%s]", path)
+}
+
+// buildWorkspaceFilesPatch returns a partial workspace ConfigMap whose Data
+// holds only the keys we want to claim ownership of via SSA. Nested paths
+// are encoded with "/" -> "__" (openclaw lesson #482). The reconciler will
+// SSA-apply this against the existing workspace ConfigMap created by the
+// HermesInstance reconciler; SSA's "atomic for map values" semantics mean
+// non-listed keys remain owned by whoever wrote them.
+func buildWorkspaceFilesPatch(parent *hermesv1.HermesInstance, sc *hermesv1.HermesSelfConfig) *corev1.ConfigMap {
+	cm := &corev1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "ConfigMap"},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      resources.WorkspaceConfigMapName(parent),
+			Namespace: parent.Namespace,
+		},
+		Data: map[string]string{},
+	}
+	for _, f := range sc.Spec.AddWorkspaceFiles {
+		if f.Content != "" {
+			cm.Data[resources.EncodeWorkspacePath(f.Path)] = f.Content
+		}
+	}
+	return cm
 }

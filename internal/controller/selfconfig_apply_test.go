@@ -80,3 +80,22 @@ func TestAppliedFieldsFormat(t *testing.T) {
 	assert.Equal(t, "spec.skills[source=git+https://github.com/foo/skill@v1]",
 		formatAppliedFieldSkill("git+https://github.com/foo/skill@v1"))
 }
+
+func TestBuildWorkspaceFilesPatch_NestedPaths(t *testing.T) {
+	parent := parentInstance()
+	sc := &hermesv1.HermesSelfConfig{
+		Spec: hermesv1.HermesSelfConfigSpec{
+			AddWorkspaceFiles: []hermesv1.SelfConfigWorkspaceFile{
+				{Path: "notes/finance.md", Content: "# Finance"},
+				{Path: "flat.md", Content: "hello"},
+			},
+		},
+	}
+	cm := buildWorkspaceFilesPatch(parent, sc)
+	assert.Equal(t, "my-hermes-workspace", cm.Name)
+	assert.Equal(t, "agents", cm.Namespace)
+	assert.Equal(t, "# Finance", cm.Data["notes__finance.md"])
+	assert.Equal(t, "hello", cm.Data["flat.md"])
+	assert.Equal(t, "v1", cm.APIVersion)
+	assert.Equal(t, "ConfigMap", cm.Kind)
+}
