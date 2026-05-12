@@ -121,6 +121,51 @@ docker-buildx: ## Build and push docker image for the manager for cross-platform
 	- $(CONTAINER_TOOL) buildx rm hermes-operator-builder
 	rm Dockerfile.cross
 
+# -------- hermes-agent image (Plan 3) --------
+
+AGENT_IMAGE         ?= ghcr.io/stubbi/hermes-agent
+HERMES_VERSION      ?= v0.13.0
+AGENT_IMAGE_PLATFORMS ?= linux/amd64,linux/arm64
+
+# Build the agent image for the current platform. Local dev only.
+.PHONY: agent-image-build
+agent-image-build:
+	docker build \
+		--build-arg HERMES_VERSION=$(HERMES_VERSION) \
+		-t $(AGENT_IMAGE):$(HERMES_VERSION) \
+		images/hermes-agent
+
+# Multi-arch build via buildx. Pushes only if PUSH=1.
+.PHONY: agent-image-buildx
+agent-image-buildx:
+	docker buildx build \
+		--platform $(AGENT_IMAGE_PLATFORMS) \
+		--build-arg HERMES_VERSION=$(HERMES_VERSION) \
+		$(if $(filter 1,$(PUSH)),--push,--load) \
+		-t $(AGENT_IMAGE):$(HERMES_VERSION) \
+		images/hermes-agent
+
+# Refresh images/hermes-agent/uv.lock for the requested HERMES_VERSION.
+# Rewrites the git ref in pyproject.toml, then runs `uv lock` inside an
+# ephemeral uv container so it works the same on developer laptops and in CI.
+# Requires network access to resolve the git dependency.
+.PHONY: agent-image-relock
+agent-image-relock:
+	sed -i.bak -E 's|(hermes-agent @ git\+https://github.com/NousResearch/hermes-agent@)[^"]+|\1$(HERMES_VERSION)|' images/hermes-agent/pyproject.toml
+	rm -f images/hermes-agent/pyproject.toml.bak
+	docker run --rm \
+		-v $(PWD)/images/hermes-agent:/work \
+		-w /work \
+		ghcr.io/astral-sh/uv:0.5.0 \
+		sh -c "uv lock"
+	@echo "Updated images/hermes-agent/pyproject.toml and uv.lock for hermes-agent@$(HERMES_VERSION)"
+
+# Smoke-test a locally built image: --help should exit 0.
+.PHONY: agent-image-smoke
+agent-image-smoke:
+	docker run --rm $(AGENT_IMAGE):$(HERMES_VERSION) hermes-agent --help >/dev/null
+	@echo "agent-image-smoke OK for $(AGENT_IMAGE):$(HERMES_VERSION)"
+
 .PHONY: build-installer
 build-installer: manifests generate kustomize ## Generate a consolidated YAML with CRDs and deployment.
 	mkdir -p dist
