@@ -23,35 +23,62 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// HermesInstanceSpec defines the desired state of HermesInstance
+// HermesInstanceSpec defines the desired state of HermesInstance.
 type HermesInstanceSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-	// The following markers will use OpenAPI v3 schema to validate the value
-	// More info: https://book.kubebuilder.io/reference/markers/crd-validation.html
-
-	// foo is an example field of HermesInstance. Edit hermesinstance_types.go to remove/update
+	// Image controls which hermes-agent container image to run.
 	// +optional
-	Foo *string `json:"foo,omitempty"`
+	Image ImageSpec `json:"image,omitempty"`
+
+	// Storage controls the PVC backing ~/.hermes for this instance.
+	// +optional
+	Storage StorageSpec `json:"storage,omitempty"`
 }
 
-// HermesInstanceStatus defines the observed state of HermesInstance.
+// ImageSpec selects an OCI image.
+type ImageSpec struct {
+	// +kubebuilder:default="ghcr.io/stubbi/hermes-agent"
+	// +optional
+	Repository string `json:"repository,omitempty"`
+
+	// +kubebuilder:default="latest"
+	// +optional
+	Tag string `json:"tag,omitempty"`
+
+	// +kubebuilder:default=IfNotPresent
+	// +kubebuilder:validation:Enum=Always;IfNotPresent;Never
+	// +optional
+	PullPolicy string `json:"pullPolicy,omitempty"`
+}
+
+// StorageSpec controls the PVC backing the agent's data directory.
+type StorageSpec struct {
+	Persistence PersistenceSpec `json:"persistence,omitempty"`
+}
+
+type PersistenceSpec struct {
+	// +kubebuilder:default=true
+	// +optional
+	Enabled *bool `json:"enabled,omitempty"`
+
+	// +kubebuilder:default="1Gi"
+	// +optional
+	Size string `json:"size,omitempty"`
+
+	// +optional
+	StorageClassName *string `json:"storageClassName,omitempty"`
+}
+
+// HermesInstanceStatus reflects the observed state of HermesInstance.
 type HermesInstanceStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// ObservedGeneration is the most recent generation observed by the controller.
+	// +optional
+	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
 
-	// For Kubernetes API conventions, see:
-	// https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#typical-status-properties
+	// Phase is a short human-readable status (Pending|Ready|Degraded).
+	// +optional
+	Phase string `json:"phase,omitempty"`
 
-	// conditions represent the current state of the HermesInstance resource.
-	// Each condition has a unique type and reflects the status of a specific aspect of the resource.
-	//
-	// Standard condition types include:
-	// - "Available": the resource is fully functional
-	// - "Progressing": the resource is being created or updated
-	// - "Degraded": the resource failed to reach or maintain its desired state
-	//
-	// The status of each condition is one of True, False, or Unknown.
+	// Conditions represent the latest available observations of the instance's state.
 	// +listType=map
 	// +listMapKey=type
 	// +optional
@@ -60,6 +87,10 @@ type HermesInstanceStatus struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:resource:shortName=hi;hermes,categories=hermes;agents
+// +kubebuilder:printcolumn:name="Phase",type=string,JSONPath=`.status.phase`
+// +kubebuilder:printcolumn:name="Image",type=string,JSONPath=`.spec.image.repository`
+// +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
 
 // HermesInstance is the Schema for the hermesinstances API
 type HermesInstance struct {

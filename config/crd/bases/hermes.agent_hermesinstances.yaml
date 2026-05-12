@@ -8,13 +8,29 @@ metadata:
 spec:
   group: hermes.agent
   names:
+    categories:
+    - hermes
+    - agents
     kind: HermesInstance
     listKind: HermesInstanceList
     plural: hermesinstances
+    shortNames:
+    - hi
+    - hermes
     singular: hermesinstance
   scope: Namespaced
   versions:
-  - name: v1
+  - additionalPrinterColumns:
+    - jsonPath: .status.phase
+      name: Phase
+      type: string
+    - jsonPath: .spec.image.repository
+      name: Image
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
     schema:
       openAPIV3Schema:
         description: HermesInstance is the Schema for the hermesinstances API
@@ -39,25 +55,46 @@ spec:
           spec:
             description: spec defines the desired state of HermesInstance
             properties:
-              foo:
-                description: foo is an example field of HermesInstance. Edit hermesinstance_types.go
-                  to remove/update
-                type: string
+              image:
+                description: Image controls which hermes-agent container image to
+                  run.
+                properties:
+                  pullPolicy:
+                    default: IfNotPresent
+                    enum:
+                    - Always
+                    - IfNotPresent
+                    - Never
+                    type: string
+                  repository:
+                    default: ghcr.io/stubbi/hermes-agent
+                    type: string
+                  tag:
+                    default: latest
+                    type: string
+                type: object
+              storage:
+                description: Storage controls the PVC backing ~/.hermes for this instance.
+                properties:
+                  persistence:
+                    properties:
+                      enabled:
+                        default: true
+                        type: boolean
+                      size:
+                        default: 1Gi
+                        type: string
+                      storageClassName:
+                        type: string
+                    type: object
+                type: object
             type: object
           status:
             description: status defines the observed state of HermesInstance
             properties:
               conditions:
-                description: |-
-                  conditions represent the current state of the HermesInstance resource.
-                  Each condition has a unique type and reflects the status of a specific aspect of the resource.
-
-                  Standard condition types include:
-                  - "Available": the resource is fully functional
-                  - "Progressing": the resource is being created or updated
-                  - "Degraded": the resource failed to reach or maintain its desired state
-
-                  The status of each condition is one of True, False, or Unknown.
+                description: Conditions represent the latest available observations
+                  of the instance's state.
                 items:
                   description: Condition contains details for one aspect of the current
                     state of this API Resource.
@@ -116,6 +153,14 @@ spec:
                 x-kubernetes-list-map-keys:
                 - type
                 x-kubernetes-list-type: map
+              observedGeneration:
+                description: ObservedGeneration is the most recent generation observed
+                  by the controller.
+                format: int64
+                type: integer
+              phase:
+                description: Phase is a short human-readable status (Pending|Ready|Degraded).
+                type: string
             type: object
         required:
         - spec
