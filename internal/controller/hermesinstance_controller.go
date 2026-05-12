@@ -103,7 +103,7 @@ func (r *HermesInstanceReconciler) reconcileConfigMap(ctx context.Context, inst 
 		Namespace: inst.Namespace,
 	}}
 	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, obj, func() error {
-		desired := resources.BuildConfigMap(inst)
+		desired := resources.BuildConfigMap(inst, "")
 		obj.Labels = resources.MergePreservingForeign(obj.Labels, desired.Labels, operatorLabelPrefix)
 		obj.Data = desired.Data
 		return controllerutil.SetControllerReference(inst, obj, r.Scheme)
