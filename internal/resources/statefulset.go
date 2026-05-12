@@ -144,6 +144,13 @@ func BuildStatefulSet(inst *hermesv1.HermesInstance) *appsv1.StatefulSet {
 		})
 	}
 
+	// --- Plan 3: runtime/gateways/honcho wiring (operator-managed env) ---
+	c.Env = append(c.Env, BuildGatewayEnv(inst)...)
+	c.Env = append(c.Env, BuildHonchoConsumerEnv(inst)...)
+	c.EnvFrom = append(c.EnvFrom, BuildGatewayEnvFrom(inst)...)
+	c.VolumeMounts = append(c.VolumeMounts, BuildRuntimeVolumeMounts(inst)...)
+	// --- end Plan 3 operator env ---
+
 	// Extend container with extra volume mounts, env, and envFrom
 	c.VolumeMounts = append(c.VolumeMounts, inst.Spec.ExtraVolumeMounts...)
 	c.Env = append(c.Env, inst.Spec.Env...)
@@ -217,7 +224,7 @@ func BuildStatefulSet(inst *hermesv1.HermesInstance) *appsv1.StatefulSet {
 		replicas = 0
 	}
 
-	return &appsv1.StatefulSet{
+	sts := &appsv1.StatefulSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      StatefulSetName(inst),
 			Namespace: inst.Namespace,
@@ -247,6 +254,19 @@ func BuildStatefulSet(inst *hermesv1.HermesInstance) *appsv1.StatefulSet {
 			},
 		},
 	}
+
+	// --- Plan 3: runtime init containers + volumes ---
+	sts.Spec.Template.Spec.InitContainers = append(
+		sts.Spec.Template.Spec.InitContainers,
+		BuildRuntimeInitContainers(inst)...,
+	)
+	sts.Spec.Template.Spec.Volumes = append(
+		sts.Spec.Template.Spec.Volumes,
+		BuildRuntimeVolumes(inst)...,
+	)
+	// --- end Plan 3 ---
+
+	return sts
 }
 
 func imageRef(inst *hermesv1.HermesInstance) string {

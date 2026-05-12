@@ -291,3 +291,109 @@ func TestBuildStatefulSet_NotSuspendedDefaultReplica(t *testing.T) {
 	assert.NotNil(t, sts.Spec.Replicas)
 	assert.Equal(t, int32(1), *sts.Spec.Replicas)
 }
+
+func TestBuildStatefulSet_RuntimeInitContainersAppended(t *testing.T) {
+	t.Parallel()
+	inst := minimalInstance()
+	inst.Spec.Runtime = hermesv1.RuntimeSpec{
+		UV:               hermesv1.UVSpec{Enabled: Ptr(true)},
+		ExtraPipPackages: []string{"polars"},
+	}
+	sts := BuildStatefulSet(inst)
+	names := []string{}
+	for _, c := range sts.Spec.Template.Spec.InitContainers {
+		names = append(names, c.Name)
+	}
+	assert.Contains(t, names, "init-uv")
+	assert.Contains(t, names, "init-pip")
+}
+
+func TestBuildStatefulSet_GatewayEnvWired(t *testing.T) {
+	t.Parallel()
+	inst := minimalInstance()
+	inst.Spec.Gateways = hermesv1.GatewaysSpec{
+		Telegram: hermesv1.TelegramGatewaySpec{
+			Enabled: Ptr(true),
+			BotTokenSecretRef: &corev1.SecretKeySelector{
+				LocalObjectReference: corev1.LocalObjectReference{Name: "tg"},
+				Key:                  "token",
+			},
+		},
+	}
+	sts := BuildStatefulSet(inst)
+	c := sts.Spec.Template.Spec.Containers[0]
+	hasToken := false
+	for _, e := range c.Env {
+		if e.Name == "TELEGRAM_BOT_TOKEN" && e.ValueFrom != nil && e.ValueFrom.SecretKeyRef.Name == "tg" {
+			hasToken = true
+		}
+	}
+	assert.True(t, hasToken, "TELEGRAM_BOT_TOKEN sourced from tg secret")
+}
+
+func TestBuildStatefulSet_HonchoEnvWired(t *testing.T) {
+	t.Parallel()
+	inst := minimalInstance()
+	inst.Spec.ProfileStore = hermesv1.ProfileStoreSpec{
+		Honcho: hermesv1.HonchoSpec{
+			Enabled: Ptr(true),
+			APIKeySecretRef: &corev1.SecretKeySelector{
+				LocalObjectReference: corev1.LocalObjectReference{Name: "honcho-secret"},
+				Key:                  "api-key",
+			},
+		},
+	}
+	sts := BuildStatefulSet(inst)
+	c := sts.Spec.Template.Spec.Containers[0]
+	byName := map[string]corev1.EnvVar{}
+	for _, e := range c.Env {
+		byName[e.Name] = e
+	}
+	assert.Equal(t, "http://demo-honcho:8000", byName["HONCHO_BASE_URL"].Value)
+	assert.NotNil(t, byName["HONCHO_API_KEY"].ValueFrom)
+}
+
+func TestBuildStatefulSet_UVCacheVolume(t *testing.T) {
+	t.Parallel()
+	inst := minimalInstance()
+	inst.Spec.Runtime = hermesv1.RuntimeSpec{UV: hermesv1.UVSpec{Enabled: Ptr(true)}}
+	sts := BuildStatefulSet(inst)
+	found := false
+	for _, v := range sts.Spec.Template.Spec.Volumes {
+		if v.Name == "uv-cache" {
+			found = true
+		}
+	}
+	assert.True(t, found, "uv-cache volume present")
+
+	foundMount := false
+	for _, m := range sts.Spec.Template.Spec.Containers[0].VolumeMounts {
+		if m.Name == "uv-cache" && m.MountPath == "/home/hermes/.cache/uv" {
+			foundMount = true
+		}
+	}
+	assert.True(t, foundMount, "uv-cache mounted at /home/hermes/.cache/uv")
+}
+
+func TestBuildStatefulSet_IdempotentWithRuntimeGatewaysHoncho(t *testing.T) {
+	t.Parallel()
+	inst := minimalInstance()
+	inst.Spec.Runtime = hermesv1.RuntimeSpec{UV: hermesv1.UVSpec{Enabled: Ptr(true)}}
+	inst.Spec.Gateways = hermesv1.GatewaysSpec{
+		Telegram: hermesv1.TelegramGatewaySpec{
+			Enabled: Ptr(true),
+			BotTokenSecretRef: &corev1.SecretKeySelector{
+				LocalObjectReference: corev1.LocalObjectReference{Name: "tg"}, Key: "token",
+			},
+		},
+	}
+	inst.Spec.ProfileStore = hermesv1.ProfileStoreSpec{
+		Honcho: hermesv1.HonchoSpec{
+			Enabled:         Ptr(true),
+			APIKeySecretRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "honcho"}, Key: "api-key"},
+		},
+	}
+	a := BuildStatefulSet(inst)
+	b := BuildStatefulSet(inst)
+	assert.Equal(t, a, b, "pure builder must be deterministic")
+}
