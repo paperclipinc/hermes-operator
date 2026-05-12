@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
@@ -76,4 +77,53 @@ func minimalInstance() *hermesv1.HermesInstance {
 	return &hermesv1.HermesInstance{
 		ObjectMeta: metav1.ObjectMeta{Name: "demo", Namespace: "agents"},
 	}
+}
+
+func TestBuildStatefulSet_HonorsResources(t *testing.T) {
+	t.Parallel()
+	inst := minimalInstance()
+	inst.Spec.Resources = hermesv1.ResourcesSpec{
+		Requests: corev1.ResourceList{
+			corev1.ResourceCPU:    resource.MustParse("100m"),
+			corev1.ResourceMemory: resource.MustParse("256Mi"),
+		},
+		Limits: corev1.ResourceList{
+			corev1.ResourceCPU:    resource.MustParse("500m"),
+			corev1.ResourceMemory: resource.MustParse("512Mi"),
+		},
+	}
+	sts := BuildStatefulSet(inst)
+	c := sts.Spec.Template.Spec.Containers[0]
+	assert.Equal(t, resource.MustParse("100m"), c.Resources.Requests[corev1.ResourceCPU])
+	assert.Equal(t, resource.MustParse("512Mi"), c.Resources.Limits[corev1.ResourceMemory])
+}
+
+func TestBuildStatefulSet_OverridesSecurityContexts(t *testing.T) {
+	t.Parallel()
+	inst := minimalInstance()
+	inst.Spec.Security.PodSecurityContext = &corev1.PodSecurityContext{
+		RunAsUser: Ptr(int64(2000)),
+	}
+	inst.Spec.Security.ContainerSecurityContext = &corev1.SecurityContext{
+		ReadOnlyRootFilesystem: Ptr(false),
+	}
+	sts := BuildStatefulSet(inst)
+	assert.Equal(t, int64(2000), *sts.Spec.Template.Spec.SecurityContext.RunAsUser)
+	assert.False(t, *sts.Spec.Template.Spec.Containers[0].SecurityContext.ReadOnlyRootFilesystem)
+}
+
+func TestBuildStatefulSet_ProbeOverrides(t *testing.T) {
+	t.Parallel()
+	inst := minimalInstance()
+	inst.Spec.Probes.Liveness = &corev1.Probe{
+		InitialDelaySeconds: 30,
+		PeriodSeconds:       15,
+		SuccessThreshold:    1,
+		FailureThreshold:    5,
+		TimeoutSeconds:      2,
+	}
+	sts := BuildStatefulSet(inst)
+	c := sts.Spec.Template.Spec.Containers[0]
+	assert.NotNil(t, c.LivenessProbe)
+	assert.Equal(t, int32(30), c.LivenessProbe.InitialDelaySeconds)
 }

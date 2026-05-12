@@ -24,6 +24,81 @@ func BuildStatefulSet(inst *hermesv1.HermesInstance) *appsv1.StatefulSet {
 	}
 	image := imageRef(inst)
 
+	// Build PodSecurityContext with override support
+	podSecurityCtx := &corev1.PodSecurityContext{
+		RunAsNonRoot: Ptr(true),
+		RunAsUser:    Ptr(int64(1000)),
+		RunAsGroup:   Ptr(int64(1000)),
+		FSGroup:      Ptr(int64(1000)),
+		SeccompProfile: &corev1.SeccompProfile{
+			Type: corev1.SeccompProfileTypeRuntimeDefault,
+		},
+	}
+	if inst.Spec.Security.PodSecurityContext != nil {
+		podSecurityCtx = inst.Spec.Security.PodSecurityContext.DeepCopy()
+	}
+
+	// Build ContainerSecurityContext with override support
+	containerSecurityCtx := &corev1.SecurityContext{
+		AllowPrivilegeEscalation: Ptr(false),
+		ReadOnlyRootFilesystem:   Ptr(true),
+		Capabilities: &corev1.Capabilities{
+			Drop: []corev1.Capability{"ALL"},
+		},
+	}
+	if inst.Spec.Security.ContainerSecurityContext != nil {
+		containerSecurityCtx = inst.Spec.Security.ContainerSecurityContext.DeepCopy()
+	}
+
+	// Build container with override support
+	c := corev1.Container{
+		Name:                     "hermes",
+		Image:                    image,
+		ImagePullPolicy:          pullPolicy(inst),
+		TerminationMessagePath:   "/dev/termination-log",
+		TerminationMessagePolicy: corev1.TerminationMessageReadFile,
+		Ports: []corev1.ContainerPort{{
+			Name:          "gateway",
+			ContainerPort: 8443,
+			Protocol:      corev1.ProtocolTCP,
+		}},
+		SecurityContext: containerSecurityCtx,
+		VolumeMounts: []corev1.VolumeMount{
+			{Name: "data", MountPath: "/home/hermes/.hermes"},
+			{
+				Name:      "config",
+				MountPath: "/home/hermes/.hermes/config.yaml",
+				SubPath:   "config.yaml",
+				ReadOnly:  true,
+			},
+			{Name: "tmp", MountPath: "/tmp"},
+		},
+		ReadinessProbe: &corev1.Probe{
+			ProbeHandler: corev1.ProbeHandler{
+				TCPSocket: &corev1.TCPSocketAction{Port: intstr.FromString("gateway")},
+			},
+			InitialDelaySeconds: 5,
+			PeriodSeconds:       10,
+			TimeoutSeconds:      1,
+			FailureThreshold:    3,
+			SuccessThreshold:    1, // explicit k8s default
+		},
+	}
+
+	// Set resources from spec
+	c.Resources = inst.Spec.Resources.ToContainerResourceRequirements()
+
+	// Set probe overrides
+	if inst.Spec.Probes.Liveness != nil {
+		c.LivenessProbe = inst.Spec.Probes.Liveness.DeepCopy()
+	}
+	if inst.Spec.Probes.Readiness != nil {
+		c.ReadinessProbe = inst.Spec.Probes.Readiness.DeepCopy()
+	}
+	if inst.Spec.Probes.Startup != nil {
+		c.StartupProbe = inst.Spec.Probes.Startup.DeepCopy()
+	}
+
 	return &appsv1.StatefulSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      StatefulSetName(inst),
@@ -55,54 +130,8 @@ func BuildStatefulSet(inst *hermesv1.HermesInstance) *appsv1.StatefulSet {
 					DNSPolicy:                     corev1.DNSClusterFirst,
 					SchedulerName:                 "default-scheduler",
 					TerminationGracePeriodSeconds: Ptr(int64(30)),
-					SecurityContext: &corev1.PodSecurityContext{
-						RunAsNonRoot: Ptr(true),
-						RunAsUser:    Ptr(int64(1000)),
-						RunAsGroup:   Ptr(int64(1000)),
-						FSGroup:      Ptr(int64(1000)),
-						SeccompProfile: &corev1.SeccompProfile{
-							Type: corev1.SeccompProfileTypeRuntimeDefault,
-						},
-					},
-					Containers: []corev1.Container{{
-						Name:                     "hermes",
-						Image:                    image,
-						ImagePullPolicy:          pullPolicy(inst),
-						TerminationMessagePath:   "/dev/termination-log",
-						TerminationMessagePolicy: corev1.TerminationMessageReadFile,
-						Ports: []corev1.ContainerPort{{
-							Name:          "gateway",
-							ContainerPort: 8443,
-							Protocol:      corev1.ProtocolTCP,
-						}},
-						SecurityContext: &corev1.SecurityContext{
-							AllowPrivilegeEscalation: Ptr(false),
-							ReadOnlyRootFilesystem:   Ptr(true),
-							Capabilities: &corev1.Capabilities{
-								Drop: []corev1.Capability{"ALL"},
-							},
-						},
-						VolumeMounts: []corev1.VolumeMount{
-							{Name: "data", MountPath: "/home/hermes/.hermes"},
-							{
-								Name:      "config",
-								MountPath: "/home/hermes/.hermes/config.yaml",
-								SubPath:   "config.yaml",
-								ReadOnly:  true,
-							},
-							{Name: "tmp", MountPath: "/tmp"},
-						},
-						ReadinessProbe: &corev1.Probe{
-							ProbeHandler: corev1.ProbeHandler{
-								TCPSocket: &corev1.TCPSocketAction{Port: intstr.FromString("gateway")},
-							},
-							InitialDelaySeconds: 5,
-							PeriodSeconds:       10,
-							TimeoutSeconds:      1,
-							FailureThreshold:    3,
-							SuccessThreshold:    1, // explicit k8s default
-						},
-					}},
+					SecurityContext:               podSecurityCtx,
+					Containers:                    []corev1.Container{c},
 					Volumes: []corev1.Volume{
 						{
 							Name: "config",
