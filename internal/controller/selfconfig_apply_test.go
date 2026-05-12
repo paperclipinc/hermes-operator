@@ -12,6 +12,7 @@ package controller
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
@@ -149,4 +150,23 @@ func TestMergeConfigMapPatches_NilHandling(t *testing.T) {
 	right := buildWorkspaceFilesPatch(parent, sc)
 	assert.Same(t, right, mergeConfigMapPatches(nil, right))
 	assert.Same(t, right, mergeConfigMapPatches(right, nil))
+}
+
+func TestBuildProfileSnapshotPayload_NilWhenEmpty(t *testing.T) {
+	sc := &hermesv1.HermesSelfConfig{}
+	assert.Nil(t, buildProfileSnapshotPayload(parentInstance(), sc, time.Now()))
+}
+
+func TestBuildProfileSnapshotPayload_PopulatesJob(t *testing.T) {
+	sc := &hermesv1.HermesSelfConfig{
+		Spec: hermesv1.HermesSelfConfigSpec{
+			AddProfileSnapshot: &hermesv1.SelfConfigProfileSnapshot{
+				ProfileID: "user-42",
+				Data:      "some-payload",
+			},
+		},
+	}
+	job := buildProfileSnapshotPayload(parentInstance(), sc, time.Date(2026, 5, 12, 8, 0, 0, 0, time.UTC))
+	assert.NotNil(t, job)
+	assert.Equal(t, "my-hermes-snapshot-user-42-20260512080000", job.Name)
 }

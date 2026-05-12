@@ -12,7 +12,9 @@ package controller
 
 import (
 	"fmt"
+	"time"
 
+	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -140,6 +142,17 @@ func buildPatchConfigPayload(parent *hermesv1.HermesInstance, sc *hermesv1.Herme
 	}
 	cm.Data["selfconfig.yaml"] = string(sc.Spec.PatchConfig.Raw)
 	return cm
+}
+
+// buildProfileSnapshotPayload returns the Job that materialises a Honcho
+// profile snapshot. Unlike the HermesInstance / ConfigMap payloads, Jobs are
+// NOT SSA-patched — they are created with a deterministic name; the apiserver
+// either creates a new Job or no-ops on AlreadyExists.
+func buildProfileSnapshotPayload(parent *hermesv1.HermesInstance, sc *hermesv1.HermesSelfConfig, when time.Time) *batchv1.Job {
+	if sc.Spec.AddProfileSnapshot == nil {
+		return nil
+	}
+	return resources.BuildSnapshotJob(parent, sc.Spec.AddProfileSnapshot.ProfileID, sc.Spec.AddProfileSnapshot.Data, when)
 }
 
 // mergeConfigMapPatches combines two partial ConfigMaps of the same name into
