@@ -19,6 +19,16 @@ This document is the authoritative reference for all `status.conditions` emitted
 | `ServiceMonitorReady` | ServiceMonitor exists OR Prometheus-Operator CRDs absent (skipped) | ServiceMonitor op failed | `Reconciled`, `Error` |
 | `PrometheusRuleReady` | PrometheusRule exists OR Prometheus-Operator CRDs absent (skipped) | PrometheusRule op failed | `Reconciled`, `Error` |
 
+### `ProfileStoreReady` (Plan 3 refinement)
+
+`ProfileStoreReady` is set by the Honcho step in the reconcile chain. Plan 3 refines its reasons:
+
+| Status | Reason | Meaning |
+|---|---|---|
+| `True` | `Disabled` | `spec.profileStore.honcho.enabled` is false; the operator did not create Honcho resources. |
+| `True` | `Ready` | Honcho Deployment has >=1 ready replica. |
+| `False` | `DeploymentNotReady` | Honcho Deployment is missing, scaling up, or its readiness probe is failing. |
+
 ## HermesClusterDefaults conditions
 
 | Type | When True | When False | Reason codes |

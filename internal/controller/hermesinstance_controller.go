@@ -57,6 +57,12 @@ type HermesInstanceReconciler struct {
 
 const operatorLabelPrefix = "hermes.agent/"
 
+const (
+	reasonProfileStoreDisabled       = "Disabled"
+	reasonProfileStoreDeploymentDown = "DeploymentNotReady"
+	reasonProfileStoreReady          = "Ready"
+)
+
 // +kubebuilder:rbac:groups=hermes.agent,resources=hermesinstances,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=hermes.agent,resources=hermesinstances/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=hermes.agent,resources=hermesinstances/finalizers,verbs=update
@@ -108,6 +114,8 @@ func (r *HermesInstanceReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		}
 		r.setCondition(inst, s.cond, metav1.ConditionTrue, "Reconciled", s.name+" up to date")
 	}
+
+	r.updateProfileStoreCondition(ctx, inst)
 
 	if err := r.updateStatus(ctx, inst); err != nil {
 		logger.Error(err, "status update failed")
@@ -495,6 +503,40 @@ func (r *HermesInstanceReconciler) reconcileHoncho(ctx context.Context, inst *he
 	}
 
 	return nil
+}
+
+func (r *HermesInstanceReconciler) updateProfileStoreCondition(ctx context.Context, inst *hermesv1.HermesInstance) {
+	cond := metav1.Condition{
+		Type:               "ProfileStoreReady",
+		ObservedGeneration: inst.Generation,
+		LastTransitionTime: metav1.NewTime(time.Now()),
+	}
+
+	if !resources.BoolValue(inst.Spec.ProfileStore.Honcho.Enabled) {
+		cond.Status = metav1.ConditionTrue
+		cond.Reason = reasonProfileStoreDisabled
+		cond.Message = "Honcho profile store disabled (spec.profileStore.honcho.enabled=false)"
+		meta.SetStatusCondition(&inst.Status.Conditions, cond)
+		return
+	}
+
+	var dep appsv1.Deployment
+	key := types.NamespacedName{Namespace: inst.Namespace, Name: resources.HonchoDeploymentName(inst)}
+	if err := r.Get(ctx, key, &dep); err != nil {
+		cond.Status = metav1.ConditionFalse
+		cond.Reason = reasonProfileStoreDeploymentDown
+		cond.Message = fmt.Sprintf("Honcho Deployment not found: %v", err)
+	} else if dep.Status.ReadyReplicas >= 1 {
+		cond.Status = metav1.ConditionTrue
+		cond.Reason = reasonProfileStoreReady
+		cond.Message = "Honcho Deployment has >=1 ready replica"
+	} else {
+		cond.Status = metav1.ConditionFalse
+		cond.Reason = reasonProfileStoreDeploymentDown
+		cond.Message = fmt.Sprintf("Honcho Deployment has %d/%d ready replicas", dep.Status.ReadyReplicas, dep.Status.Replicas)
+	}
+
+	meta.SetStatusCondition(&inst.Status.Conditions, cond)
 }
 
 // --- helpers ---
