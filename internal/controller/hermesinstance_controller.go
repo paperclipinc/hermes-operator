@@ -26,6 +26,7 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
+	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	policyv1 "k8s.io/api/policy/v1"
@@ -53,6 +54,11 @@ type HermesInstanceReconciler struct {
 	// PrometheusOperatorCRDsPresent caches whether ServiceMonitor/PrometheusRule
 	// CRDs are installed. Probed once at startup by cmd/manager.
 	PrometheusOperatorCRDsPresent bool
+
+	Backup     *BackupReconciler
+	Restore    *RestoreReconciler
+	AutoUpdate *AutoUpdateReconciler
+	Migration  *MigrationReconciler
 }
 
 const operatorLabelPrefix = "hermes.agent/"
@@ -74,6 +80,10 @@ const (
 // +kubebuilder:rbac:groups=autoscaling,resources=horizontalpodautoscalers,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=roles;rolebindings,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=monitoring.coreos.com,resources=servicemonitors;prometheusrules,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=batch,resources=jobs;cronjobs,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups="",resources=pods,verbs=get;list;watch
+// +kubebuilder:rbac:groups="",resources=events,verbs=get;list;watch;create;patch
+// +kubebuilder:rbac:groups=openclaw.rocks,resources=openclawinstances,verbs=get;list;watch
 
 func (r *HermesInstanceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
@@ -83,6 +93,27 @@ func (r *HermesInstanceReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 			return ctrl.Result{}, nil
 		}
 		return ctrl.Result{}, err
+	}
+
+	// Deletion path — hand to backup finalizer if requested.
+	if !inst.DeletionTimestamp.IsZero() {
+		if r.Backup != nil {
+			res, held, err := r.Backup.HandleDeletion(ctx, inst)
+			if err != nil {
+				return ctrl.Result{}, err
+			}
+			if held {
+				return res, nil
+			}
+		}
+		return ctrl.Result{}, nil
+	}
+
+	// Add the backup-on-delete finalizer when spec.backup.onDelete=true (uses r.Patch — lesson #437).
+	if r.Backup != nil {
+		if err := r.Backup.EnsureFinalizer(ctx, inst); err != nil {
+			return ctrl.Result{}, err
+		}
 	}
 
 	steps := []struct {
@@ -113,6 +144,28 @@ func (r *HermesInstanceReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 			return ctrl.Result{}, fmt.Errorf("reconcile %s: %w", s.name, err)
 		}
 		r.setCondition(inst, s.cond, metav1.ConditionTrue, "Reconciled", s.name+" up to date")
+	}
+
+	// Sub-controller chain — backup CronJob, migration latch, restore latch, autoupdate poll.
+	if r.Backup != nil {
+		if err := r.Backup.ReconcileCronJob(ctx, inst); err != nil {
+			logger.Error(err, "backup CronJob reconcile error")
+		}
+	}
+	if r.Migration != nil {
+		if _, _, err := r.Migration.Reconcile(ctx, inst); err != nil {
+			logger.Error(err, "migration reconcile error")
+		}
+	}
+	if r.Restore != nil {
+		if _, _, err := r.Restore.Reconcile(ctx, inst); err != nil {
+			logger.Error(err, "restore reconcile error")
+		}
+	}
+	if r.AutoUpdate != nil {
+		if _, err := r.AutoUpdate.Reconcile(ctx, inst); err != nil {
+			logger.Error(err, "autoupdate reconcile error")
+		}
 	}
 
 	r.updateProfileStoreCondition(ctx, inst)
@@ -405,7 +458,19 @@ func (r *HermesInstanceReconciler) reconcileStatefulSet(ctx context.Context, ins
 		Name: resources.StatefulSetName(inst), Namespace: inst.Namespace,
 	}}
 	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, obj, func() error {
-		desired := resources.BuildStatefulSet(inst, nil)
+		extraInits := []corev1.Container{}
+		if c := resources.BuildRestoreInitContainer(inst); c != nil {
+			extraInits = append(extraInits, *c)
+		}
+		if c := resources.BuildMigrationInitContainer(inst); c != nil {
+			extraInits = append(extraInits, *c)
+		}
+		desired := resources.BuildStatefulSet(inst, extraInits)
+		if r.Migration != nil {
+			if vol := r.Migration.BuildSourceVolume(inst); vol != nil {
+				desired.Spec.Template.Spec.Volumes = append(desired.Spec.Template.Spec.Volumes, *vol)
+			}
+		}
 		obj.Labels = resources.MergePreservingForeign(obj.Labels, desired.Labels, operatorLabelPrefix)
 		obj.Spec = desired.Spec
 		return controllerutil.SetControllerReference(inst, obj, r.Scheme)
@@ -601,6 +666,8 @@ func (r *HermesInstanceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Owns(&networkingv1.Ingress{}).
 		Owns(&policyv1.PodDisruptionBudget{}).
 		Owns(&autoscalingv2.HorizontalPodAutoscaler{}).
+		Owns(&batchv1.Job{}).
+		Owns(&batchv1.CronJob{}).
 		Named("hermesinstance").
 		Complete(r)
 }

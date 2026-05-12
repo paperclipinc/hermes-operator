@@ -21,6 +21,7 @@ import (
 	"crypto/tls"
 	"flag"
 	"os"
+	"time"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -40,6 +41,7 @@ import (
 
 	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
 	"github.com/stubbi/hermes-operator/internal/controller"
+	"github.com/stubbi/hermes-operator/internal/oci"
 	internalwebhook "github.com/stubbi/hermes-operator/internal/webhook"
 	// +kubebuilder:scaffold:imports
 )
@@ -170,11 +172,38 @@ func main() {
 	hasPromOpCRDs := prometheusOperatorCRDsPresent(context.Background(), mgr.GetConfig())
 	setupLog.Info("prometheus-operator CRDs probed", "present", hasPromOpCRDs)
 
+	backupSub := &controller.BackupReconciler{
+		Client:   mgr.GetClient(),
+		Scheme:   mgr.GetScheme(),
+		Recorder: mgr.GetEventRecorderFor("hermes-operator"),
+	}
+	restoreSub := &controller.RestoreReconciler{
+		Client:   mgr.GetClient(),
+		Scheme:   mgr.GetScheme(),
+		Recorder: mgr.GetEventRecorderFor("hermes-operator"),
+	}
+	migrationSub := &controller.MigrationReconciler{
+		Client:   mgr.GetClient(),
+		Scheme:   mgr.GetScheme(),
+		Recorder: mgr.GetEventRecorderFor("hermes-operator"),
+	}
+	autoUpdateSub := &controller.AutoUpdateReconciler{
+		Client:   mgr.GetClient(),
+		Scheme:   mgr.GetScheme(),
+		Recorder: mgr.GetEventRecorderFor("hermes-operator"),
+		Registry: oci.NewClient(15 * time.Minute),
+		Backup:   backupSub,
+	}
+
 	if err := (&controller.HermesInstanceReconciler{
 		Client:                        mgr.GetClient(),
 		Scheme:                        mgr.GetScheme(),
 		Recorder:                      mgr.GetEventRecorderFor("hermesinstance"),
 		PrometheusOperatorCRDsPresent: hasPromOpCRDs,
+		Backup:                        backupSub,
+		Restore:                       restoreSub,
+		AutoUpdate:                    autoUpdateSub,
+		Migration:                     migrationSub,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "HermesInstance")
 		os.Exit(1)

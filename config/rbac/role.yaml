@@ -22,6 +22,14 @@ rules:
   - update
   - watch
 - apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
   - apps
   resources:
   - deployments
@@ -49,12 +57,15 @@ rules:
 - apiGroups:
   - batch
   resources:
+  - cronjobs
   - jobs
   verbs:
   - create
+  - delete
   - get
   - list
   - patch
+  - update
   - watch
 - apiGroups:
   - hermes.agent
@@ -121,6 +132,14 @@ rules:
   - list
   - patch
   - update
+  - watch
+- apiGroups:
+  - openclaw.rocks
+  resources:
+  - openclawinstances
+  verbs:
+  - get
+  - list
   - watch
 - apiGroups:
   - policy
