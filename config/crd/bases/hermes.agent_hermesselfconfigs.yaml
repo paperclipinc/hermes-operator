@@ -8,13 +8,32 @@ metadata:
 spec:
   group: hermes.agent
   names:
+    categories:
+    - hermes
+    - agents
     kind: HermesSelfConfig
     listKind: HermesSelfConfigList
     plural: hermesselfconfigs
+    shortNames:
+    - hsc
     singular: hermesselfconfig
   scope: Namespaced
   versions:
-  - name: v1
+  - additionalPrinterColumns:
+    - jsonPath: .spec.instanceRef
+      name: Instance
+      type: string
+    - jsonPath: .status.phase
+      name: Phase
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    - jsonPath: .status.denyReason
+      name: DenyReason
+      priority: 1
+      type: string
+    name: v1
     schema:
       openAPIV3Schema:
         description: HermesSelfConfig is the Schema for the hermesselfconfigs API
@@ -39,25 +58,166 @@ spec:
           spec:
             description: spec defines the desired state of HermesSelfConfig
             properties:
-              foo:
-                description: foo is an example field of HermesSelfConfig. Edit hermesselfconfig_types.go
-                  to remove/update
+              addEnvVars:
+                description: AddEnvVars appends environment variables to the parent's
+                  .spec.env.
+                items:
+                  description: SelfConfigEnvVar is an environment variable entry.
+                  properties:
+                    name:
+                      description: Name of the environment variable. Must be a C_IDENTIFIER.
+                      minLength: 1
+                      pattern: ^[A-Za-z_][A-Za-z0-9_]*$
+                      type: string
+                    value:
+                      description: Value is the literal value. Mutually exclusive
+                        with ValueFrom.
+                      type: string
+                    valueFrom:
+                      description: ValueFrom selects a value from a Secret or ConfigMap
+                        key.
+                      properties:
+                        configMapKeyRef:
+                          description: SelfConfigKeySelector selects a key from a
+                            Secret or ConfigMap.
+                          properties:
+                            key:
+                              minLength: 1
+                              type: string
+                            name:
+                              minLength: 1
+                              type: string
+                          required:
+                          - key
+                          - name
+                          type: object
+                        secretKeyRef:
+                          description: SelfConfigKeySelector selects a key from a
+                            Secret or ConfigMap.
+                          properties:
+                            key:
+                              minLength: 1
+                              type: string
+                            name:
+                              minLength: 1
+                              type: string
+                          required:
+                          - key
+                          - name
+                          type: object
+                      type: object
+                  required:
+                  - name
+                  type: object
+                maxItems: 20
+                type: array
+                x-kubernetes-list-map-keys:
+                - name
+                x-kubernetes-list-type: map
+              addProfileSnapshot:
+                description: AddProfileSnapshot writes an opaque Honcho profile snapshot
+                  via a one-shot Job.
+                properties:
+                  data:
+                    description: Data is the opaque snapshot payload.
+                    minLength: 1
+                    type: string
+                  profileID:
+                    maxLength: 253
+                    minLength: 1
+                    type: string
+                required:
+                - data
+                - profileID
+                type: object
+              addSkills:
+                description: AddSkills appends skills to the parent's .spec.skills.
+                items:
+                  description: SelfConfigSkill names one skill to install.
+                  properties:
+                    source:
+                      description: Source is a uv-compatible package specifier. Required.
+                      maxLength: 512
+                      minLength: 1
+                      type: string
+                    version:
+                      description: Version optionally pins a version.
+                      type: string
+                  required:
+                  - source
+                  type: object
+                maxItems: 20
+                type: array
+                x-kubernetes-list-map-keys:
+                - source
+                x-kubernetes-list-type: map
+              addWorkspaceFiles:
+                description: AddWorkspaceFiles writes files into the workspace ConfigMap.
+                items:
+                  description: SelfConfigWorkspaceFile is a single file to materialise
+                    into the workspace.
+                  properties:
+                    content:
+                      description: Content is the literal file body.
+                      type: string
+                    contentFrom:
+                      description: ContentFrom reads the file body from a Secret key.
+                      properties:
+                        key:
+                          minLength: 1
+                          type: string
+                        name:
+                          minLength: 1
+                          type: string
+                      required:
+                      - key
+                      - name
+                      type: object
+                    path:
+                      description: Path is the relative path under ~/.hermes/workspace/.
+                      maxLength: 512
+                      minLength: 1
+                      pattern: ^[A-Za-z0-9._/-]+$
+                      type: string
+                  required:
+                  - path
+                  type: object
+                maxItems: 50
+                type: array
+                x-kubernetes-list-map-keys:
+                - path
+                x-kubernetes-list-type: map
+              instanceRef:
+                description: InstanceRef is the name of the parent HermesInstance
+                  in the same namespace.
+                maxLength: 253
+                minLength: 1
                 type: string
+              patchConfig:
+                description: |-
+                  PatchConfig is a JSON merge patch (RFC 7396) applied to the agent's
+                  runtime config at ~/.hermes/config.yaml.
+                x-kubernetes-preserve-unknown-fields: true
+            required:
+            - instanceRef
             type: object
           status:
             description: status defines the observed state of HermesSelfConfig
             properties:
+              appliedAt:
+                description: AppliedAt is the timestamp of the most recent successful
+                  SSA write.
+                format: date-time
+                type: string
+              appliedFields:
+                description: AppliedFields lists the dotted paths SSA touched on the
+                  parent.
+                items:
+                  type: string
+                type: array
+                x-kubernetes-list-type: set
               conditions:
-                description: |-
-                  conditions represent the current state of the HermesSelfConfig resource.
-                  Each condition has a unique type and reflects the status of a specific aspect of the resource.
-
-                  Standard condition types include:
-                  - "Available": the resource is fully functional
-                  - "Progressing": the resource is being created or updated
-                  - "Degraded": the resource failed to reach or maintain its desired state
-
-                  The status of each condition is one of True, False, or Unknown.
+                description: Conditions surface fine-grained state.
                 items:
                   description: Condition contains details for one aspect of the current
                     state of this API Resource.
@@ -116,6 +276,22 @@ spec:
                 x-kubernetes-list-map-keys:
                 - type
                 x-kubernetes-list-type: map
+              denyReason:
+                description: DenyReason is populated when Phase=Denied.
+                type: string
+              observedGeneration:
+                description: ObservedGeneration is the spec generation the controller
+                  last processed.
+                format: int64
+                type: integer
+              phase:
+                description: Phase summarises the current state. One of Pending, Applied,
+                  Denied.
+                enum:
+                - Pending
+                - Applied
+                - Denied
+                type: string
             type: object
         required:
         - spec
