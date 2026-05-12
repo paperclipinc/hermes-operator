@@ -2,6 +2,7 @@ package webhook
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	corev1 "k8s.io/api/core/v1"
@@ -9,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
@@ -35,16 +37,24 @@ func (v *HermesInstanceValidator) ValidateCreate(ctx context.Context, obj runtim
 	if !ok {
 		return nil, fmt.Errorf("expected *HermesInstance, got %T", obj)
 	}
-	warns, err := validateCommon(inst)
+	errs := field.ErrorList{}
+	errs = append(errs, validateRestoreMigrationMutualExclusion(inst)...)
+	errs = append(errs, validateMigrationSourceExactlyOne(inst)...)
+	warnings := v.crossCheckSecrets(ctx, inst)
+	if len(errs) > 0 {
+		return warnings, errs.ToAggregate()
+	}
+	commonWarns, err := validateCommon(inst)
+	warnings = append(warnings, commonWarns...)
 	if err != nil {
-		return warns, err
+		return warnings, err
 	}
 	gwWarns, gwErr := v.validateGateways(ctx, inst)
-	warns = append(warns, gwWarns...)
+	warnings = append(warnings, gwWarns...)
 	if gwErr != nil {
-		return warns, gwErr
+		return warnings, gwErr
 	}
-	return warns, nil
+	return warnings, nil
 }
 
 // ValidateUpdate runs the create rules + immutability rules.
@@ -54,19 +64,28 @@ func (v *HermesInstanceValidator) ValidateUpdate(ctx context.Context, oldObj, ne
 	if !ok1 || !ok2 {
 		return nil, fmt.Errorf("ValidateUpdate types: old=%T new=%T", oldObj, newObj)
 	}
-	if err := validateImmutable(oldI, newI); err != nil {
-		return nil, err
+	errs := field.ErrorList{}
+	errs = append(errs, validateImmutableTerminals(oldI, newI)...)
+	errs = append(errs, validateRestoreMigrationMutualExclusion(newI)...)
+	errs = append(errs, validateMigrationSourceExactlyOne(newI)...)
+	warnings := v.crossCheckSecrets(ctx, newI)
+	if len(errs) > 0 {
+		return warnings, errs.ToAggregate()
 	}
-	warns, err := validateCommon(newI)
+	if err := validateImmutable(oldI, newI); err != nil {
+		return warnings, err
+	}
+	commonWarns, err := validateCommon(newI)
+	warnings = append(warnings, commonWarns...)
 	if err != nil {
-		return warns, err
+		return warnings, err
 	}
 	gwWarns, gwErr := v.validateGateways(ctx, newI)
-	warns = append(warns, gwWarns...)
+	warnings = append(warnings, gwWarns...)
 	if gwErr != nil {
-		return warns, gwErr
+		return warnings, gwErr
 	}
-	return warns, nil
+	return warnings, nil
 }
 
 // ValidateDelete is a no-op.
@@ -206,6 +225,88 @@ func validateImmutable(oldI, newI *hermesv1.HermesInstance) error {
 		return fmt.Errorf("metadata.name is immutable")
 	}
 	return nil
+}
+
+// validateImmutableTerminals checks restore + migration terminal latches.
+// `old` is the previous version (nil on create).
+func validateImmutableTerminals(old, updated *hermesv1.HermesInstance) field.ErrorList {
+	var errs field.ErrorList
+	if old == nil {
+		return errs
+	}
+	if old.Status.RestoredFrom != "" && old.Status.RestoredFrom == old.Spec.RestoreFrom &&
+		old.Spec.RestoreFrom != updated.Spec.RestoreFrom {
+		errs = append(errs, field.Forbidden(
+			field.NewPath("spec", "restoreFrom"),
+			fmt.Sprintf("spec.restoreFrom is immutable after status.restoredFrom is set (current: %q). This is intentional to prevent accidental re-restore on restart.", old.Status.RestoredFrom),
+		))
+	}
+	if old.Status.Migration.Completed {
+		if !equalMigration(old.Spec.Migration, updated.Spec.Migration) {
+			errs = append(errs, field.Forbidden(
+				field.NewPath("spec", "migration", "fromOpenClaw"),
+				"spec.migration.fromOpenClaw is immutable after status.migration.completed is true (one-shot migration).",
+			))
+		}
+	}
+	return errs
+}
+
+// validateRestoreMigrationMutualExclusion rejects setting both fields at once.
+func validateRestoreMigrationMutualExclusion(inst *hermesv1.HermesInstance) field.ErrorList {
+	if inst.Spec.RestoreFrom != "" && inst.Spec.Migration.FromOpenClaw != nil {
+		return field.ErrorList{field.Invalid(
+			field.NewPath("spec"),
+			"restoreFrom + migration.fromOpenClaw",
+			"set exactly one of spec.restoreFrom or spec.migration.fromOpenClaw — the combined order of operations is ambiguous (which source wins?). To both restore and migrate, do them as two separate instances.",
+		)}
+	}
+	return nil
+}
+
+// validateMigrationSourceExactlyOne enforces exactly-one of openclawInstanceRef
+// or backupRef under spec.migration.fromOpenClaw.source.
+func validateMigrationSourceExactlyOne(inst *hermesv1.HermesInstance) field.ErrorList {
+	fc := inst.Spec.Migration.FromOpenClaw
+	if fc == nil {
+		return nil
+	}
+	refSet := fc.Source.OpenClawInstanceRef != nil
+	backupSet := fc.Source.BackupRef != nil
+	if refSet == backupSet {
+		return field.ErrorList{field.Invalid(
+			field.NewPath("spec", "migration", "fromOpenClaw", "source"),
+			map[string]bool{"openclawInstanceRef": refSet, "backupRef": backupSet},
+			"set exactly one of source.openclawInstanceRef or source.backupRef",
+		)}
+	}
+	return nil
+}
+
+// equalMigration is a JSON-based structural compare for the migration sub-spec.
+func equalMigration(a, b hermesv1.MigrationSpec) bool {
+	aj, _ := json.Marshal(a)
+	bj, _ := json.Marshal(b)
+	return string(aj) == string(bj)
+}
+
+// crossCheckSecrets emits warnings (never denials) for resolvable references
+// that are likely typos or that signal coming pitfalls (autoUpdate + tag=latest).
+func (v *HermesInstanceValidator) crossCheckSecrets(ctx context.Context, inst *hermesv1.HermesInstance) admission.Warnings {
+	var warnings admission.Warnings
+	if inst.Spec.Backup.S3 != nil && v.Client != nil {
+		name := inst.Spec.Backup.S3.CredentialsSecretRef.Name
+		if name != "" {
+			secret := &corev1.Secret{}
+			if err := v.Client.Get(ctx, types.NamespacedName{Name: name, Namespace: inst.Namespace}, secret); err != nil {
+				warnings = append(warnings, fmt.Sprintf("spec.backup.s3.credentialsSecretRef %q is not resolvable in namespace %q: %v", name, inst.Namespace, err))
+			}
+		}
+	}
+	if inst.Spec.AutoUpdate.Enabled && inst.Spec.Image.Tag == "latest" {
+		warnings = append(warnings, "spec.autoUpdate.enabled with spec.image.tag=\"latest\" — the operator will resolve to a concrete tag, but please pin spec.image.tag for GitOps deterministic apply")
+	}
+	return warnings
 }
 
 var _ = webhook.Admission{}

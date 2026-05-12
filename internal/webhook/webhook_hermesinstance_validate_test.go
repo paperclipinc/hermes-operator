@@ -231,3 +231,93 @@ func TestValidateSelfConfigure_UnknownActionDenied(t *testing.T) {
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "reboot-cluster")
 }
+
+func TestValidateRestoreFromImmutableAfterLatch(t *testing.T) {
+	old := &hermesv1.HermesInstance{
+		Spec:   hermesv1.HermesInstanceSpec{RestoreFrom: "k1"},
+		Status: hermesv1.HermesInstanceStatus{RestoredFrom: "k1"},
+	}
+	newer := old.DeepCopy()
+	newer.Spec.RestoreFrom = "k2"
+	errs := validateImmutableTerminals(old, newer)
+	assert.NotEmpty(t, errs)
+	assert.Contains(t, errs[0].Error(), "spec.restoreFrom")
+}
+
+func TestValidateMigrationImmutableAfterCompleted(t *testing.T) {
+	old := &hermesv1.HermesInstance{
+		Spec: hermesv1.HermesInstanceSpec{
+			Migration: hermesv1.MigrationSpec{
+				FromOpenClaw: &hermesv1.MigrationFromOpenClawSpec{
+					Mode: "copy",
+					Source: hermesv1.MigrationFromOpenClawSource{
+						OpenClawInstanceRef: &hermesv1.NamespacedObjectReference{Name: "x", Namespace: "y"},
+					},
+				},
+			},
+		},
+		Status: hermesv1.HermesInstanceStatus{Migration: hermesv1.MigrationStatus{Completed: true}},
+	}
+	newer := old.DeepCopy()
+	newer.Spec.Migration.FromOpenClaw.Mode = "move"
+	errs := validateImmutableTerminals(old, newer)
+	assert.NotEmpty(t, errs)
+	assert.Contains(t, errs[0].Error(), "migration")
+}
+
+func TestValidateMutualExclusion(t *testing.T) {
+	inst := &hermesv1.HermesInstance{
+		Spec: hermesv1.HermesInstanceSpec{
+			RestoreFrom: "k1",
+			Migration: hermesv1.MigrationSpec{
+				FromOpenClaw: &hermesv1.MigrationFromOpenClawSpec{
+					Source: hermesv1.MigrationFromOpenClawSource{
+						OpenClawInstanceRef: &hermesv1.NamespacedObjectReference{Name: "x", Namespace: "y"},
+					},
+				},
+			},
+		},
+	}
+	errs := validateRestoreMigrationMutualExclusion(inst)
+	assert.NotEmpty(t, errs)
+}
+
+func TestValidateMigrationSourceExactlyOne(t *testing.T) {
+	both := &hermesv1.HermesInstance{
+		Spec: hermesv1.HermesInstanceSpec{
+			Migration: hermesv1.MigrationSpec{
+				FromOpenClaw: &hermesv1.MigrationFromOpenClawSpec{
+					Source: hermesv1.MigrationFromOpenClawSource{
+						OpenClawInstanceRef: &hermesv1.NamespacedObjectReference{Name: "x", Namespace: "y"},
+						BackupRef:           &hermesv1.MigrationBackupRef{S3: hermesv1.MigrationBackupS3{Bucket: "b", Key: "k", Endpoint: "e", CredentialsSecretRef: hermesv1.LocalObjectReference{Name: "s"}}},
+					},
+				},
+			},
+		},
+	}
+	assert.NotEmpty(t, validateMigrationSourceExactlyOne(both))
+
+	neither := &hermesv1.HermesInstance{
+		Spec: hermesv1.HermesInstanceSpec{
+			Migration: hermesv1.MigrationSpec{
+				FromOpenClaw: &hermesv1.MigrationFromOpenClawSpec{
+					Source: hermesv1.MigrationFromOpenClawSource{},
+				},
+			},
+		},
+	}
+	assert.NotEmpty(t, validateMigrationSourceExactlyOne(neither))
+
+	one := &hermesv1.HermesInstance{
+		Spec: hermesv1.HermesInstanceSpec{
+			Migration: hermesv1.MigrationSpec{
+				FromOpenClaw: &hermesv1.MigrationFromOpenClawSpec{
+					Source: hermesv1.MigrationFromOpenClawSource{
+						OpenClawInstanceRef: &hermesv1.NamespacedObjectReference{Name: "x", Namespace: "y"},
+					},
+				},
+			},
+		},
+	}
+	assert.Empty(t, validateMigrationSourceExactlyOne(one))
+}
