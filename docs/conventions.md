@@ -99,3 +99,16 @@ Both must stay in sync with the types.
 - New optional fields with `omitempty` and sane defaults — non-breaking.
 - Field removal requires `hermes.agent/v2` + conversion webhook + ≥6 months overlap.
 - Deprecation: godoc `// Deprecated:`, webhook warning, CHANGELOG + `docs/deprecations.md` entry, target removal ≥2 minors out.
+
+## Explicit Kubernetes defaults (extended)
+
+Plan 1 listed StatefulSet / Service / Probe defaults. Plan 2 adds these:
+
+| Resource | Field | Default value |
+|---|---|---|
+| HorizontalPodAutoscaler | `spec.metrics[].resource.target.type` | `Utilization` (set explicitly) |
+| Ingress | `spec.rules[].http.paths[].pathType` | `Prefix` (set when nil) |
+| ServiceMonitor | `spec.endpoints[].scheme` | `http`; `https` when `metrics.secure=true` (must agree -- lesson #435/#440) |
+| NetworkPolicy | `spec.policyTypes` | both `Ingress` and `Egress` explicitly (k8s defaults to only `Ingress` when omitted) |
+| PodDisruptionBudget | one of `MinAvailable` / `MaxUnavailable` | when neither set, `MaxUnavailable: 1` |
+| Role | `apiGroups` | empty string `""` for core resources, explicit other groups |

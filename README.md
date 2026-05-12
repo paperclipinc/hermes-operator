@@ -6,7 +6,28 @@
 
 Kubernetes operator for [nousresearch/hermes-agent](https://github.com/nousresearch/hermes-agent) — a Python-based self-improving multi-platform AI agent.
 
-> **Status: alpha.** Plan 1 of 7 shipped (minimal happy path).
+> **Status: alpha.** Plans 1–2 of 7 shipped (minimal happy path + full spec).
+
+## Features
+
+| Feature | Status | Plan |
+|---|---|---|
+| Reconcile HermesInstance (PVC, ConfigMap, Service, StatefulSet) | ✅ v1.0 | Plan 1 |
+| Full HermesInstance spec (resources, security, scheduling, ...) | ✅ v1.0 | Plan 2 |
+| Defaulting webhook (HermesClusterDefaults singleton) | ✅ v1.0 | Plan 2 |
+| Validating webhook (required / immutable / one-of) | ✅ v1.0 | Plan 2 |
+| NetworkPolicy (deny-all baseline + selective allow) | ✅ v1.0 | Plan 2 |
+| Per-instance RBAC (SA + Role + RoleBinding) | ✅ v1.0 | Plan 2 |
+| PodDisruptionBudget | ✅ v1.0 | Plan 2 |
+| HorizontalPodAutoscaler | ✅ v1.0 | Plan 2 |
+| Ingress (provider-aware annotations) | ✅ v1.0 | Plan 2 |
+| Prometheus ServiceMonitor + PrometheusRule | ✅ v1.0 | Plan 2 |
+| `spec.suspended` scale-to-zero | ✅ v1.0 | Plan 2 |
+| cert-manager-driven webhook TLS | ✅ v1.0 | Plan 2 |
+| `spec.runtime` (Python/uv), gateways, profileStore | ⏳ pending | Plan 3 |
+| HermesSelfConfig (agent self-mutations via SSA) | ⏳ pending | Plan 4 |
+| Backup / restore / autoupdate / migration | ⏳ pending | Plan 5 |
+| OLM bundle + GoReleaser + conformance suite | ⏳ pending | Plan 6 |
 
 ## Quick start
 
