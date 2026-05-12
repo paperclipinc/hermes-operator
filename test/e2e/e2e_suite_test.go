@@ -1,8 +1,6 @@
 package e2e
 
 import (
-	"fmt"
-	"io"
 	"os/exec"
 	"strings"
 	"testing"
@@ -42,17 +40,9 @@ func kubectl(args ...string) (string, error) {
 	return run("kubectl", args...)
 }
 
-func mustRun(cmd string, args ...string) string {
-	out, err := run(cmd, args...)
-	Expect(err).ToNot(HaveOccurred(), fmt.Sprintf("command failed: %s %v\n%s", cmd, args, out))
-	return out
-}
-
 func runStdin(cmd string, args []string, stdin string) (string, error) {
 	c := execCommand(cmd, args...)
 	c.Stdin = strings.NewReader(stdin)
 	b, err := c.CombinedOutput()
 	return string(b), err
 }
-
-func newStdin(s string) io.Reader { return strings.NewReader(s) }
