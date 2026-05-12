@@ -78,3 +78,30 @@ func TestResourcesSpec_RequestsLimits(t *testing.T) {
 	assert.Equal(t, resource.MustParse("100m"), rs.Requests[corev1.ResourceCPU])
 	assert.Equal(t, resource.MustParse("512Mi"), rs.Limits[corev1.ResourceMemory])
 }
+
+func TestSecuritySpec_Shape(t *testing.T) {
+	t.Parallel()
+	ss := SecuritySpec{
+		PodSecurityContext:       &corev1.PodSecurityContext{RunAsNonRoot: Ptr(true)},
+		ContainerSecurityContext: &corev1.SecurityContext{ReadOnlyRootFilesystem: Ptr(true)},
+		RBAC: RBACSpec{
+			CreateServiceAccount: Ptr(true),
+			ServiceAccountName:   "",
+			Annotations: map[string]string{
+				"eks.amazonaws.com/role-arn": "arn:aws:iam::1:role/hermes",
+			},
+		},
+		NetworkPolicy: NetworkPolicySpec{
+			Enabled:                  Ptr(true),
+			AllowDNS:                 Ptr(true),
+			AllowedIngressNamespaces: []string{"prometheus"},
+			AllowedIngressCIDRs:      []string{"10.0.0.0/8"},
+			AllowedEgressCIDRs:       []string{"203.0.113.0/24"},
+		},
+		CABundle: CABundleSpec{ConfigMapName: "corp-ca", Key: "ca.crt"},
+	}
+	assert.True(t, *ss.PodSecurityContext.RunAsNonRoot)
+	assert.True(t, *ss.RBAC.CreateServiceAccount)
+	assert.True(t, *ss.NetworkPolicy.Enabled)
+	assert.Equal(t, "corp-ca", ss.CABundle.ConfigMapName)
+}

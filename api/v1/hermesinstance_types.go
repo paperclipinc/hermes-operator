@@ -18,6 +18,7 @@ package v1
 
 import (
 	corev1 "k8s.io/api/core/v1"
+	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -276,8 +277,111 @@ func (r *ResourcesSpec) ToContainerResourceRequirements() corev1.ResourceRequire
 	}
 }
 
-// SecuritySpec — populated in Task 6.
-type SecuritySpec struct{}
+// SecuritySpec bundles pod/container security, per-instance RBAC, NetworkPolicy,
+// and the optional CA-bundle mount.
+type SecuritySpec struct {
+	// PodSecurityContext overrides the operator's default hardened pod context.
+	// Operator default is enforced when nil: runAsNonRoot=true, runAsUser=1000,
+	// fsGroup=1000, seccompProfile=RuntimeDefault.
+	// +optional
+	PodSecurityContext *corev1.PodSecurityContext `json:"podSecurityContext,omitempty"`
+
+	// ContainerSecurityContext overrides the operator's default hardened container
+	// context. Operator default: readOnlyRootFilesystem=true, allowPrivilegeEscalation=false,
+	// drop ALL capabilities.
+	// +optional
+	ContainerSecurityContext *corev1.SecurityContext `json:"containerSecurityContext,omitempty"`
+
+	// RBAC controls per-instance ServiceAccount + Role + RoleBinding creation.
+	// +optional
+	RBAC RBACSpec `json:"rbac,omitempty"`
+
+	// NetworkPolicy controls per-instance NetworkPolicy creation (default-deny baseline).
+	// +optional
+	NetworkPolicy NetworkPolicySpec `json:"networkPolicy,omitempty"`
+
+	// CABundle optionally mounts a ConfigMap- or Secret-sourced CA bundle into
+	// /etc/ssl/certs/hermes-ca-bundle.crt and sets SSL_CERT_FILE in the agent env.
+	// +optional
+	CABundle CABundleSpec `json:"caBundle,omitempty"`
+}
+
+// RBACSpec controls per-instance ServiceAccount + Role + RoleBinding creation.
+type RBACSpec struct {
+	// CreateServiceAccount — when true (the default), the operator creates and
+	// owns a ServiceAccount named after the instance.
+	// +kubebuilder:default=true
+	// +optional
+	CreateServiceAccount *bool `json:"createServiceAccount,omitempty"`
+
+	// ServiceAccountName — when CreateServiceAccount is false, the agent uses
+	// this externally-managed ServiceAccount. Must exist in the same namespace.
+	// +optional
+	ServiceAccountName string `json:"serviceAccountName,omitempty"`
+
+	// Annotations are applied to the operator-created ServiceAccount. Use this
+	// for IRSA (`eks.amazonaws.com/role-arn`), GKE Workload Identity
+	// (`iam.gke.io/gcp-service-account`), Azure Workload Identity, etc.
+	// +optional
+	Annotations map[string]string `json:"annotations,omitempty"`
+}
+
+// NetworkPolicySpec controls per-instance NetworkPolicy creation.
+type NetworkPolicySpec struct {
+	// Enabled — when true (the default), the operator creates a deny-all
+	// NetworkPolicy plus selective allow rules (DNS + 443 egress + Service ingress
+	// from the same namespace).
+	// +kubebuilder:default=true
+	// +optional
+	Enabled *bool `json:"enabled,omitempty"`
+
+	// AllowDNS — emit the standard DNS egress rule (UDP+TCP 53 to any peer).
+	// Default true. Disable only when CoreDNS is reachable via a different
+	// transport (e.g. node-local DNS via hostNetwork).
+	// +kubebuilder:default=true
+	// +optional
+	AllowDNS *bool `json:"allowDNS,omitempty"`
+
+	// AllowedIngressNamespaces is the set of additional namespaces (beyond the
+	// instance's own) whose pods may connect to the agent's exposed ports.
+	// +listType=set
+	// +optional
+	AllowedIngressNamespaces []string `json:"allowedIngressNamespaces,omitempty"`
+
+	// AllowedIngressCIDRs is the set of CIDRs that may connect to the agent's
+	// exposed ports.
+	// +listType=set
+	// +optional
+	AllowedIngressCIDRs []string `json:"allowedIngressCIDRs,omitempty"`
+
+	// AllowedEgressCIDRs is the set of CIDRs the agent may connect to in addition
+	// to the operator-built defaults (DNS + 443).
+	// +listType=set
+	// +optional
+	AllowedEgressCIDRs []string `json:"allowedEgressCIDRs,omitempty"`
+
+	// AdditionalEgress is a list of user-supplied egress rules appended verbatim
+	// to the generated NetworkPolicy.
+	// +optional
+	AdditionalEgress []networkingv1.NetworkPolicyEgressRule `json:"additionalEgress,omitempty"`
+}
+
+// CABundleSpec optionally mounts a CA bundle into the agent container.
+// Exactly one of ConfigMapName / SecretName SHOULD be set.
+type CABundleSpec struct {
+	// ConfigMapName references a ConfigMap in the same namespace.
+	// +optional
+	ConfigMapName string `json:"configMapName,omitempty"`
+
+	// SecretName references a Secret in the same namespace.
+	// +optional
+	SecretName string `json:"secretName,omitempty"`
+
+	// Key is the data-map key holding the PEM bundle. Default "ca.crt".
+	// +kubebuilder:default="ca.crt"
+	// +optional
+	Key string `json:"key,omitempty"`
+}
 
 // NetworkingSpec — populated in Task 7.
 type NetworkingSpec struct{}
