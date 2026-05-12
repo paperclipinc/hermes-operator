@@ -16,8 +16,14 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        k8s: ["1.28", "1.29", "1.30", "1.31", "1.32"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with: { go-version: "1.26" }
-      - run: make test
+      - name: Run tests (k8s ${{ matrix.k8s }})
+        env:
+          ENVTEST_K8S_VERSION: ${{ matrix.k8s }}.0
+        run: make test
