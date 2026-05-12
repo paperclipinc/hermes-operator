@@ -33,6 +33,14 @@ var _ = BeforeSuite(func() {
 		logs, _ := kubectl("logs", "-l", "app.kubernetes.io/name=hermes-operator", "-n", "hermes-system", "--all-containers=true", "--tail=200")
 		Fail("helm upgrade failed: " + out + "\n\n--- deploy describe ---\n" + desc + "\n\n--- pods ---\n" + pods + "\n\n--- operator logs ---\n" + logs)
 	}
+	By("waiting for operator webhook endpoint to have a Ready backend")
+	Eventually(func() string {
+		out, _ := kubectl("get", "endpoints/hermes-operator-webhook", "-n", "hermes-system",
+			"-o", "jsonpath={.subsets[0].addresses[0].ip}")
+		return strings.TrimSpace(out)
+	}, 3*time.Minute, 5*time.Second).ShouldNot(BeEmpty(),
+		"operator webhook backend never became ready; helm --wait passed but the validating-webhook service has no endpoints")
+
 	By("installing MinIO for backup/restore e2e")
 	InstallMinIO()
 	CreateHermesS3CredsSecret("default")
