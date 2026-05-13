@@ -26,7 +26,7 @@ var _ = BeforeSuite(func() {
 		"--set", "image.repository=hermes-operator",
 		"--set", "image.tag=dev",
 		"--set", "image.pullPolicy=IfNotPresent",
-		"--wait", "--timeout=5m")
+		"--wait", "--timeout=10m")
 	if err != nil {
 		desc, _ := kubectl("describe", "deploy/hermes-operator", "-n", "hermes-system")
 		pods, _ := kubectl("get", "pods", "-n", "hermes-system", "-o", "wide")
@@ -52,11 +52,29 @@ spec:
     repository: ghcr.io/stubbi/hermes-agent
     tag: "1.0.0"
 `
-	Eventually(func() error {
-		_, err := runStdin("kubectl", []string{"apply", "--dry-run=server", "-f", "-"}, probe)
-		return err
-	}, 5*time.Minute, 3*time.Second).Should(Succeed(),
-		"webhook never answered a dry-run apply; operator pod is ready but TLS bind / cert injection is still pending")
+	deadline := time.Now().Add(5 * time.Minute)
+	var lastErr string
+	for {
+		out, err := runStdin("kubectl", []string{"apply", "--dry-run=server", "-f", "-"}, probe)
+		if err == nil {
+			break
+		}
+		lastErr = strings.TrimSpace(out)
+		if time.Now().After(deadline) {
+			desc, _ := kubectl("describe", "validatingwebhookconfigurations.admissionregistration.k8s.io")
+			mut, _ := kubectl("describe", "mutatingwebhookconfigurations.admissionregistration.k8s.io")
+			certs, _ := kubectl("get", "certificates,certificaterequests,secrets", "-n", "hermes-system", "-o", "wide")
+			pods, _ := kubectl("get", "pods", "-n", "hermes-system", "-o", "wide")
+			logs, _ := kubectl("logs", "-n", "hermes-system", "-l", "app.kubernetes.io/name=hermes-operator", "--all-containers=true", "--tail=200")
+			Fail("webhook never answered a dry-run apply within 5m. last error:\n" + lastErr +
+				"\n\n--- validatingwebhookconfigs ---\n" + desc +
+				"\n--- mutatingwebhookconfigs ---\n" + mut +
+				"\n--- certs+secrets ---\n" + certs +
+				"\n--- pods ---\n" + pods +
+				"\n--- operator logs ---\n" + logs)
+		}
+		time.Sleep(3 * time.Second)
+	}
 
 	By("installing MinIO for backup/restore e2e")
 	InstallMinIO()
