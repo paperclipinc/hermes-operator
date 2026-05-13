@@ -46,8 +46,11 @@ var _ = Describe("HermesInstance controller", func() {
 	const (
 		name      = "demo"
 		namespace = "default"
-		timeout   = 30 * time.Second
-		interval  = 250 * time.Millisecond
+		// 30s is enough on most k8s envtest versions; bumped to 60s because
+		// k8s 1.32 envtest can lag on AfterEach cleanup (reconciler can race
+		// with the test's explicit STS delete).
+		timeout  = 60 * time.Second
+		interval = 250 * time.Millisecond
 	)
 
 	AfterEach(func() {
