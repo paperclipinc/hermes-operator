@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.5](https://github.com/stubbi/hermes-operator/compare/v0.1.4...v0.1.5) (2026-05-13)
+
+
+### Bug Fixes
+
+* **release:** run make installer via goreleaser before:hooks ([#25](https://github.com/stubbi/hermes-operator/issues/25)) ([5bcd154](https://github.com/stubbi/hermes-operator/commit/5bcd1548d9b80b23809b171b13d7ec71a80724af))
+
 ## [0.1.4](https://github.com/stubbi/hermes-operator/compare/v0.1.3...v0.1.4) (2026-05-13)
 
 
