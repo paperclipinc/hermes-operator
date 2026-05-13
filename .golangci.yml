@@ -49,6 +49,14 @@ linters:
       - path: test/
         linters: [staticcheck]
         text: 'ST1001'
+      # Tolerate deprecated controller-runtime / k8s API surfaces in the
+      # api/v1 webhook wiring + types (admission.CustomDefaulter/Validator,
+      # untyped webhook builder methods, ServiceExternalTrafficPolicyType,
+      # scheme.Builder). The deprecated forms still work for v1.0; the
+      # typed migration is a v1.1 cleanup.
+      - path: api/v1/
+        linters: [staticcheck]
+        text: 'SA1019'
 
 formatters:
   enable:

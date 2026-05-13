@@ -15,8 +15,11 @@ import (
 
 var _ = Describe("HermesSelfConfig controller", func() {
 	const (
-		ns      = "default"
-		timeout = 30 * time.Second
+		ns = "default"
+		// Bumped from 30s — 30s is occasionally insufficient on slower
+		// GitHub-hosted runners (envtest startup + cache sync + reconciler
+		// settle time) and produced flakes across k8s 1.28–1.32.
+		timeout = 60 * time.Second
 		poll    = 200 * time.Millisecond
 	)
 
