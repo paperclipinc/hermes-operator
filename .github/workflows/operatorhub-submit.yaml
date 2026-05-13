@@ -63,7 +63,7 @@ jobs:
           BRANCH="hermes-operator-v${VERSION}"
 
           gh auth setup-git
-          gh repo fork k8s-operatorhub/community-operators --clone=true --remote=true -- community-operators
+          gh repo fork k8s-operatorhub/community-operators --clone=true -- community-operators
           cd community-operators
 
           git config user.name "github-actions[bot]"
@@ -151,7 +151,7 @@ jobs:
           VERSION="${{ steps.version.outputs.version }}"
           BRANCH="hermes-operator-v${VERSION}"
           gh auth setup-git
-          gh repo fork redhat-openshift-ecosystem/community-operators-prod --clone=true --remote=true -- community-operators-prod
+          gh repo fork redhat-openshift-ecosystem/community-operators-prod --clone=true -- community-operators-prod
           cd community-operators-prod
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
