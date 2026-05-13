@@ -1,6 +1,8 @@
 # Security Policy
 
-Report vulnerabilities by email to **jannes@aqora.io** with the subject "SECURITY: hermes-operator".
+## Reporting
+
+Use [GitHub's private vulnerability reporting](https://github.com/stubbi/hermes-operator/security/advisories/new) — this routes a private advisory to the maintainers and is the preferred path. As a fallback, email **jannes@aqora.io** with subject "SECURITY: hermes-operator".
 
 We aim to acknowledge within 72 hours and provide a remediation timeline within 7 days.
 

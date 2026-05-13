@@ -21,6 +21,8 @@
   <a href="https://github.com/stubbi/hermes-operator/releases/latest"><img src="https://img.shields.io/github/v/release/stubbi/hermes-operator" alt="Release"></a>
   <a href="#supported-kubernetes-versions"><img src="https://img.shields.io/badge/kubernetes-1.28%E2%80%931.32-blue" alt="Kubernetes versions"></a>
   <a href="go.mod"><img src="https://img.shields.io/github/go-mod/go-version/stubbi/hermes-operator" alt="Go version"></a>
+  <a href="https://api.securityscorecards.dev/projects/github.com/stubbi/hermes-operator"><img src="https://api.securityscorecards.dev/projects/github.com/stubbi/hermes-operator/badge" alt="OpenSSF Scorecard"></a>
+  <a href="https://artifacthub.io/packages/search?repo=hermes-operator"><img src="https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/hermes-operator" alt="Artifact Hub"></a>
 </p>
 
 Kubernetes operator for [nousresearch/hermes-agent](https://github.com/nousresearch/hermes-agent)
