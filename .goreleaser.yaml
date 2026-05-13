@@ -2,11 +2,13 @@ version: 2
 
 project_name: hermes-operator
 
-# Run after --clean wipes dist/, before archives/release glob extra_files.
-# The CI workflow also has setup-go + kubectl + kustomize available.
+# Run before goreleaser populates dist/ but after --clean wipes it.
+# make installer writes dist/install.yaml; move it to release-assets/ so
+# goreleaser's own "dist must be empty" check passes, then glob it from
+# release.extra_files.
 before:
   hooks:
-    - make installer
+    - sh -c "make installer && mkdir -p release-assets && mv dist/install.yaml release-assets/install.yaml && rmdir dist"
 
 builds:
   - id: manager
@@ -60,4 +62,4 @@ release:
     owner: stubbi
     name: hermes-operator
   extra_files:
-    - glob: dist/install.yaml
+    - glob: release-assets/install.yaml
