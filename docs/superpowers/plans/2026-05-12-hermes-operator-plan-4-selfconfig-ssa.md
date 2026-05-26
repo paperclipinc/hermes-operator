@@ -840,7 +840,7 @@ Create `internal/controller/selfconfig_policy.go`:
 
 ```go
 /*
-Copyright 2026 stubbi.
+Copyright 2026 Paperclip.inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -1103,7 +1103,7 @@ Create `internal/controller/selfconfig_apply.go`:
 
 ```go
 /*
-Copyright 2026 stubbi.
+Copyright 2026 Paperclip.inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -1560,7 +1560,7 @@ Create `internal/controller/hermesselfconfig_controller.go`:
 
 ```go
 /*
-Copyright 2026 stubbi.
+Copyright 2026 Paperclip.inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -1861,7 +1861,7 @@ Create `internal/resources/snapshot_job.go`:
 
 ```go
 /*
-Copyright 2026 stubbi. Apache-2.0.
+Copyright 2026 Paperclip.inc. Apache-2.0.
 */
 
 package resources
@@ -2283,7 +2283,7 @@ Create `internal/controller/selfconfig_events.go`:
 
 ```go
 /*
-Copyright 2026 stubbi. Apache-2.0.
+Copyright 2026 Paperclip.inc. Apache-2.0.
 */
 
 package controller
@@ -2404,7 +2404,7 @@ Create `internal/controller/selfconfig_metrics.go`:
 
 ```go
 /*
-Copyright 2026 stubbi. Apache-2.0.
+Copyright 2026 Paperclip.inc. Apache-2.0.
 */
 
 package controller
@@ -2635,7 +2635,7 @@ Replace the stub's body with:
 
 ```go
 /*
-Copyright 2026 stubbi. Apache-2.0.
+Copyright 2026 Paperclip.inc. Apache-2.0.
 */
 
 package webhook
@@ -3104,7 +3104,7 @@ Create `test/conformance/gitops_coexistence_test.go`:
 
 ```go
 /*
-Copyright 2026 stubbi. Apache-2.0.
+Copyright 2026 Paperclip.inc. Apache-2.0.
 
 This file is a placeholder for the full Plan-6 conformance suite. Plan 4
 already proves SSA-based GitOps coexistence in

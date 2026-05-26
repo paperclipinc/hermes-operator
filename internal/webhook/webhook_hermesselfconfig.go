@@ -1,5 +1,5 @@
 /*
-Copyright 2026 stubbi. Apache-2.0.
+Copyright 2026 Paperclip.inc. Apache-2.0.
 */
 
 package webhook
