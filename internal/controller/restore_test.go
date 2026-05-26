@@ -1,5 +1,5 @@
 /*
-Copyright 2026 stubbi.
+Copyright 2026 Paperclip.inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 )
 
 var _ = Describe("Restore sub-controller", func() {
@@ -50,7 +50,7 @@ var _ = Describe("Restore sub-controller", func() {
 			},
 			Spec: hermesv1.HermesInstanceSpec{
 				Image: hermesv1.ImageSpec{
-					Repository: "ghcr.io/stubbi/hermes-agent",
+					Repository: "ghcr.io/paperclipinc/hermes-agent",
 					Tag:        "1.0.0",
 				},
 				RestoreFrom: restoreFrom,

@@ -93,7 +93,7 @@ Expected: working tree clean, branch `main`, one prior commit (`docs: add hermes
 ```bash
 kubebuilder init \
   --domain agent \
-  --repo github.com/stubbi/hermes-operator \
+  --repo github.com/paperclipinc/hermes-operator \
   --owner "stubbi" \
   --project-name hermes-operator \
   --license apache2
@@ -105,7 +105,7 @@ Expected: creates `PROJECT`, `go.mod`, `Makefile`, `Dockerfile`, `cmd/manager/ma
 ```bash
 head -1 go.mod
 ```
-Expected: `module github.com/stubbi/hermes-operator`.
+Expected: `module github.com/paperclipinc/hermes-operator`.
 
 - [ ] **Step 4: Run `go mod tidy`**
 
@@ -210,7 +210,7 @@ type HermesInstanceSpec struct {
 
 // ImageSpec selects an OCI image.
 type ImageSpec struct {
-    // +kubebuilder:default="ghcr.io/stubbi/hermes-agent"
+    // +kubebuilder:default="ghcr.io/paperclipinc/hermes-agent"
     // +optional
     Repository string `json:"repository,omitempty"`
 
@@ -318,7 +318,7 @@ import (
     "testing"
 
     "github.com/stretchr/testify/assert"
-    hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+    hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
     metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -376,7 +376,7 @@ Create `internal/resources/common.go`:
 package resources
 
 import (
-    hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+    hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
     "strings"
 )
 
@@ -444,7 +444,7 @@ import (
     "testing"
 
     "github.com/stretchr/testify/assert"
-    hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+    hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
     corev1 "k8s.io/api/core/v1"
     "k8s.io/apimachinery/pkg/api/resource"
     metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -506,7 +506,7 @@ Create `internal/resources/pvc.go`:
 package resources
 
 import (
-    hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+    hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
     corev1 "k8s.io/api/core/v1"
     "k8s.io/apimachinery/pkg/api/resource"
     metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -575,7 +575,7 @@ import (
     "testing"
 
     "github.com/stretchr/testify/assert"
-    hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+    hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
     metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -605,7 +605,7 @@ Create `internal/resources/configmap.go`:
 package resources
 
 import (
-    hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+    hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
     corev1 "k8s.io/api/core/v1"
     metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -663,7 +663,7 @@ import (
     "testing"
 
     "github.com/stretchr/testify/assert"
-    hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+    hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
     corev1 "k8s.io/api/core/v1"
     metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -697,7 +697,7 @@ Create `internal/resources/service.go`:
 package resources
 
 import (
-    hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+    hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
     corev1 "k8s.io/api/core/v1"
     "k8s.io/apimachinery/pkg/util/intstr"
     metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -769,7 +769,7 @@ import (
     "testing"
 
     "github.com/stretchr/testify/assert"
-    hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+    hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
     corev1 "k8s.io/api/core/v1"
     metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -784,12 +784,12 @@ func TestBuildStatefulSet_NameNamespaceLabels(t *testing.T) {
 
 func TestBuildStatefulSet_ContainerImage(t *testing.T) {
     inst := minimalInstance()
-    inst.Spec.Image.Repository = "ghcr.io/stubbi/hermes-agent"
+    inst.Spec.Image.Repository = "ghcr.io/paperclipinc/hermes-agent"
     inst.Spec.Image.Tag = "v1.0.0"
     sts := BuildStatefulSet(inst)
     require := sts.Spec.Template.Spec.Containers
     assert.Len(t, require, 1)
-    assert.Equal(t, "ghcr.io/stubbi/hermes-agent:v1.0.0", require[0].Image)
+    assert.Equal(t, "ghcr.io/paperclipinc/hermes-agent:v1.0.0", require[0].Image)
     assert.Equal(t, corev1.PullIfNotPresent, require[0].ImagePullPolicy, "explicit default")
 }
 
@@ -861,7 +861,7 @@ package resources
 import (
     "fmt"
 
-    hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+    hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
     appsv1 "k8s.io/api/apps/v1"
     corev1 "k8s.io/api/core/v1"
     metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -979,7 +979,7 @@ func BuildStatefulSet(inst *hermesv1.HermesInstance) *appsv1.StatefulSet {
 func imageRef(inst *hermesv1.HermesInstance) string {
     repo := inst.Spec.Image.Repository
     if repo == "" {
-        repo = "ghcr.io/stubbi/hermes-agent"
+        repo = "ghcr.io/paperclipinc/hermes-agent"
     }
     tag := inst.Spec.Image.Tag
     if tag == "" {
@@ -1059,8 +1059,8 @@ import (
     "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
     "sigs.k8s.io/controller-runtime/pkg/log"
 
-    hermesv1 "github.com/stubbi/hermes-operator/api/v1"
-    "github.com/stubbi/hermes-operator/internal/resources"
+    hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
+    "github.com/paperclipinc/hermes-operator/internal/resources"
 )
 
 // HermesInstanceReconciler reconciles a HermesInstance.
@@ -1277,7 +1277,7 @@ import (
     metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
     "k8s.io/apimachinery/pkg/types"
 
-    hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+    hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 )
 
 var _ = Describe("HermesInstance controller", func() {
@@ -1301,7 +1301,7 @@ var _ = Describe("HermesInstance controller", func() {
             ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace},
             Spec: hermesv1.HermesInstanceSpec{
                 Image: hermesv1.ImageSpec{
-                    Repository: "ghcr.io/stubbi/hermes-agent",
+                    Repository: "ghcr.io/paperclipinc/hermes-agent",
                     Tag:        "test",
                 },
             },
@@ -1317,7 +1317,7 @@ var _ = Describe("HermesInstance controller", func() {
             g.Expect(k8sClient.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, svc)).To(Succeed())
             sts := &appsv1.StatefulSet{}
             g.Expect(k8sClient.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, sts)).To(Succeed())
-            g.Expect(sts.Spec.Template.Spec.Containers[0].Image).To(Equal("ghcr.io/stubbi/hermes-agent:test"))
+            g.Expect(sts.Spec.Template.Spec.Containers[0].Image).To(Equal("ghcr.io/paperclipinc/hermes-agent:test"))
         }).Within(timeout).WithPolling(interval).Should(Succeed())
     })
 
@@ -1499,7 +1499,7 @@ linters-settings:
     enabled-checks:
       - octalLiteral
   goimports:
-    local-prefixes: github.com/stubbi/hermes-operator
+    local-prefixes: github.com/paperclipinc/hermes-operator
 
 issues:
   exclude-rules:
@@ -1569,7 +1569,7 @@ jobs:
           context: .
           platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name == 'push' }}
-          tags: ghcr.io/stubbi/hermes-operator:dev,ghcr.io/stubbi/hermes-operator:${{ github.sha }}
+          tags: ghcr.io/paperclipinc/hermes-operator:dev,ghcr.io/paperclipinc/hermes-operator:${{ github.sha }}
 ```
 
 - [ ] **Step 4: Run lint locally**
@@ -1605,9 +1605,9 @@ type: application
 version: 0.1.0
 appVersion: "0.1.0"
 kubeVersion: ">=1.28.0-0"
-home: https://github.com/stubbi/hermes-operator
+home: https://github.com/paperclipinc/hermes-operator
 sources:
-  - https://github.com/stubbi/hermes-operator
+  - https://github.com/paperclipinc/hermes-operator
 maintainers:
   - name: stubbi
     email: jannes@aqora.io
@@ -1617,7 +1617,7 @@ maintainers:
 
 ```yaml
 image:
-  repository: ghcr.io/stubbi/hermes-operator
+  repository: ghcr.io/paperclipinc/hermes-operator
   tag: ""               # defaults to .Chart.AppVersion with "v" prefix
   pullPolicy: IfNotPresent
 
@@ -1889,8 +1889,8 @@ Replace the kubebuilder-generated README with:
 # hermes-operator
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Go Report Card](https://goreportcard.com/badge/github.com/stubbi/hermes-operator)](https://goreportcard.com/report/github.com/stubbi/hermes-operator)
-[![CI](https://github.com/stubbi/hermes-operator/actions/workflows/ci.yaml/badge.svg)](https://github.com/stubbi/hermes-operator/actions/workflows/ci.yaml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/paperclipinc/hermes-operator)](https://goreportcard.com/report/github.com/paperclipinc/hermes-operator)
+[![CI](https://github.com/paperclipinc/hermes-operator/actions/workflows/ci.yaml/badge.svg)](https://github.com/paperclipinc/hermes-operator/actions/workflows/ci.yaml)
 
 Kubernetes operator for [nousresearch/hermes-agent](https://github.com/nousresearch/hermes-agent): a Python-based self-improving multi-platform AI agent.
 
@@ -1908,7 +1908,7 @@ metadata:
   name: demo
 spec:
   image:
-    repository: ghcr.io/stubbi/hermes-agent
+    repository: ghcr.io/paperclipinc/hermes-agent
     tag: latest
   storage:
     persistence:
@@ -1962,8 +1962,8 @@ We aim to acknowledge within 72 hours and provide a remediation timeline within 
 Operator images are signed with Cosign (keyless OIDC); SBOMs are attested and attached to releases. Verify with:
 
 ```bash
-cosign verify ghcr.io/stubbi/hermes-operator:vX.Y.Z \
-  --certificate-identity-regexp 'https://github.com/stubbi/hermes-operator/.github/workflows/.*' \
+cosign verify ghcr.io/paperclipinc/hermes-operator:vX.Y.Z \
+  --certificate-identity-regexp 'https://github.com/paperclipinc/hermes-operator/.github/workflows/.*' \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
 ```
 ```
@@ -2228,7 +2228,7 @@ metadata:
   namespace: default
 spec:
   image:
-    repository: ghcr.io/stubbi/hermes-agent
+    repository: ghcr.io/paperclipinc/hermes-agent
     tag: latest
   storage:
     persistence:

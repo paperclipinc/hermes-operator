@@ -22,7 +22,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 )
 
 func run(cmd string, args ...string) (string, error) {

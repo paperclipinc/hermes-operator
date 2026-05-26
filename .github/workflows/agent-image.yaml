@@ -1,6 +1,6 @@
 # .github/workflows/agent-image.yaml
 #
-# Builds and publishes ghcr.io/stubbi/hermes-agent for every hermes-agent
+# Builds and publishes ghcr.io/paperclipinc/hermes-agent for every hermes-agent
 # release in the supported matrix. Triggered:
 #   - Manually via workflow_dispatch (engineer picks the HERMES_VERSION).
 #   - On every push of a tag matching `agent/vX.Y.Z`.
@@ -78,8 +78,8 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ghcr.io/stubbi/hermes-agent:${{ steps.ver.outputs.tag }}
-            ghcr.io/stubbi/hermes-agent:latest
+            ghcr.io/paperclipinc/hermes-agent:${{ steps.ver.outputs.tag }}
+            ghcr.io/paperclipinc/hermes-agent:latest
           build-args: |
             HERMES_VERSION=${{ steps.ver.outputs.tag }}
           provenance: true
@@ -92,14 +92,14 @@ jobs:
         env:
           DIGEST: ${{ steps.build.outputs.digest }}
         run: |
-          cosign sign --yes "ghcr.io/stubbi/hermes-agent@${DIGEST}"
+          cosign sign --yes "ghcr.io/paperclipinc/hermes-agent@${DIGEST}"
 
       - name: Install Syft
         uses: anchore/sbom-action/download-syft@v0
 
       - name: Generate SBOM
         run: |
-          syft "ghcr.io/stubbi/hermes-agent:${{ steps.ver.outputs.tag }}" \
+          syft "ghcr.io/paperclipinc/hermes-agent:${{ steps.ver.outputs.tag }}" \
             -o spdx-json=sbom.spdx.json
 
       - name: Attach SBOM as Cosign attestation
@@ -109,4 +109,4 @@ jobs:
           cosign attest --yes \
             --predicate sbom.spdx.json \
             --type spdxjson \
-            "ghcr.io/stubbi/hermes-agent@${DIGEST}"
+            "ghcr.io/paperclipinc/hermes-agent@${DIGEST}"

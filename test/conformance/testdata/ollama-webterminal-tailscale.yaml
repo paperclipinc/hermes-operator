@@ -4,7 +4,7 @@ metadata:
   name: conformance-sidecars
 spec:
   image:
-    repository: ghcr.io/stubbi/hermes-agent
+    repository: ghcr.io/paperclipinc/hermes-agent
     tag: latest
   storage:
     persistence:
@@ -21,7 +21,7 @@ spec:
           cpu: 500m
           memory: 2Gi
     - name: web-terminal
-      image: ghcr.io/stubbi/hermes-web-terminal:latest
+      image: ghcr.io/paperclipinc/hermes-web-terminal:latest
       ports:
         - containerPort: 7681
           name: web-terminal

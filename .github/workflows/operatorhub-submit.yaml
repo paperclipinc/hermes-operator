@@ -37,7 +37,7 @@ jobs:
           # Copy and version the CSV.
           sed \
             -e "s/hermes-operator\.v[0-9]\+\.[0-9]\+\.[0-9]\+/hermes-operator.v${VERSION}/g" \
-            -e "s|ghcr.io/stubbi/hermes-operator:v[0-9]\+\.[0-9]\+\.[0-9]\+|ghcr.io/stubbi/hermes-operator:${TAG}|g" \
+            -e "s|ghcr.io/paperclipinc/hermes-operator:v[0-9]\+\.[0-9]\+\.[0-9]\+|ghcr.io/paperclipinc/hermes-operator:${TAG}|g" \
             -e "s/createdAt: .*/createdAt: \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"/" \
             -e "s/^  version: [0-9]\+\.[0-9]\+\.[0-9]\+/  version: ${VERSION}/" \
             bundle/manifests/hermes-operator.clusterserviceversion.yaml \
@@ -93,14 +93,14 @@ jobs:
           ### Update to hermes-operator
 
           **Version:** ${VERSION}
-          **Operator:** [Hermes Kubernetes Operator](https://github.com/stubbi/hermes-operator)
+          **Operator:** [Hermes Kubernetes Operator](https://github.com/paperclipinc/hermes-operator)
 
           #### Changes
-          See [release notes](https://github.com/stubbi/hermes-operator/releases/tag/v${VERSION}).
+          See [release notes](https://github.com/paperclipinc/hermes-operator/releases/tag/v${VERSION}).
 
           #### Testing
           - CI tests + nightly conformance suite pass on the source repository
-          - Container image is published and signed at \`ghcr.io/stubbi/hermes-operator:v${VERSION}\`
+          - Container image is published and signed at \`ghcr.io/paperclipinc/hermes-operator:v${VERSION}\`
           - SBOM attested at the same digest (verify with \`cosign verify-attestation\`)
           EOF
           )"
@@ -133,7 +133,7 @@ jobs:
           mkdir -p "${BUNDLE_DIR}/manifests" "${BUNDLE_DIR}/metadata"
           sed \
             -e "s/hermes-operator\.v[0-9]\+\.[0-9]\+\.[0-9]\+/hermes-operator.v${VERSION}/g" \
-            -e "s|ghcr.io/stubbi/hermes-operator:v[0-9]\+\.[0-9]\+\.[0-9]\+|ghcr.io/stubbi/hermes-operator:${TAG}|g" \
+            -e "s|ghcr.io/paperclipinc/hermes-operator:v[0-9]\+\.[0-9]\+\.[0-9]\+|ghcr.io/paperclipinc/hermes-operator:${TAG}|g" \
             -e "s/createdAt: .*/createdAt: \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"/" \
             -e "s/^  version: [0-9]\+\.[0-9]\+\.[0-9]\+/  version: ${VERSION}/" \
             bundle/manifests/hermes-operator.clusterserviceversion.yaml \
@@ -169,5 +169,5 @@ jobs:
               --repo redhat-openshift-ecosystem/community-operators-prod \
               --head "${FORK_OWNER}:${BRANCH}" \
               --title "operator hermes-operator (${VERSION})" \
-              --body "Release ${VERSION}. See https://github.com/stubbi/hermes-operator/releases/tag/v${VERSION}."
+              --body "Release ${VERSION}. See https://github.com/paperclipinc/hermes-operator/releases/tag/v${VERSION}."
           fi

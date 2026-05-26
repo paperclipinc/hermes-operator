@@ -1564,7 +1564,7 @@ func TestHermesClusterDefaults_Shape(t *testing.T) {
 	hcd := &HermesClusterDefaults{
 		ObjectMeta: metav1.ObjectMeta{Name: "cluster"},
 		Spec: HermesClusterDefaultsSpec{
-			Image: ImageSpec{Repository: "ghcr.io/stubbi/hermes-agent", Tag: "1.4.2"},
+			Image: ImageSpec{Repository: "ghcr.io/paperclipinc/hermes-agent", Tag: "1.4.2"},
 			Registry: RegistryDefaults{
 				PullSecretName: "ghcr-pull",
 			},
@@ -1585,7 +1585,7 @@ func TestHermesClusterDefaults_Shape(t *testing.T) {
 		},
 	}
 	assert.Equal(t, "cluster", hcd.Name)
-	assert.Equal(t, "ghcr.io/stubbi/hermes-agent", hcd.Spec.Image.Repository)
+	assert.Equal(t, "ghcr.io/paperclipinc/hermes-agent", hcd.Spec.Image.Repository)
 	assert.Equal(t, "ghcr-pull", hcd.Spec.Registry.PullSecretName)
 	assert.NotNil(t, hcd.Spec.Storage.Persistence.StorageClassName)
 
@@ -1921,7 +1921,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -2010,7 +2010,7 @@ package resources
 import (
 	"fmt"
 
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
@@ -2155,7 +2155,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -2228,7 +2228,7 @@ import (
 	"sort"
 	"strings"
 
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -2321,7 +2321,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -2360,7 +2360,7 @@ Create `internal/resources/secret.go`:
 package resources
 
 import (
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -2429,7 +2429,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -2580,7 +2580,7 @@ Create `internal/resources/networkpolicy.go`:
 package resources
 
 import (
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -2761,7 +2761,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
@@ -2817,7 +2817,7 @@ Create `internal/resources/pdb.go`:
 package resources
 
 import (
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 	policyv1 "k8s.io/api/policy/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -2893,7 +2893,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -3004,7 +3004,7 @@ Create `internal/resources/hpa.go`:
 package resources
 
 import (
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -3119,7 +3119,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -3260,7 +3260,7 @@ package resources
 import (
 	"strings"
 
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -3413,7 +3413,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -3530,7 +3530,7 @@ Create `internal/resources/rbac.go`:
 package resources
 
 import (
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -3665,7 +3665,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -3745,7 +3745,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -3817,7 +3817,7 @@ Create `internal/resources/servicemonitor.go`:
 package resources
 
 import (
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -3901,7 +3901,7 @@ Create `internal/resources/prometheusrule.go`:
 package resources
 
 import (
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -4023,7 +4023,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -4134,7 +4134,7 @@ Replace `internal/resources/service.go` body with:
 package resources
 
 import (
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -4285,7 +4285,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -4309,7 +4309,7 @@ func TestDefaulter_FillsNilFromClusterDefaults(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{Name: "cluster"},
 		Spec: hermesv1.HermesClusterDefaultsSpec{
 			Image: hermesv1.ImageSpec{
-				Repository: "ghcr.io/stubbi/hermes-agent",
+				Repository: "ghcr.io/paperclipinc/hermes-agent",
 				Tag:        "1.4.2",
 			},
 			Storage: hermesv1.StorageSpec{
@@ -4325,7 +4325,7 @@ func TestDefaulter_FillsNilFromClusterDefaults(t *testing.T) {
 	}
 	assert.NoError(t, d.Default(context.Background(), inst))
 
-	assert.Equal(t, "ghcr.io/stubbi/hermes-agent", inst.Spec.Image.Repository)
+	assert.Equal(t, "ghcr.io/paperclipinc/hermes-agent", inst.Spec.Image.Repository)
 	assert.Equal(t, "1.4.2", inst.Spec.Image.Tag)
 	assert.Equal(t, "10Gi", inst.Spec.Storage.Persistence.Size)
 }
@@ -4385,7 +4385,7 @@ import (
 	"context"
 	"fmt"
 
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -4570,7 +4570,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -4669,7 +4669,7 @@ func TestValidator_AllowHappyPath(t *testing.T) {
 	inst := &hermesv1.HermesInstance{
 		ObjectMeta: metav1.ObjectMeta{Name: "demo"},
 		Spec: hermesv1.HermesInstanceSpec{
-			Image:   hermesv1.ImageSpec{Repository: "ghcr.io/stubbi/hermes-agent"},
+			Image:   hermesv1.ImageSpec{Repository: "ghcr.io/paperclipinc/hermes-agent"},
 			Storage: hermesv1.StorageSpec{Persistence: hermesv1.PersistenceSpec{Size: "1Gi"}},
 		},
 	}
@@ -4690,7 +4690,7 @@ import (
 	"context"
 	"fmt"
 
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
@@ -4845,7 +4845,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -4879,7 +4879,7 @@ import (
 	"context"
 	"fmt"
 
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
@@ -4977,7 +4977,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -5002,7 +5002,7 @@ import (
 	"context"
 	"fmt"
 
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
@@ -5093,7 +5093,7 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 )
@@ -5110,7 +5110,7 @@ var _ = Describe("HermesClusterDefaults controller", func() {
 		hcd := &hermesv1.HermesClusterDefaults{
 			ObjectMeta: metav1.ObjectMeta{Name: "cluster"},
 			Spec: hermesv1.HermesClusterDefaultsSpec{
-				Image: hermesv1.ImageSpec{Repository: "ghcr.io/stubbi/hermes-agent", Tag: "1.0.0"},
+				Image: hermesv1.ImageSpec{Repository: "ghcr.io/paperclipinc/hermes-agent", Tag: "1.0.0"},
 			},
 		}
 		Expect(k8sClient.Create(ctx, hcd)).To(Succeed())
@@ -5144,7 +5144,7 @@ import (
 	"fmt"
 	"time"
 
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -5715,8 +5715,8 @@ import (
 	"fmt"
 	"time"
 
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
-	"github.com/stubbi/hermes-operator/internal/resources"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
+	"github.com/paperclipinc/hermes-operator/internal/resources"
 
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
@@ -6333,7 +6333,7 @@ func maximalInstance(name, namespace string) *hermesv1.HermesInstance {
 	return &hermesv1.HermesInstance{
 		ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace},
 		Spec: hermesv1.HermesInstanceSpec{
-			Image: hermesv1.ImageSpec{Repository: "ghcr.io/stubbi/hermes-agent", Tag: "test", PullPolicy: "IfNotPresent"},
+			Image: hermesv1.ImageSpec{Repository: "ghcr.io/paperclipinc/hermes-agent", Tag: "test", PullPolicy: "IfNotPresent"},
 			Storage: hermesv1.StorageSpec{
 				Persistence: hermesv1.PersistenceSpec{Enabled: Ptr(true), Size: "1Gi"},
 			},
@@ -6385,7 +6385,7 @@ func maximalInstance(name, namespace string) *hermesv1.HermesInstance {
 }
 ```
 
-Add the imports (Ptr from the resources package is not visible; declare a local Ptr in the test file or import as `. "github.com/stubbi/hermes-operator/internal/resources"`):
+Add the imports (Ptr from the resources package is not visible; declare a local Ptr in the test file or import as `. "github.com/paperclipinc/hermes-operator/internal/resources"`):
 
 ```go
 import (
@@ -6407,7 +6407,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 )
 
 func Ptr[T any](v T) *T { return &v }
@@ -6523,7 +6523,7 @@ if err = hermesv1.RegisterHermesSelfConfigWebhook(mgr, scValidator); err != nil 
 Add the import:
 
 ```go
-"github.com/stubbi/hermes-operator/internal/webhook"
+"github.com/paperclipinc/hermes-operator/internal/webhook"
 ```
 
 - [ ] **Step 4: Build + smoke-run**
@@ -6831,7 +6831,7 @@ Use the following skeleton (fill in every field; do not leave a "TODO": every sp
 
 | Field | Type | Default | Description |
 |---|---|---|---|
-| `repository` | string | `ghcr.io/stubbi/hermes-agent` (from ClusterDefaults) | OCI image repo. |
+| `repository` | string | `ghcr.io/paperclipinc/hermes-agent` (from ClusterDefaults) | OCI image repo. |
 | `tag` | string | `latest` (or ClusterDefaults) | Image tag. |
 | `pullPolicy` | enum (`Always`/`IfNotPresent`/`Never`) | `IfNotPresent` | Pull policy. |
 

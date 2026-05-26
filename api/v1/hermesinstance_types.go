@@ -1,5 +1,5 @@
 /*
-Copyright 2026 stubbi.
+Copyright 2026 Paperclip.inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -143,7 +143,7 @@ type HermesInstanceSpec struct {
 
 	// Runtime controls the agent's Python toolchain and OS-level dependencies.
 	// All fields default to the values that match the operator's published
-	// ghcr.io/stubbi/hermes-agent image.
+	// ghcr.io/paperclipinc/hermes-agent image.
 	// +optional
 	Runtime RuntimeSpec `json:"runtime,omitempty"`
 
@@ -160,7 +160,7 @@ type HermesInstanceSpec struct {
 
 // ImageSpec selects an OCI image.
 type ImageSpec struct {
-	// +kubebuilder:default="ghcr.io/stubbi/hermes-agent"
+	// +kubebuilder:default="ghcr.io/paperclipinc/hermes-agent"
 	// +optional
 	Repository string `json:"repository,omitempty"`
 

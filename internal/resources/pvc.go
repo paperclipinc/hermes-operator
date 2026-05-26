@@ -5,7 +5,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 )
 
 // PVCName returns the deterministic PVC name for a HermesInstance.

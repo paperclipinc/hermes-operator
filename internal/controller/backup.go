@@ -18,8 +18,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
-	"github.com/stubbi/hermes-operator/internal/resources"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
+	"github.com/paperclipinc/hermes-operator/internal/resources"
 )
 
 // +kubebuilder:rbac:groups=batch,resources=jobs;cronjobs,verbs=get;list;watch;create;update;patch;delete

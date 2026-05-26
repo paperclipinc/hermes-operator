@@ -1,6 +1,6 @@
 # images/hermes-agent/Dockerfile
 #
-# Two-stage multi-arch build for ghcr.io/stubbi/hermes-agent.
+# Two-stage multi-arch build for ghcr.io/paperclipinc/hermes-agent.
 # Stage 1 (`builder`) uses the official uv image to resolve and install the pinned
 # Python environment into a self-contained venv at /opt/venv. Stage 2 (`runtime`)
 # copies only the venv + minimal apt deps and runs as the non-root `hermes` user.
@@ -94,10 +94,10 @@ ENV PATH="/opt/venv/bin:${PATH}" \
 # Image metadata. The HERMES_VERSION label is the one the operator's autoupdate
 # controller (Plan 5) compares against the registry tag.
 LABEL org.opencontainers.image.title="hermes-agent" \
-      org.opencontainers.image.source="https://github.com/stubbi/hermes-operator" \
-      org.opencontainers.image.documentation="https://github.com/stubbi/hermes-operator/blob/main/images/hermes-agent/README.md" \
+      org.opencontainers.image.source="https://github.com/paperclipinc/hermes-operator" \
+      org.opencontainers.image.documentation="https://github.com/paperclipinc/hermes-operator/blob/main/images/hermes-agent/README.md" \
       org.opencontainers.image.licenses="MIT" \
-      org.opencontainers.image.vendor="stubbi" \
+      org.opencontainers.image.vendor="paperclipinc" \
       hermes.agent/version="${HERMES_VERSION}"
 
 USER hermes

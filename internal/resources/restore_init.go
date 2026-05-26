@@ -5,7 +5,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 )
 
 // BuildRestoreInitContainer returns the init container that restores a snapshot

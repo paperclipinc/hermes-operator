@@ -35,13 +35,13 @@ The goal is a Kubernetes operator that deploys and manages hermes-agent instance
 | | |
 |---|---|
 | Repo | `stubbi/hermes-operator` (private) |
-| Go module | `github.com/stubbi/hermes-operator` |
+| Go module | `github.com/paperclipinc/hermes-operator` |
 | Go version | 1.24 |
 | Framework | kubebuilder v4 / controller-runtime |
 | Kubernetes | ≥ 1.28 (CI matrix: 1.28, 1.29, 1.30, 1.31, 1.32) |
 | License | Apache-2.0 (operator). Independent of hermes-agent's MIT. |
-| Operator image | `ghcr.io/stubbi/hermes-operator` (multi-arch amd64+arm64, Cosign-signed, SBOM attested) |
-| Agent image | `ghcr.io/stubbi/hermes-agent` (operator's responsibility to build/publish from the upstream Python package; default `spec.image.repository`) |
+| Operator image | `ghcr.io/paperclipinc/hermes-operator` (multi-arch amd64+arm64, Cosign-signed, SBOM attested) |
+| Agent image | `ghcr.io/paperclipinc/hermes-agent` (operator's responsibility to build/publish from the upstream Python package; default `spec.image.repository`) |
 | Conventional commits | `feat:`, `fix:`, `docs:`, `ci:`, `chore:`, `refactor:`, `test:` (release-please uses `feat:`/`fix:` for changelog) |
 
 ## 3. CRD surface
@@ -167,7 +167,7 @@ metadata:
   name: cluster
 spec:
   image:
-    repository: ghcr.io/stubbi/hermes-agent
+    repository: ghcr.io/paperclipinc/hermes-agent
     tag: "1.4.2"
   registry:
     pullSecretName: ghcr-pull
@@ -272,7 +272,7 @@ spec:
   autoUpdate:
     enabled: true
     source:
-      registry: ghcr.io/stubbi/hermes-agent
+      registry: ghcr.io/paperclipinc/hermes-agent
       channel: "1.x"                    # semver range; default = same major as current
     pollInterval: 1h
     rollback:
@@ -338,7 +338,7 @@ On first reconcile, if `migration.fromOpenClaw` is set and `status.migrationComp
 | **Helm chart** | `charts/hermes-operator/` | CRDs templated under `templates/crds/` so `helm upgrade` propagates schema changes. `make sync-chart-crds` enforced by CI. RBAC auto-derived from kubebuilder markers via a CI check. Values: `watchNamespaces`, `createRBAC`, `logLevel`, `metrics.secure`, `webhook.certManager.enabled`. |
 | **OLM bundle** | `bundle/` | OperatorHub submission via the `community-operators` repo. Bundled CSV, descriptors per CRD, OpenAPI schemas, alm-examples. Auto-submission workflow on minor releases. |
 | **Plain manifests** | `config/` (kustomize) | `kustomize build config/default` produces a single YAML for `kubectl apply` users. |
-| **Container images** | `ghcr.io/stubbi/hermes-operator`, `ghcr.io/stubbi/hermes-agent` | Multi-arch (amd64+arm64), Cosign-signed (keyless OIDC), SBOM attested, uploaded to release assets. |
+| **Container images** | `ghcr.io/paperclipinc/hermes-operator`, `ghcr.io/paperclipinc/hermes-agent` | Multi-arch (amd64+arm64), Cosign-signed (keyless OIDC), SBOM attested, uploaded to release assets. |
 
 ### 9.1 Release pipeline
 

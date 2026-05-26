@@ -1,5 +1,5 @@
 /*
-Copyright 2026 stubbi.
+Copyright 2026 Paperclip.inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import (
 
 	"github.com/gobwas/glob"
 
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 )
 
 // DetermineActions inspects a HermesSelfConfig and returns the set of action

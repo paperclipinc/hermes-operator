@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Land every Python/uv-shaped runtime concern that distinguishes hermes-operator from openclaw-operator: build and publish the `ghcr.io/stubbi/hermes-agent` container image, wire `spec.runtime`/`spec.gateways`/`spec.profileStore` into the `HermesInstance` builders, stand up the Honcho companion service, and document the platform-gateway token surface: so that a `HermesInstance` declaring `gateways.telegram.enabled: true` + `profileStore.honcho.enabled: true` reconciles into a working hermes-agent pod with Honcho beside it, on a default-deny NetworkPolicy that allows exactly the upstream endpoints required.
+**Goal:** Land every Python/uv-shaped runtime concern that distinguishes hermes-operator from openclaw-operator: build and publish the `ghcr.io/paperclipinc/hermes-agent` container image, wire `spec.runtime`/`spec.gateways`/`spec.profileStore` into the `HermesInstance` builders, stand up the Honcho companion service, and document the platform-gateway token surface: so that a `HermesInstance` declaring `gateways.telegram.enabled: true` + `profileStore.honcho.enabled: true` reconciles into a working hermes-agent pod with Honcho beside it, on a default-deny NetworkPolicy that allows exactly the upstream endpoints required.
 
 **Architecture:** Three new builder files (`internal/resources/runtime_init.go`, `internal/resources/gateways.go`, `internal/resources/honcho.go`) extend the StatefulSet/ConfigMap/NetworkPolicy primitives from Plans 1+2. The agent image is built from the upstream Python package against a committed `uv.lock`, multi-arch via QEMU+buildx, signed and SBOM-attested by the same GoReleaser/Cosign pipeline Plan 1 set up for the operator image. Webhook warnings (not denials) cover secret-not-found cases so that GitOps users can apply a HermesInstance and its secrets in either order without races. The Honcho profile store runs as a sibling Deployment + headless Service + PVC in the same namespace as the HermesInstance, with NetworkPolicy isolating it to the parent hermes pod only.
 
@@ -132,7 +132,7 @@ README.md
 ```markdown
 # hermes-agent image build context
 
-The operator owns `ghcr.io/stubbi/hermes-agent`. Upstream
+The operator owns `ghcr.io/paperclipinc/hermes-agent`. Upstream
 (`nousresearch/hermes-agent`) ships only a Python package, so this directory
 packages it into a multi-arch container that the operator can pull by default.
 
@@ -188,7 +188,7 @@ git commit -m "feat(images): scaffold hermes-agent image build context (pyprojec
 ```dockerfile
 # images/hermes-agent/Dockerfile
 #
-# Two-stage multi-arch build for ghcr.io/stubbi/hermes-agent.
+# Two-stage multi-arch build for ghcr.io/paperclipinc/hermes-agent.
 # Stage 1 (`builder`) uses the official uv image to resolve and install the pinned
 # Python environment into a self-contained venv at /opt/venv. Stage 2 (`runtime`)
 # copies only the venv + minimal apt deps and runs as the non-root `hermes` user.
@@ -275,8 +275,8 @@ ENV PATH="/opt/venv/bin:${PATH}" \
 # Image metadata. The HERMES_VERSION label is the one the operator's autoupdate
 # controller (Plan 5) compares against the registry tag.
 LABEL org.opencontainers.image.title="hermes-agent" \
-      org.opencontainers.image.source="https://github.com/stubbi/hermes-operator" \
-      org.opencontainers.image.documentation="https://github.com/stubbi/hermes-operator/blob/main/images/hermes-agent/README.md" \
+      org.opencontainers.image.source="https://github.com/paperclipinc/hermes-operator" \
+      org.opencontainers.image.documentation="https://github.com/paperclipinc/hermes-operator/blob/main/images/hermes-agent/README.md" \
       org.opencontainers.image.licenses="MIT" \
       org.opencontainers.image.vendor="stubbi" \
       hermes.agent/version="${HERMES_VERSION}"
@@ -337,7 +337,7 @@ Expected: `--check` reports no warnings. (If `--check` is unsupported on the loc
 
 ```bash
 git add images/hermes-agent/Dockerfile images/hermes-agent/entrypoint.sh
-git commit -m "feat(images): multi-stage Dockerfile for ghcr.io/stubbi/hermes-agent with tini PID 1"
+git commit -m "feat(images): multi-stage Dockerfile for ghcr.io/paperclipinc/hermes-agent with tini PID 1"
 ```
 
 ---
@@ -355,7 +355,7 @@ Add the following section to the existing `Makefile` (right after the operator-i
 ```makefile
 # -------- hermes-agent image (Plan 3) --------
 
-AGENT_IMAGE         ?= ghcr.io/stubbi/hermes-agent
+AGENT_IMAGE         ?= ghcr.io/paperclipinc/hermes-agent
 HERMES_VERSION      ?= 1.4.2
 AGENT_IMAGE_PLATFORMS ?= linux/amd64,linux/arm64
 
@@ -420,7 +420,7 @@ Expected: no diff. If a diff appears, the resolver is non-deterministic: investi
 make agent-image-build HERMES_VERSION=1.4.2
 make agent-image-smoke HERMES_VERSION=1.4.2
 ```
-Expected: `agent-image-smoke OK for ghcr.io/stubbi/hermes-agent:1.4.2`. If the upstream CLI flag is `-h` rather than `--help`, adjust the smoke target accordingly: but document the rename.
+Expected: `agent-image-smoke OK for ghcr.io/paperclipinc/hermes-agent:1.4.2`. If the upstream CLI flag is `-h` rather than `--help`, adjust the smoke target accordingly: but document the rename.
 
 - [ ] **Step 5: Commit**
 
@@ -441,7 +441,7 @@ git commit -m "feat(images): add agent-image-{build,buildx,relock,smoke} Makefil
 ```yaml
 # .github/workflows/agent-image.yaml
 #
-# Builds and publishes ghcr.io/stubbi/hermes-agent for every hermes-agent
+# Builds and publishes ghcr.io/paperclipinc/hermes-agent for every hermes-agent
 # release in the supported matrix. Triggered:
 #   - Manually via workflow_dispatch (engineer picks the HERMES_VERSION).
 #   - On every push of a tag matching `agent/vX.Y.Z`: this is the explicit
@@ -518,8 +518,8 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ghcr.io/stubbi/hermes-agent:${{ matrix.hermes_version }}
-            ghcr.io/stubbi/hermes-agent:latest
+            ghcr.io/paperclipinc/hermes-agent:${{ matrix.hermes_version }}
+            ghcr.io/paperclipinc/hermes-agent:latest
           build-args: |
             HERMES_VERSION=${{ matrix.hermes_version }}
           provenance: true
@@ -533,14 +533,14 @@ jobs:
           DIGEST: ${{ steps.build.outputs.digest }}
         run: |
           cosign sign --yes \
-            "ghcr.io/stubbi/hermes-agent@${DIGEST}"
+            "ghcr.io/paperclipinc/hermes-agent@${DIGEST}"
 
       - name: Install Syft
         uses: anchore/sbom-action/download-syft@v0
 
       - name: Generate SBOM
         run: |
-          syft "ghcr.io/stubbi/hermes-agent:${{ matrix.hermes_version }}" \
+          syft "ghcr.io/paperclipinc/hermes-agent:${{ matrix.hermes_version }}" \
             -o spdx-json=sbom.spdx.json
 
       - name: Attach SBOM as Cosign attestation
@@ -550,7 +550,7 @@ jobs:
           cosign attest --yes \
             --predicate sbom.spdx.json \
             --type spdxjson \
-            "ghcr.io/stubbi/hermes-agent@${DIGEST}"
+            "ghcr.io/paperclipinc/hermes-agent@${DIGEST}"
 ```
 
 - [ ] **Step 2: Create `.github/workflows/agent-image-smoke.yaml`**
@@ -645,7 +645,7 @@ In `api/v1/hermesinstance_types.go`, append `Runtime` to the existing `HermesIns
 ```go
 // Runtime controls the agent's Python toolchain and OS-level dependencies.
 // All fields default to the values that match the operator's published
-// ghcr.io/stubbi/hermes-agent image.
+// ghcr.io/paperclipinc/hermes-agent image.
 // +optional
 Runtime RuntimeSpec `json:"runtime,omitempty"`
 ```
@@ -1046,7 +1046,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -1181,7 +1181,7 @@ import (
 	"fmt"
 	"strings"
 
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 )
@@ -1396,7 +1396,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -1552,7 +1552,7 @@ import (
 	"fmt"
 	"strings"
 
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -1758,7 +1758,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -1890,7 +1890,7 @@ package resources
 import (
 	"fmt"
 
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -3517,7 +3517,7 @@ metadata:
   namespace: default
 spec:
   image:
-    repository: ghcr.io/stubbi/hermes-agent
+    repository: ghcr.io/paperclipinc/hermes-agent
     tag: "1.4.2"
     pullPolicy: IfNotPresent
   storage:
@@ -4024,7 +4024,7 @@ Append (or modify the relevant section in) `charts/hermes-operator/values.yaml`:
 # Default values copied into HermesInstance.spec.image when not set by the user.
 # Mirrors HermesClusterDefaults but distributed via the chart for convenience.
 agentImage:
-  repository: ghcr.io/stubbi/hermes-agent
+  repository: ghcr.io/paperclipinc/hermes-agent
   tag: "1.4.2"        # update when shipping a new agent matrix entry
   pullPolicy: IfNotPresent
 
@@ -4202,7 +4202,7 @@ spec.
 - [ ] §7.4 "read-only root FS with explicit writable subPaths": Task 8 init
   containers all set `ReadOnlyRootFilesystem: true` except the apt init
   (documented exception).
-- [ ] Operator-published `ghcr.io/stubbi/hermes-agent`: Tasks 1-4 (build
+- [ ] Operator-published `ghcr.io/paperclipinc/hermes-agent`: Tasks 1-4 (build
   context, Dockerfile, lockfile, CI matrix).
 
 ### Lessons baked in (from spec §1 G3 / openclaw issue log)

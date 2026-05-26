@@ -18,7 +18,7 @@ fields (others are protected via `spec.selfConfigure.protectedKeys`).
 ## Prerequisites
 
 You need a kind cluster with FluxCD installed and the
-`stubbi/hermes-operator` chart deployed. Assume a Git repository
+`paperclipinc/hermes-operator` chart deployed. Assume a Git repository
 `github.com/example/agents-gitops` containing the manifests in this
 directory.
 

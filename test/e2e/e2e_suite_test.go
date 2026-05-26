@@ -49,7 +49,7 @@ metadata:
   namespace: default
 spec:
   image:
-    repository: ghcr.io/stubbi/hermes-agent
+    repository: ghcr.io/paperclipinc/hermes-agent
     tag: "1.0.0"
   storage:
     persistence:

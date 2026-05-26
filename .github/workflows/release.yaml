@@ -60,7 +60,7 @@ jobs:
         run: |
           TAG="${{ github.ref_name }}"
           MAJOR_MINOR=$(echo "$TAG" | sed 's/^v//' | cut -d. -f1,2)
-          IMAGE="ghcr.io/stubbi/hermes-operator"
+          IMAGE="ghcr.io/paperclipinc/hermes-operator"
           {
             echo "image=${IMAGE}"
             echo "major_minor=${MAJOR_MINOR}"
@@ -90,7 +90,7 @@ jobs:
             org.opencontainers.image.title=hermes-operator
             org.opencontainers.image.version=${{ github.ref_name }}
             org.opencontainers.image.revision=${{ github.sha }}
-            org.opencontainers.image.source=https://github.com/stubbi/hermes-operator
+            org.opencontainers.image.source=https://github.com/paperclipinc/hermes-operator
             org.opencontainers.image.licenses=Apache-2.0
 
       - name: Sign container image with cosign (keyless OIDC)
@@ -103,7 +103,7 @@ jobs:
       - name: Generate SBOM for container image
         uses: anchore/sbom-action@v0
         with:
-          image: ghcr.io/stubbi/hermes-operator:${{ github.ref_name }}
+          image: ghcr.io/paperclipinc/hermes-operator:${{ github.ref_name }}
           artifact-name: sbom-${{ github.ref_name }}.spdx.json
           output-file: sbom-${{ github.ref_name }}.spdx.json
 
@@ -154,4 +154,4 @@ jobs:
           helm package charts/hermes-operator \
             --version "${CHART_VERSION}" \
             --app-version "${{ github.ref_name }}"
-          helm push hermes-operator-${CHART_VERSION}.tgz oci://ghcr.io/stubbi/charts
+          helm push hermes-operator-${CHART_VERSION}.tgz oci://ghcr.io/paperclipinc/charts

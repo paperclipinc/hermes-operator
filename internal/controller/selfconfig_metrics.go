@@ -1,5 +1,5 @@
 /*
-Copyright 2026 stubbi. Apache-2.0.
+Copyright 2026 Paperclip.inc. Apache-2.0.
 */
 
 package controller
@@ -8,7 +8,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
 
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 )
 
 var (
