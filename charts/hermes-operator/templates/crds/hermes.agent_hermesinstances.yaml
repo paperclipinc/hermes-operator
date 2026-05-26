@@ -3024,7 +3024,7 @@ spec:
                     - Never
                     type: string
                   repository:
-                    default: ghcr.io/stubbi/hermes-agent
+                    default: ghcr.io/paperclipinc/hermes-agent
                     type: string
                   tag:
                     default: latest
@@ -5504,7 +5504,7 @@ spec:
                 description: |-
                   Runtime controls the agent's Python toolchain and OS-level dependencies.
                   All fields default to the values that match the operator's published
-                  ghcr.io/stubbi/hermes-agent image.
+                  ghcr.io/paperclipinc/hermes-agent image.
                 properties:
                   extraAptPackages:
                     description: |-

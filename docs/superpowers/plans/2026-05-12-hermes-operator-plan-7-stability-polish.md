@@ -138,7 +138,7 @@ Three independent versions, all semver:
 | Surface | Version | Stability |
 |---|---|---|
 | API group `hermes.agent` | `v1` | This document. Stable for v1.x. |
-| Operator image | `vX.Y.Z` (e.g. `ghcr.io/stubbi/hermes-operator:v1.0.0`) | Semver. Breaking ops-surface changes (RBAC removals, metric renames) require a major bump. |
+| Operator image | `vX.Y.Z` (e.g. `ghcr.io/paperclipinc/hermes-operator:v1.0.0`) | Semver. Breaking ops-surface changes (RBAC removals, metric renames) require a major bump. |
 | Helm chart | `vX.Y.Z` (chart `version`) | Semver of the chart itself, decoupled from `appVersion`. |
 
 `appVersion` in the chart tracks the operator image version. The chart can
@@ -1065,13 +1065,13 @@ Replace `README.md` with the following. Section order is fixed.
 
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg" alt="License"></a>
-  <a href="https://goreportcard.com/report/github.com/stubbi/hermes-operator"><img src="https://goreportcard.com/badge/github.com/stubbi/hermes-operator" alt="Go Report Card"></a>
-  <a href="https://github.com/stubbi/hermes-operator/actions/workflows/ci.yaml"><img src="https://github.com/stubbi/hermes-operator/actions/workflows/ci.yaml/badge.svg" alt="CI"></a>
-  <a href="https://github.com/stubbi/hermes-operator/actions/workflows/e2e.yaml"><img src="https://github.com/stubbi/hermes-operator/actions/workflows/e2e.yaml/badge.svg" alt="E2E"></a>
-  <a href="https://github.com/stubbi/hermes-operator/actions/workflows/conformance.yaml"><img src="https://github.com/stubbi/hermes-operator/actions/workflows/conformance.yaml/badge.svg" alt="Conformance"></a>
-  <a href="https://github.com/stubbi/hermes-operator/releases/latest"><img src="https://img.shields.io/github/v/release/stubbi/hermes-operator" alt="Release"></a>
+  <a href="https://goreportcard.com/report/github.com/paperclipinc/hermes-operator"><img src="https://goreportcard.com/badge/github.com/paperclipinc/hermes-operator" alt="Go Report Card"></a>
+  <a href="https://github.com/paperclipinc/hermes-operator/actions/workflows/ci.yaml"><img src="https://github.com/paperclipinc/hermes-operator/actions/workflows/ci.yaml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/paperclipinc/hermes-operator/actions/workflows/e2e.yaml"><img src="https://github.com/paperclipinc/hermes-operator/actions/workflows/e2e.yaml/badge.svg" alt="E2E"></a>
+  <a href="https://github.com/paperclipinc/hermes-operator/actions/workflows/conformance.yaml"><img src="https://github.com/paperclipinc/hermes-operator/actions/workflows/conformance.yaml/badge.svg" alt="Conformance"></a>
+  <a href="https://github.com/paperclipinc/hermes-operator/releases/latest"><img src="https://img.shields.io/github/v/release/paperclipinc/hermes-operator" alt="Release"></a>
   <a href="#supported-kubernetes-versions"><img src="https://img.shields.io/badge/kubernetes-1.28%E2%80%931.32-blue" alt="Kubernetes versions"></a>
-  <a href="go.mod"><img src="https://img.shields.io/github/go-mod/go-version/stubbi/hermes-operator" alt="Go version"></a>
+  <a href="go.mod"><img src="https://img.shields.io/github/go-mod/go-version/paperclipinc/hermes-operator" alt="Go version"></a>
 </p>
 
 Kubernetes operator for [nousresearch/hermes-agent](https://github.com/nousresearch/hermes-agent)
@@ -1092,7 +1092,7 @@ in place from day one: no v0.x grind.
 
 ```bash
 # 1. Install the CRDs and operator via Helm.
-helm repo add hermes https://stubbi.github.io/hermes-operator
+helm repo add hermes https://paperclipinc.github.io/hermes-operator
 helm install hermes-operator hermes/hermes-operator \
   -n hermes-operator --create-namespace
 
@@ -1104,7 +1104,7 @@ metadata:
   name: my-hermes
 spec:
   image:
-    repository: ghcr.io/stubbi/hermes-agent
+    repository: ghcr.io/paperclipinc/hermes-agent
     tag: "1.4.2"
   storage:
     persistence:
@@ -1115,7 +1115,7 @@ YAML
 # 3. Watch it converge.
 kubectl get hi -n agents -w
 # NAME        READY   PHASE   IMAGE                                AGE
-# my-hermes   True    Ready   ghcr.io/stubbi/hermes-agent:1.4.2    30s
+# my-hermes   True    Ready   ghcr.io/paperclipinc/hermes-agent:1.4.2    30s
 ```
 
 For more involved scenarios, see [`examples/`](examples/).
@@ -1273,8 +1273,8 @@ minor release. Patch releases never change the supported matrix.
 |---|---|
 | Helm | `helm install hermes-operator hermes/hermes-operator` |
 | OLM / OperatorHub | `kubectl operator install hermes-operator` |
-| Plain manifests | `kubectl apply -f https://github.com/stubbi/hermes-operator/releases/latest/download/install.yaml` |
-| Container image | `ghcr.io/stubbi/hermes-operator:v1.0.0` (multi-arch, Cosign-signed, SBOM attested) |
+| Plain manifests | `kubectl apply -f https://github.com/paperclipinc/hermes-operator/releases/latest/download/install.yaml` |
+| Container image | `ghcr.io/paperclipinc/hermes-operator:v1.0.0` (multi-arch, Cosign-signed, SBOM attested) |
 
 ## Documentation
 
@@ -1404,7 +1404,7 @@ kubectl apply -n agents -f hermesinstance.yaml
 ```bash
 kubectl get hi -n agents
 # NAME        READY   PHASE   IMAGE                                AGE
-# minimal     True    Ready   ghcr.io/stubbi/hermes-agent:1.4.2    30s
+# minimal     True    Ready   ghcr.io/paperclipinc/hermes-agent:1.4.2    30s
 
 kubectl describe hi minimal -n agents | grep -A1 "Ready"
 # Type:   Ready
@@ -1442,7 +1442,7 @@ metadata:
   name: minimal
 spec:
   image:
-    repository: ghcr.io/stubbi/hermes-agent
+    repository: ghcr.io/paperclipinc/hermes-agent
     tag: "1.4.2"
   storage:
     persistence:
@@ -1563,7 +1563,7 @@ metadata:
   name: full-featured
 spec:
   image:
-    repository: ghcr.io/stubbi/hermes-agent
+    repository: ghcr.io/paperclipinc/hermes-agent
     tag: "1.4.2"
     imagePullPolicy: IfNotPresent
     imagePullSecrets:
@@ -1724,7 +1724,7 @@ spec:
   autoUpdate:
     enabled: true
     source:
-      registry: ghcr.io/stubbi/hermes-agent
+      registry: ghcr.io/paperclipinc/hermes-agent
       channel: "1.x"
     pollInterval: 1h
     rollback:
@@ -1750,7 +1750,7 @@ spec:
         effect: NoSchedule
   initContainers:
     - name: warm-cache
-      image: ghcr.io/stubbi/hermes-agent:1.4.2
+      image: ghcr.io/paperclipinc/hermes-agent:1.4.2
       command: ["sh", "-c", "echo warming cache && sleep 2"]
   sidecars:
     - name: log-shipper
@@ -1905,7 +1905,7 @@ metadata:
   name: multi-platform
 spec:
   image:
-    repository: ghcr.io/stubbi/hermes-agent
+    repository: ghcr.io/paperclipinc/hermes-agent
     tag: "1.4.2"
   storage:
     persistence:
@@ -2029,7 +2029,7 @@ metadata:
   name: honcho
 spec:
   image:
-    repository: ghcr.io/stubbi/hermes-agent
+    repository: ghcr.io/paperclipinc/hermes-agent
     tag: "1.4.2"
   storage:
     persistence:
@@ -2116,9 +2116,9 @@ kubectl apply -n agents -f hermesinstance.yaml
 ```bash
 kubectl get hi auto-update -n agents -w
 # NAME           READY   PHASE          IMAGE                                 AGE
-# auto-update    True    Ready          ghcr.io/stubbi/hermes-agent:1.4.2     2m
-# auto-update    False   Rolling        ghcr.io/stubbi/hermes-agent:1.4.2     3h
-# auto-update    True    Ready          ghcr.io/stubbi/hermes-agent:1.4.3     3h1m
+# auto-update    True    Ready          ghcr.io/paperclipinc/hermes-agent:1.4.2     2m
+# auto-update    False   Rolling        ghcr.io/paperclipinc/hermes-agent:1.4.2     3h
+# auto-update    True    Ready          ghcr.io/paperclipinc/hermes-agent:1.4.3     3h1m
 
 kubectl get hi auto-update -n agents \
   -o jsonpath='{.status.autoUpdate}' | jq
@@ -2142,7 +2142,7 @@ kubectl patch hi auto-update -n agents --type=merge -p '{
   "spec": {
     "autoUpdate": {
       "source": {
-        "registry": "ghcr.io/stubbi/hermes-agent",
+        "registry": "ghcr.io/paperclipinc/hermes-agent",
         "channel":  "broken-1.x"
       }
     }
@@ -2177,7 +2177,7 @@ metadata:
   name: auto-update
 spec:
   image:
-    repository: ghcr.io/stubbi/hermes-agent
+    repository: ghcr.io/paperclipinc/hermes-agent
     tag: "1.4.2"
   storage:
     persistence:
@@ -2195,7 +2195,7 @@ spec:
   autoUpdate:
     enabled: true
     source:
-      registry: ghcr.io/stubbi/hermes-agent
+      registry: ghcr.io/paperclipinc/hermes-agent
       channel: "1.x"
     pollInterval: 1h
     rollback:
@@ -2405,7 +2405,7 @@ metadata:
   name: backup-s3
 spec:
   image:
-    repository: ghcr.io/stubbi/hermes-agent
+    repository: ghcr.io/paperclipinc/hermes-agent
     tag: "1.4.2"
   storage:
     persistence:
@@ -2554,7 +2554,7 @@ metadata:
   name: migrated-from-sibling
 spec:
   image:
-    repository: ghcr.io/stubbi/hermes-agent
+    repository: ghcr.io/paperclipinc/hermes-agent
     tag: "1.4.2"
   storage:
     persistence:
@@ -2578,7 +2578,7 @@ metadata:
   name: migrated-from-backup
 spec:
   image:
-    repository: ghcr.io/stubbi/hermes-agent
+    repository: ghcr.io/paperclipinc/hermes-agent
     tag: "1.4.2"
   storage:
     persistence:
@@ -2763,7 +2763,7 @@ metadata:
   name: gitops-hermes
 spec:
   image:
-    repository: ghcr.io/stubbi/hermes-agent
+    repository: ghcr.io/paperclipinc/hermes-agent
     tag: "1.4.2"
   storage:
     persistence:
@@ -2860,14 +2860,14 @@ spec:
 YAML
 
 kubectl get hi defaulted -n agents -o jsonpath='{.spec.image}'
-# {"repository":"ghcr.io/stubbi/hermes-agent","tag":"1.4.2"}
+# {"repository":"ghcr.io/paperclipinc/hermes-agent","tag":"1.4.2"}
 ```
 
 ## What this defaults
 
 | Spec path | Default |
 |---|---|
-| `spec.image.repository` | `ghcr.io/stubbi/hermes-agent` |
+| `spec.image.repository` | `ghcr.io/paperclipinc/hermes-agent` |
 | `spec.image.tag` | `1.4.2` |
 | `spec.image.imagePullSecrets[]` | `[{name: ghcr-pull}]` |
 | `spec.storage.persistence.storageClassName` | `gp3` |
@@ -2894,7 +2894,7 @@ kubectl delete hcd cluster
 
 Existing `HermesInstance` resources are unaffected (their fields are
 already filled). New ones fall back to the operator's built-in fallback
-defaults (`ghcr.io/stubbi/hermes-agent:latest`, 10Gi default StorageClass,
+defaults (`ghcr.io/paperclipinc/hermes-agent:latest`, 10Gi default StorageClass,
 no SA annotations).
 ```
 
@@ -2907,7 +2907,7 @@ metadata:
   name: cluster
 spec:
   image:
-    repository: ghcr.io/stubbi/hermes-agent
+    repository: ghcr.io/paperclipinc/hermes-agent
     tag: "1.4.2"
     imagePullSecrets:
       - name: ghcr-pull
@@ -3462,7 +3462,7 @@ gh pr checkout <PR_NUMBER>
 Locate the auto-generated `## [1.0.0]` block at the top of the file. Replace it with the polished version below, preserving the commit hash links release-please inserted (you can re-derive them from the auto-generated text: keep the `[abc1234]` style links, just rearrange them).
 
 ```markdown
-## [1.0.0](https://github.com/stubbi/hermes-operator/releases/tag/v1.0.0) (2026-05-XX)
+## [1.0.0](https://github.com/paperclipinc/hermes-operator/releases/tag/v1.0.0) (2026-05-XX)
 
 First public release. The Kubernetes operator for
 [nousresearch/hermes-agent](https://github.com/nousresearch/hermes-agent),
@@ -3591,7 +3591,7 @@ gh run watch --repo stubbi/hermes-operator
 # Pick the most recent run on the v1.0.0 tag.
 ```
 
-Wait for all stages: `build` (binaries) → `docker` (multi-arch images for `ghcr.io/stubbi/hermes-operator` and `ghcr.io/stubbi/hermes-agent`) → `sign` (Cosign keyless OIDC against both images) → `sbom` (SPDX SBOM generated and attested) → `release` (GitHub Release published with binaries, checksums, SBOM, and `install.yaml` attached).
+Wait for all stages: `build` (binaries) → `docker` (multi-arch images for `ghcr.io/paperclipinc/hermes-operator` and `ghcr.io/paperclipinc/hermes-agent`) → `sign` (Cosign keyless OIDC against both images) → `sbom` (SPDX SBOM generated and attested) → `release` (GitHub Release published with binaries, checksums, SBOM, and `install.yaml` attached).
 
 - [ ] **Step 4: Verify artefacts**
 
@@ -3600,14 +3600,14 @@ Wait for all stages: `build` (binaries) → `docker` (multi-arch images for `ghc
 gh release view v1.0.0 --repo stubbi/hermes-operator | head -20
 
 # Image signatures verifiable.
-cosign verify ghcr.io/stubbi/hermes-operator:v1.0.0 \
-  --certificate-identity-regexp 'https://github.com/stubbi/hermes-operator/.+' \
+cosign verify ghcr.io/paperclipinc/hermes-operator:v1.0.0 \
+  --certificate-identity-regexp 'https://github.com/paperclipinc/hermes-operator/.+' \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
 
 # SBOM attestation present.
-cosign verify-attestation ghcr.io/stubbi/hermes-operator:v1.0.0 \
+cosign verify-attestation ghcr.io/paperclipinc/hermes-operator:v1.0.0 \
   --type spdxjson \
-  --certificate-identity-regexp 'https://github.com/stubbi/hermes-operator/.+' \
+  --certificate-identity-regexp 'https://github.com/paperclipinc/hermes-operator/.+' \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com \
   | jq -r '.payload' | base64 -d | jq '.predicate.Data | length'
 ```
@@ -3627,7 +3627,7 @@ release-please bumps both automatically per Plan 6's `release-please-config.json
 
 ```bash
 kubectl apply --dry-run=client \
-  -f https://github.com/stubbi/hermes-operator/releases/download/v1.0.0/install.yaml
+  -f https://github.com/paperclipinc/hermes-operator/releases/download/v1.0.0/install.yaml
 ```
 
 The dry-run should print every resource the install bundles without error.
@@ -3694,7 +3694,7 @@ After v1.0.0 ships, the dynamic badges already pick up the new release automatic
 
 - [ ] **Step 1: Visual sanity-check**
 
-Open https://github.com/stubbi/hermes-operator and confirm:
+Open https://github.com/paperclipinc/hermes-operator and confirm:
 
 - The "Release" badge shows `v1.0.0`.
 - The "CI" and "E2E" and "Conformance" badges are green.
@@ -3707,7 +3707,7 @@ Find these lines in the Quickstart section of `README.md`:
 
 ```yaml
   image:
-    repository: ghcr.io/stubbi/hermes-agent
+    repository: ghcr.io/paperclipinc/hermes-agent
     tag: "1.4.2"
 ```
 
@@ -3730,7 +3730,7 @@ Leave the `tag: "1.4.2"` of the agent image alone (that is decoupled from operat
 Insert immediately above the `## Quickstart` heading:
 
 ```markdown
-> **Latest release:** [v1.0.0](https://github.com/stubbi/hermes-operator/releases/tag/v1.0.0)
+> **Latest release:** [v1.0.0](https://github.com/paperclipinc/hermes-operator/releases/tag/v1.0.0)
 >: supports Kubernetes 1.28-1.32 and hermes-agent 1.x.
 ```
 
@@ -3771,7 +3771,7 @@ git checkout -b docs/launch-announcement
 
 ## TL;DR
 
-[`stubbi/hermes-operator`](https://github.com/stubbi/hermes-operator) v1.0.0
+[`stubbi/hermes-operator`](https://github.com/paperclipinc/hermes-operator) v1.0.0
 is out. It is a Kubernetes operator for
 [`nousresearch/hermes-agent`](https://github.com/nousresearch/hermes-agent),
 a Python-based self-improving multi-platform AI agent.
@@ -3817,15 +3817,15 @@ This is the single most important thing v1.0 does differently.
 
 ## Links
 
-- Repository: https://github.com/stubbi/hermes-operator
-- Release notes: https://github.com/stubbi/hermes-operator/releases/tag/v1.0.0
-- Design spec: [`docs/superpowers/specs/2026-05-12-hermes-operator-design.md`](https://github.com/stubbi/hermes-operator/blob/main/docs/superpowers/specs/2026-05-12-hermes-operator-design.md)
-- API reference: [`docs/api-reference.md`](https://github.com/stubbi/hermes-operator/blob/main/docs/api-reference.md)
-- Condition catalogue: [`docs/conditions.md`](https://github.com/stubbi/hermes-operator/blob/main/docs/conditions.md)
-- API versioning policy: [`docs/api-versioning.md`](https://github.com/stubbi/hermes-operator/blob/main/docs/api-versioning.md)
-- Deprecation policy: [`docs/deprecations.md`](https://github.com/stubbi/hermes-operator/blob/main/docs/deprecations.md)
-- Examples: [`examples/`](https://github.com/stubbi/hermes-operator/tree/main/examples)
-- Roadmap: [`ROADMAP.md`](https://github.com/stubbi/hermes-operator/blob/main/ROADMAP.md)
+- Repository: https://github.com/paperclipinc/hermes-operator
+- Release notes: https://github.com/paperclipinc/hermes-operator/releases/tag/v1.0.0
+- Design spec: [`docs/superpowers/specs/2026-05-12-hermes-operator-design.md`](https://github.com/paperclipinc/hermes-operator/blob/main/docs/superpowers/specs/2026-05-12-hermes-operator-design.md)
+- API reference: [`docs/api-reference.md`](https://github.com/paperclipinc/hermes-operator/blob/main/docs/api-reference.md)
+- Condition catalogue: [`docs/conditions.md`](https://github.com/paperclipinc/hermes-operator/blob/main/docs/conditions.md)
+- API versioning policy: [`docs/api-versioning.md`](https://github.com/paperclipinc/hermes-operator/blob/main/docs/api-versioning.md)
+- Deprecation policy: [`docs/deprecations.md`](https://github.com/paperclipinc/hermes-operator/blob/main/docs/deprecations.md)
+- Examples: [`examples/`](https://github.com/paperclipinc/hermes-operator/tree/main/examples)
+- Roadmap: [`ROADMAP.md`](https://github.com/paperclipinc/hermes-operator/blob/main/ROADMAP.md)
 
 ## Asking for help
 
@@ -4046,7 +4046,7 @@ auth):
 curl -fsSL https://api.github.com/repos/stubbi/hermes-operator | jq .private
 # false
 
-curl -fsSL https://github.com/stubbi/hermes-operator/releases/download/v1.0.0/install.yaml \
+curl -fsSL https://github.com/paperclipinc/hermes-operator/releases/download/v1.0.0/install.yaml \
   | head -3
 # (the install manifest renders without auth)
 ```
@@ -4057,7 +4057,7 @@ On a fresh kind cluster (no GHCR pull secret, no auth):
 
 ```bash
 kind create cluster --name hermes-launch-smoke
-kubectl apply -f https://github.com/stubbi/hermes-operator/releases/download/v1.0.0/install.yaml
+kubectl apply -f https://github.com/paperclipinc/hermes-operator/releases/download/v1.0.0/install.yaml
 kubectl wait -n hermes-operator deploy/hermes-operator-controller-manager \
   --for=condition=Available --timeout=300s
 kubectl apply -f https://raw.githubusercontent.com/stubbi/hermes-operator/v1.0.0/examples/minimal/hermesinstance.yaml \
@@ -4146,7 +4146,7 @@ references it claims to satisfy and a per-task delivery check.
       raw release-please commit-firehose) and acknowledges
       openclaw-operator with the specific lessons baked in.
 - [ ] **Task 19** `v1.0.0` tag exists; GoReleaser run succeeded;
-      Cosign verifies on `ghcr.io/stubbi/hermes-operator:v1.0.0`; SBOM
+      Cosign verifies on `ghcr.io/paperclipinc/hermes-operator:v1.0.0`; SBOM
       attestation present.
 - [ ] **Task 20** PRs against `k8s-operatorhub/community-operators` and
       `redhat-openshift-ecosystem/community-operators-prod` are open or
@@ -4205,14 +4205,14 @@ references it claims to satisfy and a per-task delivery check.
 - [ ] `helm install hermes-operator hermes/hermes-operator --version 1.0.0`
       works on a fresh kind 1.30 cluster.
 - [ ] `kubectl apply -f
-      https://github.com/stubbi/hermes-operator/releases/download/v1.0.0/install.yaml`
+      https://github.com/paperclipinc/hermes-operator/releases/download/v1.0.0/install.yaml`
       works on a fresh kind 1.30 cluster, without GHCR auth.
 - [ ] Every example under `examples/` applies on the kind cluster
       created above (some require Secrets you must create per the
       example README; that is acceptable).
 - [ ] The Grafana dashboard imports and all panels render against a
       Prometheus that scrapes the operator's ServiceMonitor.
-- [ ] `cosign verify ghcr.io/stubbi/hermes-operator:v1.0.0` succeeds
+- [ ] `cosign verify ghcr.io/paperclipinc/hermes-operator:v1.0.0` succeeds
       without local keys (keyless OIDC).
 - [ ] `kubectl describe hi minimal` shows the expected condition shape
       from `docs/conditions.md`.

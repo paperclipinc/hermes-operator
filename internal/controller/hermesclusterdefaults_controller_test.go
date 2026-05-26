@@ -1,5 +1,5 @@
 /*
-Copyright 2026 stubbi.
+Copyright 2026 Paperclip.inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 )
 
 var _ = Describe("HermesClusterDefaults controller", func() {
@@ -40,7 +40,7 @@ var _ = Describe("HermesClusterDefaults controller", func() {
 		hcd := &hermesv1.HermesClusterDefaults{
 			ObjectMeta: metav1.ObjectMeta{Name: "cluster"},
 			Spec: hermesv1.HermesClusterDefaultsSpec{
-				Image: hermesv1.ImageSpec{Repository: "ghcr.io/stubbi/hermes-agent", Tag: "1.0.0"},
+				Image: hermesv1.ImageSpec{Repository: "ghcr.io/paperclipinc/hermes-agent", Tag: "1.0.0"},
 			},
 		}
 		Expect(k8sClient.Create(ctx, hcd)).To(Succeed())

@@ -2,14 +2,14 @@
 
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg" alt="License"></a>
-  <a href="https://goreportcard.com/report/github.com/stubbi/hermes-operator"><img src="https://goreportcard.com/badge/github.com/stubbi/hermes-operator" alt="Go Report Card"></a>
-  <a href="https://github.com/stubbi/hermes-operator/actions/workflows/ci.yaml"><img src="https://github.com/stubbi/hermes-operator/actions/workflows/ci.yaml/badge.svg" alt="CI"></a>
-  <a href="https://github.com/stubbi/hermes-operator/actions/workflows/e2e.yaml"><img src="https://github.com/stubbi/hermes-operator/actions/workflows/e2e.yaml/badge.svg" alt="E2E"></a>
-  <a href="https://github.com/stubbi/hermes-operator/actions/workflows/conformance.yaml"><img src="https://github.com/stubbi/hermes-operator/actions/workflows/conformance.yaml/badge.svg" alt="Conformance"></a>
-  <a href="https://github.com/stubbi/hermes-operator/releases/latest"><img src="https://img.shields.io/github/v/release/stubbi/hermes-operator" alt="Release"></a>
+  <a href="https://goreportcard.com/report/github.com/paperclipinc/hermes-operator"><img src="https://goreportcard.com/badge/github.com/paperclipinc/hermes-operator" alt="Go Report Card"></a>
+  <a href="https://github.com/paperclipinc/hermes-operator/actions/workflows/ci.yaml"><img src="https://github.com/paperclipinc/hermes-operator/actions/workflows/ci.yaml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/paperclipinc/hermes-operator/actions/workflows/e2e.yaml"><img src="https://github.com/paperclipinc/hermes-operator/actions/workflows/e2e.yaml/badge.svg" alt="E2E"></a>
+  <a href="https://github.com/paperclipinc/hermes-operator/actions/workflows/conformance.yaml"><img src="https://github.com/paperclipinc/hermes-operator/actions/workflows/conformance.yaml/badge.svg" alt="Conformance"></a>
+  <a href="https://github.com/paperclipinc/hermes-operator/releases/latest"><img src="https://img.shields.io/github/v/release/paperclipinc/hermes-operator" alt="Release"></a>
   <a href="#supported-kubernetes-versions"><img src="https://img.shields.io/badge/kubernetes-1.28--1.32-blue" alt="Kubernetes versions"></a>
-  <a href="go.mod"><img src="https://img.shields.io/github/go-mod/go-version/stubbi/hermes-operator" alt="Go version"></a>
-  <a href="https://api.securityscorecards.dev/projects/github.com/stubbi/hermes-operator"><img src="https://api.securityscorecards.dev/projects/github.com/stubbi/hermes-operator/badge" alt="OpenSSF Scorecard"></a>
+  <a href="go.mod"><img src="https://img.shields.io/github/go-mod/go-version/paperclipinc/hermes-operator" alt="Go version"></a>
+  <a href="https://api.securityscorecards.dev/projects/github.com/paperclipinc/hermes-operator"><img src="https://api.securityscorecards.dev/projects/github.com/paperclipinc/hermes-operator/badge" alt="OpenSSF Scorecard"></a>
   <a href="https://artifacthub.io/packages/search?repo=hermes-operator"><img src="https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/hermes-operator" alt="Artifact Hub"></a>
 </p>
 
@@ -30,7 +30,7 @@ in place from day one: no v0.x grind.
 
 ```bash
 # 1. Install the CRDs and operator via Helm.
-helm repo add hermes https://stubbi.github.io/hermes-operator
+helm repo add hermes https://paperclipinc.github.io/hermes-operator
 helm install hermes-operator hermes/hermes-operator \
   -n hermes-operator --create-namespace
 
@@ -42,7 +42,7 @@ metadata:
   name: my-hermes
 spec:
   image:
-    repository: ghcr.io/stubbi/hermes-agent
+    repository: ghcr.io/paperclipinc/hermes-agent
     tag: "1.4.2"
   storage:
     persistence:
@@ -53,7 +53,7 @@ YAML
 # 3. Watch it converge.
 kubectl get hi -n agents -w
 # NAME        READY   PHASE   IMAGE                                AGE
-# my-hermes   True    Ready   ghcr.io/stubbi/hermes-agent:1.4.2    30s
+# my-hermes   True    Ready   ghcr.io/paperclipinc/hermes-agent:1.4.2    30s
 ```
 
 For more involved scenarios, see [`examples/`](examples/).
@@ -211,8 +211,8 @@ minor release. Patch releases never change the supported matrix.
 |---|---|
 | Helm | `helm install hermes-operator hermes/hermes-operator` |
 | OLM / OperatorHub | `kubectl operator install hermes-operator` |
-| Plain manifests | `kubectl apply -f https://github.com/stubbi/hermes-operator/releases/latest/download/install.yaml` |
-| Container image | `ghcr.io/stubbi/hermes-operator:v1.0.0` (multi-arch, Cosign-signed, SBOM attested) |
+| Plain manifests | `kubectl apply -f https://github.com/paperclipinc/hermes-operator/releases/latest/download/install.yaml` |
+| Container image | `ghcr.io/paperclipinc/hermes-operator:v1.0.0` (multi-arch, Cosign-signed, SBOM attested) |
 
 ## Documentation
 

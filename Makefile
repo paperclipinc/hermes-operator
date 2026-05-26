@@ -123,7 +123,7 @@ docker-buildx: ## Build and push docker image for the manager for cross-platform
 
 # -------- hermes-agent image (Plan 3) --------
 
-AGENT_IMAGE         ?= ghcr.io/stubbi/hermes-agent
+AGENT_IMAGE         ?= ghcr.io/paperclipinc/hermes-agent
 HERMES_VERSION      ?= v0.13.0
 AGENT_IMAGE_PLATFORMS ?= linux/amd64,linux/arm64
 
@@ -175,7 +175,7 @@ build-installer: manifests generate kustomize ## Generate a consolidated YAML wi
 .PHONY: installer
 installer: manifests generate kustomize ## Emit dist/install.yaml for plain kubectl apply.
 	mkdir -p dist
-	cd config/manager && $(KUSTOMIZE) edit set image controller=ghcr.io/stubbi/hermes-operator:$${VERSION:-latest}
+	cd config/manager && $(KUSTOMIZE) edit set image controller=ghcr.io/paperclipinc/hermes-operator:$${VERSION:-latest}
 	$(KUSTOMIZE) build config/default > dist/install.yaml
 	@echo "Wrote dist/install.yaml ($$(wc -l < dist/install.yaml) lines)"
 
@@ -357,8 +357,8 @@ sync-bundle-rbac-check: ## Verify the bundle CSV RBAC is in sync (CI use).
 
 ##@ Bundle
 
-BUNDLE_IMG ?= ghcr.io/stubbi/hermes-operator-bundle:$(shell git describe --tags --always)
-CATALOG_IMG ?= ghcr.io/stubbi/hermes-operator-catalog:$(shell git describe --tags --always)
+BUNDLE_IMG ?= ghcr.io/paperclipinc/hermes-operator-bundle:$(shell git describe --tags --always)
+CATALOG_IMG ?= ghcr.io/paperclipinc/hermes-operator-catalog:$(shell git describe --tags --always)
 
 OPERATOR_SDK ?= $(LOCALBIN)/operator-sdk
 OPERATOR_SDK_VERSION ?= v1.38.0
@@ -416,14 +416,14 @@ scorecard: operator-sdk ## Run operator-sdk scorecard tests (requires a kind clu
 
 .PHONY: verify-signing
 verify-signing: ## Verify the latest published release is Cosign-signed and SBOM-attested.
-	@VERSION=$$(gh release view --repo stubbi/hermes-operator --json tagName --jq .tagName); \
-	IMAGE="ghcr.io/stubbi/hermes-operator:$${VERSION}"; \
+	@VERSION=$$(gh release view --repo paperclipinc/hermes-operator --json tagName --jq .tagName); \
+	IMAGE="ghcr.io/paperclipinc/hermes-operator:$${VERSION}"; \
 	echo "Verifying $${IMAGE}..."; \
 	cosign verify "$${IMAGE}" \
-	  --certificate-identity-regexp 'https://github.com/stubbi/hermes-operator/.github/workflows/.*' \
+	  --certificate-identity-regexp 'https://github.com/paperclipinc/hermes-operator/.github/workflows/.*' \
 	  --certificate-oidc-issuer https://token.actions.githubusercontent.com >/dev/null || { echo "::error::signature verification failed for $${IMAGE}"; exit 1; }; \
 	echo "Verifying SBOM attestation..."; \
 	cosign verify-attestation "$${IMAGE}" --type spdxjson \
-	  --certificate-identity-regexp 'https://github.com/stubbi/hermes-operator/.github/workflows/.*' \
+	  --certificate-identity-regexp 'https://github.com/paperclipinc/hermes-operator/.github/workflows/.*' \
 	  --certificate-oidc-issuer https://token.actions.githubusercontent.com >/dev/null || { echo "::error::SBOM attestation verification failed for $${IMAGE}"; exit 1; }; \
 	echo "OK: $${IMAGE} is signed and SBOM-attested."

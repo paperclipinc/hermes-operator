@@ -1,5 +1,5 @@
 /*
-Copyright 2026 stubbi.
+Copyright 2026 Paperclip.inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 )
 
 var _ = Describe("AutoUpdate sub-controller", func() {
@@ -56,14 +56,14 @@ var _ = Describe("AutoUpdate sub-controller", func() {
 			},
 			Spec: hermesv1.HermesInstanceSpec{
 				Image: hermesv1.ImageSpec{
-					Repository: "ghcr.io/stubbi/hermes-agent",
+					Repository: "ghcr.io/paperclipinc/hermes-agent",
 					Tag:        currentTag,
 				},
 				AutoUpdate: hermesv1.AutoUpdateSpec{
 					Enabled:      enabled,
 					PollInterval: pollInterval,
 					Source: hermesv1.AutoUpdateSourceSpec{
-						Registry: "ghcr.io/stubbi/hermes-agent",
+						Registry: "ghcr.io/paperclipinc/hermes-agent",
 					},
 				},
 			},
@@ -72,7 +72,7 @@ var _ = Describe("AutoUpdate sub-controller", func() {
 
 	AfterEach(func() {
 		// Reset fakeOCI tags to initial state
-		fakeOCI.SetTags("ghcr.io/stubbi/hermes-agent", []string{"1.0.0", "1.0.1", "1.1.0"})
+		fakeOCI.SetTags("ghcr.io/paperclipinc/hermes-agent", []string{"1.0.0", "1.0.1", "1.1.0"})
 
 		inst := &hermesv1.HermesInstance{}
 		if err := k8sClient.Get(ctx, types.NamespacedName{Name: auName, Namespace: namespace}, inst); err == nil {
@@ -91,7 +91,7 @@ var _ = Describe("AutoUpdate sub-controller", func() {
 	Context("Idle when not enabled", func() {
 		It("does not set targetTag when autoUpdate.enabled=false", func() {
 			// Set fake registry to have a much newer tag
-			fakeOCI.SetTags("ghcr.io/stubbi/hermes-agent", []string{"1.0.0", "2.0.0", "3.0.0"})
+			fakeOCI.SetTags("ghcr.io/paperclipinc/hermes-agent", []string{"1.0.0", "2.0.0", "3.0.0"})
 
 			inst := newAutoUpdateInstance(false, "1.0.0")
 			Expect(k8sClient.Create(ctx, inst)).To(Succeed())
@@ -116,7 +116,7 @@ var _ = Describe("AutoUpdate sub-controller", func() {
 	Context("Roll forward when newer tag available", func() {
 		It("sets status.autoUpdate.targetTag when fake registry returns a higher tag", func() {
 			// Current tag is 1.0.0, registry has 1.1.0
-			fakeOCI.SetTags("ghcr.io/stubbi/hermes-agent", []string{"1.0.0", "1.1.0"})
+			fakeOCI.SetTags("ghcr.io/paperclipinc/hermes-agent", []string{"1.0.0", "1.1.0"})
 
 			inst := newAutoUpdateInstance(true, "1.0.0")
 			// Use a short poll interval so the controller checks quickly
@@ -147,7 +147,7 @@ var _ = Describe("AutoUpdate sub-controller", func() {
 					return false
 				}
 				if len(sts.Spec.Template.Spec.Containers) > 0 {
-					return sts.Spec.Template.Spec.Containers[0].Image == "ghcr.io/stubbi/hermes-agent:1.1.0"
+					return sts.Spec.Template.Spec.Containers[0].Image == "ghcr.io/paperclipinc/hermes-agent:1.1.0"
 				}
 				return false
 			}, timeout, interval).Should(BeTrue(),

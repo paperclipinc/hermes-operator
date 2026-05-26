@@ -12,7 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 )
 
 var _ = Describe("HermesSelfConfig: GitOps coexistence (SSA)", func() {
@@ -43,7 +43,7 @@ var _ = Describe("HermesSelfConfig: GitOps coexistence (SSA)", func() {
 			ObjectMeta: metav1.ObjectMeta{Name: ssaName, Namespace: ssaNS},
 			Spec: hermesv1.HermesInstanceSpec{
 				Image: hermesv1.ImageSpec{
-					Repository: "ghcr.io/stubbi/hermes-agent",
+					Repository: "ghcr.io/paperclipinc/hermes-agent",
 					Tag:        "v1.0.0",
 				},
 				SelfConfigure: hermesv1.SelfConfigureSpec{

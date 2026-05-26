@@ -1,6 +1,6 @@
 # hermes-agent image build context
 
-The operator owns `ghcr.io/stubbi/hermes-agent`. Upstream
+The operator owns `ghcr.io/paperclipinc/hermes-agent`. Upstream
 (`nousresearch/hermes-agent`) ships only a Python package, so this directory
 packages it into a multi-arch container that the operator can pull by default.
 

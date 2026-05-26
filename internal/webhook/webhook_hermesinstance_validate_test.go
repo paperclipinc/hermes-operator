@@ -11,7 +11,7 @@ import (
 	client "sigs.k8s.io/controller-runtime/pkg/client"
 	fake "sigs.k8s.io/controller-runtime/pkg/client/fake"
 
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 )
 
 func TestValidator_DenyEmptyImageRepository(t *testing.T) {
@@ -106,7 +106,7 @@ func TestValidator_AllowHappyPath(t *testing.T) {
 	inst := &hermesv1.HermesInstance{
 		ObjectMeta: metav1.ObjectMeta{Name: "demo"},
 		Spec: hermesv1.HermesInstanceSpec{
-			Image:   hermesv1.ImageSpec{Repository: "ghcr.io/stubbi/hermes-agent"},
+			Image:   hermesv1.ImageSpec{Repository: "ghcr.io/paperclipinc/hermes-agent"},
 			Storage: hermesv1.StorageSpec{Persistence: hermesv1.PersistenceSpec{Size: "1Gi"}},
 		},
 	}

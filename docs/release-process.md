@@ -8,7 +8,7 @@
 See Plan 6, Task 1. Summary:
 
 - Repository secret `RELEASE_PLEASE_TOKEN` is a classic PAT with `repo` +
-  `workflow` scopes on `stubbi/hermes-operator`.
+  `workflow` scopes on `paperclipinc/hermes-operator`.
 - Workflow permissions: default-write enabled.
 - Packages: write enabled.
 
@@ -43,7 +43,7 @@ already-published releases).
    - SBOM uploaded as a release asset
    - Release is flipped from draft → published (via the PAT, so the
      `release.published` event fires)
-   - Helm chart is packaged and pushed to `oci://ghcr.io/stubbi/charts`
+   - Helm chart is packaged and pushed to `oci://ghcr.io/paperclipinc/charts`
 6. **operatorhub-submit.yaml** fires on the published-release event:
    - Forks `k8s-operatorhub/community-operators`, creates a branch with the
      new bundle, opens a PR
@@ -86,8 +86,8 @@ git push origin vX.Y.Z   # uses your local git creds (not GHA's GITHUB_TOKEN)
 
 ```bash
 make verify-signing       # uses gh release view to find the latest tag
-cosign verify ghcr.io/stubbi/hermes-operator:vX.Y.Z \
-  --certificate-identity-regexp 'https://github.com/stubbi/hermes-operator/.github/workflows/.*' \
+cosign verify ghcr.io/paperclipinc/hermes-operator:vX.Y.Z \
+  --certificate-identity-regexp 'https://github.com/paperclipinc/hermes-operator/.github/workflows/.*' \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
 ```
 
@@ -96,19 +96,19 @@ See `docs/security/signing.md` for the full verification ritual.
 ## What ships with each release
 
 - Multi-arch (linux/amd64 + linux/arm64) operator image:
-  `ghcr.io/stubbi/hermes-operator:vX.Y.Z` and `:X.Y` and `:latest`
+  `ghcr.io/paperclipinc/hermes-operator:vX.Y.Z` and `:X.Y` and `:latest`
 - Multi-arch agent image:
-  `ghcr.io/stubbi/hermes-agent:vX.Y.Z` (built by a separate hermes-agent
+  `ghcr.io/paperclipinc/hermes-agent:vX.Y.Z` (built by a separate hermes-agent
   release; the operator's `appVersion` doesn't pin agent versions:
   `spec.image.tag` does)
 - OLM bundle image:
-  `ghcr.io/stubbi/hermes-operator-bundle:vX.Y.Z`
+  `ghcr.io/paperclipinc/hermes-operator-bundle:vX.Y.Z`
 - Helm chart (OCI):
-  `oci://ghcr.io/stubbi/charts/hermes-operator:X.Y.Z`
+  `oci://ghcr.io/paperclipinc/charts/hermes-operator:X.Y.Z`
 - Plain manifests:
-  `https://github.com/stubbi/hermes-operator/releases/download/vX.Y.Z/install.yaml`
+  `https://github.com/paperclipinc/hermes-operator/releases/download/vX.Y.Z/install.yaml`
 - SBOM:
-  `https://github.com/stubbi/hermes-operator/releases/download/vX.Y.Z/sbom.spdx.json`
+  `https://github.com/paperclipinc/hermes-operator/releases/download/vX.Y.Z/sbom.spdx.json`
 - Cosign signature + SBOM attestation against every image digest
 - OperatorHub PRs (auto-opened): community-operators + community-operators-prod
 

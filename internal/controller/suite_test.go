@@ -1,5 +1,5 @@
 /*
-Copyright 2026 stubbi.
+Copyright 2026 Paperclip.inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -34,8 +34,8 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
-	"github.com/stubbi/hermes-operator/internal/oci"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
+	"github.com/paperclipinc/hermes-operator/internal/oci"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -111,7 +111,7 @@ var _ = BeforeSuite(func() {
 		Recorder: k8sManager.GetEventRecorderFor("hermes-operator"),
 	}
 	fakeReg := oci.NewFake()
-	fakeReg.SetTags("ghcr.io/stubbi/hermes-agent", []string{"1.0.0", "1.0.1", "1.1.0"})
+	fakeReg.SetTags("ghcr.io/paperclipinc/hermes-agent", []string{"1.0.0", "1.0.1", "1.1.0"})
 	autoUpdateSub := &AutoUpdateReconciler{
 		Client:   k8sManager.GetClient(),
 		Scheme:   k8sManager.GetScheme(),

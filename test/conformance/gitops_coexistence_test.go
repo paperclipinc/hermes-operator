@@ -1,5 +1,5 @@
 /*
-Copyright 2026 stubbi. Apache-2.0.
+Copyright 2026 Paperclip.inc. Apache-2.0.
 
 This file is a placeholder for the full Plan-6 conformance suite. Plan 4
 already proves SSA-based GitOps coexistence in

@@ -13,7 +13,7 @@
 **Spec reference:** `docs/superpowers/specs/2026-05-12-hermes-operator-design.md` §9 (distribution), §10 (testing strategy), §11 (v1 stability commitments).
 
 **Manual one-time setup the user owns (documented under Task 1):**
-- Create a classic GitHub PAT named `RELEASE_PLEASE_TOKEN` with `repo` scope on `stubbi/hermes-operator` and store it as a repository secret named `RELEASE_PLEASE_TOKEN`. Required because tags created by `GITHUB_TOKEN` do not fire downstream workflows.
+- Create a classic GitHub PAT named `RELEASE_PLEASE_TOKEN` with `repo` scope on `paperclipinc/hermes-operator` and store it as a repository secret named `RELEASE_PLEASE_TOKEN`. Required because tags created by `GITHUB_TOKEN` do not fire downstream workflows.
 - Confirm `id-token: write` is available on the repo (default for public repos, must be enabled in org settings for private).
 
 ---
@@ -101,19 +101,19 @@ In a browser:
 - [ ] **Step 2: Store as repository secret**
 
 ```bash
-gh secret set RELEASE_PLEASE_TOKEN --repo stubbi/hermes-operator
+gh secret set RELEASE_PLEASE_TOKEN --repo paperclipinc/hermes-operator
 # Paste token at prompt.
 ```
-Expected: `✓ Set Actions secret RELEASE_PLEASE_TOKEN for stubbi/hermes-operator`.
+Expected: `✓ Set Actions secret RELEASE_PLEASE_TOKEN for paperclipinc/hermes-operator`.
 
 - [ ] **Step 3: Verify `id-token: write` is permitted**
 
 ```bash
-gh api repos/stubbi/hermes-operator/actions/permissions/workflow | jq .default_workflow_permissions
+gh api repos/paperclipinc/hermes-operator/actions/permissions/workflow | jq .default_workflow_permissions
 ```
 Expected: `"write"`. If `"read"`, run:
 ```bash
-gh api -X PUT repos/stubbi/hermes-operator/actions/permissions/workflow \
+gh api -X PUT repos/paperclipinc/hermes-operator/actions/permissions/workflow \
   -f default_workflow_permissions=write \
   -F can_approve_pull_request_reviews=true
 ```
@@ -121,7 +121,7 @@ gh api -X PUT repos/stubbi/hermes-operator/actions/permissions/workflow \
 - [ ] **Step 4: Verify GHCR write is on**
 
 ```bash
-gh api repos/stubbi/hermes-operator --jq '.has_packages'
+gh api repos/paperclipinc/hermes-operator --jq '.has_packages'
 ```
 Expected: `true`. If `false`, enable packages on the repo settings page (admin-only).
 
@@ -219,7 +219,7 @@ Why each extra-file:
 - `Chart.yaml/$.appVersion`: operator image tag the chart deploys.
 - `values.yaml/$.image.tag`: default image tag if a user doesn't override.
 - CSV `metadata.name`: must be `hermes-operator.vX.Y.Z` per OLM convention; release-please rewrites the entire value to match.
-- CSV `metadata.annotations.containerImage`: `ghcr.io/stubbi/hermes-operator:vX.Y.Z` shown in OperatorHub UI.
+- CSV `metadata.annotations.containerImage`: `ghcr.io/paperclipinc/hermes-operator:vX.Y.Z` shown in OperatorHub UI.
 - CSV `spec.version`: the OLM-visible semver (without `v` prefix).
 
 - [ ] **Step 2: Write `.release-please-manifest.json`**
@@ -390,7 +390,7 @@ dockers_v2:
     ids:
       - manager
     images:
-      - "ghcr.io/stubbi/hermes-operator"
+      - "ghcr.io/paperclipinc/hermes-operator"
     tags:
       - "{{ .Tag }}"
       - "{{ .Major }}.{{ .Minor }}"
@@ -441,7 +441,7 @@ release:
   draft: true
   replace_existing_artifacts: true
   github:
-    owner: stubbi
+    owner: paperclipinc
     name: hermes-operator
   extra_files:
     - glob: dist/install.yaml
@@ -662,7 +662,7 @@ Append to `Makefile`:
 .PHONY: installer
 installer: manifests generate kustomize ## Emit dist/install.yaml for plain kubectl apply.
 	mkdir -p dist
-	cd config/manager && $(KUSTOMIZE) edit set image controller=ghcr.io/stubbi/hermes-operator:$${VERSION:-latest}
+	cd config/manager && $(KUSTOMIZE) edit set image controller=ghcr.io/paperclipinc/hermes-operator:$${VERSION:-latest}
 	$(KUSTOMIZE) build config/default > dist/install.yaml
 	@echo "Wrote dist/install.yaml ($$(wc -l < dist/install.yaml) lines)"
 ```
@@ -736,7 +736,7 @@ annotations:
 
 ```yaml
 reviewers:
-  - stubbi
+  - paperclipinc
 updateGraph: semver-mode
 ```
 
@@ -846,10 +846,10 @@ metadata:
   annotations:
     capabilities: "Auto Pilot"
     categories: "AI/Machine Learning, Developer Tools, Application Runtime"
-    containerImage: ghcr.io/stubbi/hermes-operator:v0.1.0
+    containerImage: ghcr.io/paperclipinc/hermes-operator:v0.1.0
     createdAt: "2026-05-12T00:00:00Z"
-    support: stubbi
-    repository: https://github.com/stubbi/hermes-operator
+    support: paperclipinc
+    repository: https://github.com/paperclipinc/hermes-operator
     description: "A production-grade Kubernetes operator for deploying and managing nousresearch/hermes-agent: a Python-based self-improving multi-platform AI agent."
     alm-examples: |-
       [
@@ -858,7 +858,7 @@ metadata:
           "kind": "HermesInstance",
           "metadata": { "name": "demo", "namespace": "default" },
           "spec": {
-            "image": { "repository": "ghcr.io/stubbi/hermes-agent", "tag": "1.0.0" },
+            "image": { "repository": "ghcr.io/paperclipinc/hermes-agent", "tag": "1.0.0" },
             "storage": { "persistence": { "enabled": true, "size": "10Gi" } },
             "envFrom": [{ "secretRef": { "name": "hermes-api-keys" } }]
           }
@@ -868,7 +868,7 @@ metadata:
           "kind": "HermesInstance",
           "metadata": { "name": "production", "namespace": "hermes" },
           "spec": {
-            "image": { "repository": "ghcr.io/stubbi/hermes-agent", "tag": "1.0.0" },
+            "image": { "repository": "ghcr.io/paperclipinc/hermes-agent", "tag": "1.0.0" },
             "resources": {
               "requests": { "cpu": "500m", "memory": "1Gi" },
               "limits":   { "cpu": "2",    "memory": "4Gi" }
@@ -897,7 +897,7 @@ metadata:
             },
             "autoUpdate": {
               "enabled": true,
-              "source": { "registry": "ghcr.io/stubbi/hermes-agent", "channel": "1.x" },
+              "source": { "registry": "ghcr.io/paperclipinc/hermes-agent", "channel": "1.x" },
               "rollback": { "enabled": true, "probeFailureThreshold": 3 }
             }
           }
@@ -918,7 +918,7 @@ metadata:
           "kind": "HermesClusterDefaults",
           "metadata": { "name": "cluster" },
           "spec": {
-            "image": { "repository": "ghcr.io/stubbi/hermes-agent", "tag": "1.0.0" },
+            "image": { "repository": "ghcr.io/paperclipinc/hermes-agent", "tag": "1.0.0" },
             "storage": { "storageClassName": "gp3", "size": "10Gi" },
             "observability": { "serviceMonitor": { "enabled": true } },
             "networking": { "networkPolicy": { "enabled": true } }
@@ -1023,15 +1023,15 @@ spec:
     - name: Jannes Stubbemann
       email: jannes@aqora.io
   provider:
-    name: stubbi
-    url: https://github.com/stubbi/hermes-operator
+    name: paperclipinc
+    url: https://github.com/paperclipinc/hermes-operator
   links:
     - name: GitHub Repository
-      url: https://github.com/stubbi/hermes-operator
+      url: https://github.com/paperclipinc/hermes-operator
     - name: API Reference
-      url: https://github.com/stubbi/hermes-operator/blob/main/docs/api-reference.md
+      url: https://github.com/paperclipinc/hermes-operator/blob/main/docs/api-reference.md
     - name: Changelog
-      url: https://github.com/stubbi/hermes-operator/blob/main/CHANGELOG.md
+      url: https://github.com/paperclipinc/hermes-operator/blob/main/CHANGELOG.md
   installModes:
     - type: OwnNamespace
       supported: true
@@ -1043,9 +1043,9 @@ spec:
       supported: true
   relatedImages:
     - name: hermes-operator
-      image: ghcr.io/stubbi/hermes-operator:v0.1.0
+      image: ghcr.io/paperclipinc/hermes-operator:v0.1.0
     - name: hermes-agent
-      image: ghcr.io/stubbi/hermes-agent:latest
+      image: ghcr.io/paperclipinc/hermes-agent:latest
   customresourcedefinitions:
     owned:
       - name: hermesinstances.hermes.agent
@@ -1279,7 +1279,7 @@ spec:
                 terminationGracePeriodSeconds: 10
                 containers:
                   - name: manager
-                    image: ghcr.io/stubbi/hermes-operator:v0.1.0
+                    image: ghcr.io/paperclipinc/hermes-operator:v0.1.0
                     command:
                       - /manager
                     args:
@@ -1435,8 +1435,8 @@ Append to `Makefile`:
 ```makefile
 ##@ Bundle
 
-BUNDLE_IMG ?= ghcr.io/stubbi/hermes-operator-bundle:$(shell git describe --tags --always)
-CATALOG_IMG ?= ghcr.io/stubbi/hermes-operator-catalog:$(shell git describe --tags --always)
+BUNDLE_IMG ?= ghcr.io/paperclipinc/hermes-operator-bundle:$(shell git describe --tags --always)
+CATALOG_IMG ?= ghcr.io/paperclipinc/hermes-operator-catalog:$(shell git describe --tags --always)
 
 OPERATOR_SDK ?= $(LOCALBIN)/operator-sdk
 OPERATOR_SDK_VERSION ?= v1.38.0
@@ -1565,7 +1565,7 @@ jobs:
           # Copy and version the CSV.
           sed \
             -e "s/hermes-operator\.v[0-9]\+\.[0-9]\+\.[0-9]\+/hermes-operator.v${VERSION}/g" \
-            -e "s|ghcr.io/stubbi/hermes-operator:v[0-9]\+\.[0-9]\+\.[0-9]\+|ghcr.io/stubbi/hermes-operator:${TAG}|g" \
+            -e "s|ghcr.io/paperclipinc/hermes-operator:v[0-9]\+\.[0-9]\+\.[0-9]\+|ghcr.io/paperclipinc/hermes-operator:${TAG}|g" \
             -e "s/createdAt: .*/createdAt: \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"/" \
             -e "s/^  version: [0-9]\+\.[0-9]\+\.[0-9]\+/  version: ${VERSION}/" \
             bundle/manifests/hermes-operator.clusterserviceversion.yaml \
@@ -1621,14 +1621,14 @@ jobs:
           ### Update to hermes-operator
 
           **Version:** ${VERSION}
-          **Operator:** [Hermes Kubernetes Operator](https://github.com/stubbi/hermes-operator)
+          **Operator:** [Hermes Kubernetes Operator](https://github.com/paperclipinc/hermes-operator)
 
           #### Changes
-          See [release notes](https://github.com/stubbi/hermes-operator/releases/tag/v${VERSION}).
+          See [release notes](https://github.com/paperclipinc/hermes-operator/releases/tag/v${VERSION}).
 
           #### Testing
           - CI tests + nightly conformance suite pass on the source repository
-          - Container image is published and signed at \`ghcr.io/stubbi/hermes-operator:v${VERSION}\`
+          - Container image is published and signed at \`ghcr.io/paperclipinc/hermes-operator:v${VERSION}\`
           - SBOM attested at the same digest (verify with \`cosign verify-attestation\`)
           EOF
           )"
@@ -1661,7 +1661,7 @@ jobs:
           mkdir -p "${BUNDLE_DIR}/manifests" "${BUNDLE_DIR}/metadata"
           sed \
             -e "s/hermes-operator\.v[0-9]\+\.[0-9]\+\.[0-9]\+/hermes-operator.v${VERSION}/g" \
-            -e "s|ghcr.io/stubbi/hermes-operator:v[0-9]\+\.[0-9]\+\.[0-9]\+|ghcr.io/stubbi/hermes-operator:${TAG}|g" \
+            -e "s|ghcr.io/paperclipinc/hermes-operator:v[0-9]\+\.[0-9]\+\.[0-9]\+|ghcr.io/paperclipinc/hermes-operator:${TAG}|g" \
             -e "s/createdAt: .*/createdAt: \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"/" \
             -e "s/^  version: [0-9]\+\.[0-9]\+\.[0-9]\+/  version: ${VERSION}/" \
             bundle/manifests/hermes-operator.clusterserviceversion.yaml \
@@ -1697,7 +1697,7 @@ jobs:
               --repo redhat-openshift-ecosystem/community-operators-prod \
               --head "${FORK_OWNER}:${BRANCH}" \
               --title "operator hermes-operator (${VERSION})" \
-              --body "Release ${VERSION}. See https://github.com/stubbi/hermes-operator/releases/tag/v${VERSION}."
+              --body "Release ${VERSION}. See https://github.com/paperclipinc/hermes-operator/releases/tag/v${VERSION}."
           fi
 ```
 
@@ -1730,15 +1730,15 @@ Append to `Makefile`:
 ```makefile
 .PHONY: verify-signing
 verify-signing: ## Verify the latest published release is Cosign-signed and SBOM-attested.
-	@VERSION=$$(gh release view --repo stubbi/hermes-operator --json tagName --jq .tagName); \
-	IMAGE="ghcr.io/stubbi/hermes-operator:$${VERSION}"; \
+	@VERSION=$$(gh release view --repo paperclipinc/hermes-operator --json tagName --jq .tagName); \
+	IMAGE="ghcr.io/paperclipinc/hermes-operator:$${VERSION}"; \
 	echo "Verifying $${IMAGE}..."; \
 	cosign verify "$${IMAGE}" \
-	  --certificate-identity-regexp 'https://github.com/stubbi/hermes-operator/.github/workflows/.*' \
+	  --certificate-identity-regexp 'https://github.com/paperclipinc/hermes-operator/.github/workflows/.*' \
 	  --certificate-oidc-issuer https://token.actions.githubusercontent.com >/dev/null || { echo "::error::signature verification failed for $${IMAGE}"; exit 1; }; \
 	echo "Verifying SBOM attestation..."; \
 	cosign verify-attestation "$${IMAGE}" --type spdxjson \
-	  --certificate-identity-regexp 'https://github.com/stubbi/hermes-operator/.github/workflows/.*' \
+	  --certificate-identity-regexp 'https://github.com/paperclipinc/hermes-operator/.github/workflows/.*' \
 	  --certificate-oidc-issuer https://token.actions.githubusercontent.com >/dev/null || { echo "::error::SBOM attestation verification failed for $${IMAGE}"; exit 1; }; \
 	echo "OK: $${IMAGE} is signed and SBOM-attested."
 ```
@@ -1761,8 +1761,8 @@ the canonical reference; `SECURITY.md` (top-level) points here.
 ## Verify an image signature
 
 ```bash
-cosign verify ghcr.io/stubbi/hermes-operator:vX.Y.Z \
-  --certificate-identity-regexp 'https://github.com/stubbi/hermes-operator/.github/workflows/.*' \
+cosign verify ghcr.io/paperclipinc/hermes-operator:vX.Y.Z \
+  --certificate-identity-regexp 'https://github.com/paperclipinc/hermes-operator/.github/workflows/.*' \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
 ```
 
@@ -1773,20 +1773,20 @@ tampered.
 ## Verify the SBOM attestation
 
 ```bash
-cosign verify-attestation ghcr.io/stubbi/hermes-operator:vX.Y.Z --type spdxjson \
-  --certificate-identity-regexp 'https://github.com/stubbi/hermes-operator/.github/workflows/.*' \
+cosign verify-attestation ghcr.io/paperclipinc/hermes-operator:vX.Y.Z --type spdxjson \
+  --certificate-identity-regexp 'https://github.com/paperclipinc/hermes-operator/.github/workflows/.*' \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
 ```
 
 To extract and inspect the SBOM payload:
 
 ```bash
-cosign download attestation ghcr.io/stubbi/hermes-operator:vX.Y.Z --predicate-type spdxjson \
+cosign download attestation ghcr.io/paperclipinc/hermes-operator:vX.Y.Z --predicate-type spdxjson \
   | jq -r .payload | base64 -d | jq .predicate > sbom.spdx.json
 ```
 
 The SBOM is also uploaded as a release asset at
-`https://github.com/stubbi/hermes-operator/releases/download/vX.Y.Z/sbom.spdx.json`
+`https://github.com/paperclipinc/hermes-operator/releases/download/vX.Y.Z/sbom.spdx.json`
 for users who can't (or won't) hit the registry.
 
 ## What the operator signs
@@ -2151,7 +2151,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 )
 
 // run executes a command, returning combined output.
@@ -2402,7 +2402,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 )
 
 func clientcmdPath() string {
@@ -2426,7 +2426,7 @@ Also strip the unused `ctrl.GetConfigOrDie()` scheme stub from `newClient`: use 
 
 ```go
 import (
-	hermesscheme "github.com/stubbi/hermes-operator/api/v1"
+	hermesscheme "github.com/paperclipinc/hermes-operator/api/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -2478,7 +2478,7 @@ metadata:
   name: conformance-minimal
 spec:
   image:
-    repository: ghcr.io/stubbi/hermes-agent
+    repository: ghcr.io/paperclipinc/hermes-agent
     tag: latest
   storage:
     persistence:
@@ -2496,7 +2496,7 @@ metadata:
   name: conformance-maximal
 spec:
   image:
-    repository: ghcr.io/stubbi/hermes-agent
+    repository: ghcr.io/paperclipinc/hermes-agent
     tag: latest
     pullPolicy: IfNotPresent
   config:
@@ -2604,7 +2604,7 @@ metadata:
   name: conformance-gateways
 spec:
   image:
-    repository: ghcr.io/stubbi/hermes-agent
+    repository: ghcr.io/paperclipinc/hermes-agent
     tag: latest
   storage:
     persistence:
@@ -2638,7 +2638,7 @@ metadata:
   name: conformance-selfconfig
 spec:
   image:
-    repository: ghcr.io/stubbi/hermes-agent
+    repository: ghcr.io/paperclipinc/hermes-agent
     tag: latest
   storage:
     persistence:
@@ -2669,7 +2669,7 @@ metadata:
   name: conformance-profilestore
 spec:
   image:
-    repository: ghcr.io/stubbi/hermes-agent
+    repository: ghcr.io/paperclipinc/hermes-agent
     tag: latest
   storage:
     persistence:
@@ -2691,7 +2691,7 @@ metadata:
   name: conformance-autoupdate
 spec:
   image:
-    repository: ghcr.io/stubbi/hermes-agent
+    repository: ghcr.io/paperclipinc/hermes-agent
     tag: "1.0.0"
   storage:
     persistence:
@@ -2700,7 +2700,7 @@ spec:
   autoUpdate:
     enabled: true
     source:
-      registry: ghcr.io/stubbi/hermes-agent
+      registry: ghcr.io/paperclipinc/hermes-agent
       channel: "1.x"
     pollInterval: 1h
     rollback:
@@ -2719,7 +2719,7 @@ metadata:
   name: conformance-backup
 spec:
   image:
-    repository: ghcr.io/stubbi/hermes-agent
+    repository: ghcr.io/paperclipinc/hermes-agent
     tag: latest
   storage:
     persistence:
@@ -2747,7 +2747,7 @@ metadata:
   name: conformance-networking
 spec:
   image:
-    repository: ghcr.io/stubbi/hermes-agent
+    repository: ghcr.io/paperclipinc/hermes-agent
     tag: latest
   storage:
     persistence:
@@ -2775,7 +2775,7 @@ metadata:
   name: conformance-observability
 spec:
   image:
-    repository: ghcr.io/stubbi/hermes-agent
+    repository: ghcr.io/paperclipinc/hermes-agent
     tag: latest
   storage:
     persistence:
@@ -2802,7 +2802,7 @@ metadata:
   name: conformance-sidecars
 spec:
   image:
-    repository: ghcr.io/stubbi/hermes-agent
+    repository: ghcr.io/paperclipinc/hermes-agent
     tag: latest
   storage:
     persistence:
@@ -2815,7 +2815,7 @@ spec:
       requests: { cpu: 500m, memory: 2Gi }
   webTerminal:
     enabled: true
-    image: ghcr.io/stubbi/web-terminal:latest
+    image: ghcr.io/paperclipinc/web-terminal:latest
   tailscale:
     enabled: true
     authKeySecretRef:
@@ -2875,7 +2875,7 @@ apiVersion: hermes.agent/v1
 kind: HermesInstance
 metadata: { name: neg-selfcfg-empty, namespace: default }
 spec:
-  image: { repository: ghcr.io/stubbi/hermes-agent, tag: latest }
+  image: { repository: ghcr.io/paperclipinc/hermes-agent, tag: latest }
   storage: { persistence: { enabled: true, size: 1Gi } }
   selfConfigure:
     enabled: true
@@ -2891,7 +2891,7 @@ apiVersion: hermes.agent/v1
 kind: HermesInstance
 metadata: { name: neg-config-both, namespace: default }
 spec:
-  image: { repository: ghcr.io/stubbi/hermes-agent, tag: latest }
+  image: { repository: ghcr.io/paperclipinc/hermes-agent, tag: latest }
   storage: { persistence: { enabled: true, size: 1Gi } }
   config:
     raw:
@@ -2909,7 +2909,7 @@ apiVersion: hermes.agent/v1
 kind: HermesInstance
 metadata: { name: neg-storage-invalid, namespace: default }
 spec:
-  image: { repository: ghcr.io/stubbi/hermes-agent, tag: latest }
+  image: { repository: ghcr.io/paperclipinc/hermes-agent, tag: latest }
   storage: { persistence: { enabled: true, size: 1XB } }
 `,
 		wantErrSubstring: "quantity",
@@ -2935,7 +2935,7 @@ apiVersion: hermes.agent/v1
 kind: HermesInstance
 metadata: { name: neg-tg-notoken, namespace: default }
 spec:
-  image: { repository: ghcr.io/stubbi/hermes-agent, tag: latest }
+  image: { repository: ghcr.io/paperclipinc/hermes-agent, tag: latest }
   storage: { persistence: { enabled: true, size: 1Gi } }
   gateways:
     telegram:
@@ -2951,7 +2951,7 @@ apiVersion: hermes.agent/v1
 kind: HermesInstance
 metadata: { name: neg-backup-ondelete-no-s3, namespace: default }
 spec:
-  image: { repository: ghcr.io/stubbi/hermes-agent, tag: latest }
+  image: { repository: ghcr.io/paperclipinc/hermes-agent, tag: latest }
   storage: { persistence: { enabled: true, size: 1Gi } }
   backup:
     onDelete: true
@@ -2966,7 +2966,7 @@ apiVersion: hermes.agent/v1
 kind: HermesInstance
 metadata: { name: neg-au-no-registry, namespace: default }
 spec:
-  image: { repository: ghcr.io/stubbi/hermes-agent, tag: latest }
+  image: { repository: ghcr.io/paperclipinc/hermes-agent, tag: latest }
   storage: { persistence: { enabled: true, size: 1Gi } }
   autoUpdate:
     enabled: true
@@ -2982,7 +2982,7 @@ apiVersion: hermes.agent/v1
 kind: HermesInstance
 metadata: { name: neg-mig-no-src, namespace: default }
 spec:
-  image: { repository: ghcr.io/stubbi/hermes-agent, tag: latest }
+  image: { repository: ghcr.io/paperclipinc/hermes-agent, tag: latest }
   storage: { persistence: { enabled: true, size: 1Gi } }
   migration:
     fromOpenClaw:
@@ -2998,7 +2998,7 @@ apiVersion: hermes.agent/v1
 kind: HermesInstance
 metadata: { name: neg-mig-both-src, namespace: default }
 spec:
-  image: { repository: ghcr.io/stubbi/hermes-agent, tag: latest }
+  image: { repository: ghcr.io/paperclipinc/hermes-agent, tag: latest }
   storage: { persistence: { enabled: true, size: 1Gi } }
   migration:
     fromOpenClaw:
@@ -3021,7 +3021,7 @@ apiVersion: hermes.agent/v1
 kind: HermesInstance
 metadata: { name: neg-probe-st, namespace: default }
 spec:
-  image: { repository: ghcr.io/stubbi/hermes-agent, tag: latest }
+  image: { repository: ghcr.io/paperclipinc/hermes-agent, tag: latest }
   storage: { persistence: { enabled: true, size: 1Gi } }
   probes:
     liveness:
@@ -3037,7 +3037,7 @@ apiVersion: hermes.agent/v1
 kind: HermesInstance
 metadata: { name: neg-ing-nohosts, namespace: default }
 spec:
-  image: { repository: ghcr.io/stubbi/hermes-agent, tag: latest }
+  image: { repository: ghcr.io/paperclipinc/hermes-agent, tag: latest }
   storage: { persistence: { enabled: true, size: 1Gi } }
   networking:
     ingress:
@@ -3054,7 +3054,7 @@ apiVersion: hermes.agent/v1
 kind: HermesInstance
 metadata: { name: neg-hpa-bounds, namespace: default }
 spec:
-  image: { repository: ghcr.io/stubbi/hermes-agent, tag: latest }
+  image: { repository: ghcr.io/paperclipinc/hermes-agent, tag: latest }
   storage: { persistence: { enabled: true, size: 1Gi } }
   availability:
     hpa:
@@ -3072,7 +3072,7 @@ apiVersion: hermes.agent/v1
 kind: HermesInstance
 metadata: { name: neg-pdb-both, namespace: default }
 spec:
-  image: { repository: ghcr.io/stubbi/hermes-agent, tag: latest }
+  image: { repository: ghcr.io/paperclipinc/hermes-agent, tag: latest }
   storage: { persistence: { enabled: true, size: 1Gi } }
   availability:
     pdb:
@@ -3093,7 +3093,7 @@ apiVersion: hermes.agent/v1
 kind: HermesInstance
 metadata: { name: neg-restorefrom-mut, namespace: default, annotations: { hermes.agent/conformance-precondition: "status.restoredFrom=snap-a" } }
 spec:
-  image: { repository: ghcr.io/stubbi/hermes-agent, tag: latest }
+  image: { repository: ghcr.io/paperclipinc/hermes-agent, tag: latest }
   storage: { persistence: { enabled: true, size: 1Gi } }
   restoreFrom: snap-b
 `,
@@ -3157,7 +3157,7 @@ kind: HermesClusterDefaults
 metadata: { name: not-cluster }
 spec:
   image:
-    repository: ghcr.io/stubbi/hermes-agent
+    repository: ghcr.io/paperclipinc/hermes-agent
     tag: latest
 `,
 		wantErrSubstring: "name must be 'cluster'",
@@ -3383,7 +3383,7 @@ import (
 func listPriorReleaseTags() []string {
 	const floor = "v1.0.0"
 	if _, err := exec.LookPath("gh"); err == nil && os.Getenv("GH_TOKEN") != "" {
-		out, err := exec.Command("gh", "api", "repos/stubbi/hermes-operator/releases",
+		out, err := exec.Command("gh", "api", "repos/paperclipinc/hermes-operator/releases",
 			"--jq", `[.[] | select(.draft==false and .prerelease==false) | .tag_name]`).Output()
 		if err == nil {
 			var tags []string
@@ -3448,7 +3448,7 @@ var _ = Describe("Conformance: upgrade-path matrix", func() {
 
 				By("installing operator " + tag + " via released Helm chart")
 				out, err = run("helm", "install", "hermes-operator",
-					fmt.Sprintf("oci://ghcr.io/stubbi/charts/hermes-operator"),
+					fmt.Sprintf("oci://ghcr.io/paperclipinc/charts/hermes-operator"),
 					"--version", strings.TrimPrefix(tag, "v"),
 					"--namespace", ns, "--create-namespace",
 					"--wait", "--timeout=5m")
@@ -3473,7 +3473,7 @@ apiVersion: hermes.agent/v1
 kind: HermesClusterDefaults
 metadata: { name: cluster }
 spec:
-  image: { repository: ghcr.io/stubbi/hermes-agent, tag: latest }
+  image: { repository: ghcr.io/paperclipinc/hermes-agent, tag: latest }
   storage: { storageClassName: standard, size: 1Gi }
 `
 				inst := readFile("testdata/minimal.yaml")
@@ -3584,7 +3584,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 )
 
 // flapTracker counts apparent flips between two field managers on the same
@@ -4245,7 +4245,7 @@ Create `internal/resources/resources_bench_test.go`:
 
 ```go
 /*
-Copyright 2026 stubbi
+Copyright 2026 Paperclip.inc
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -4262,7 +4262,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 )
 
 // newBenchInstanceMinimal: only the fields the spec marks required.
@@ -4271,7 +4271,7 @@ func newBenchInstanceMinimal() *hermesv1.HermesInstance {
 		ObjectMeta: metav1.ObjectMeta{Name: "bench", Namespace: "bench-ns"},
 		Spec: hermesv1.HermesInstanceSpec{
 			Image: hermesv1.ImageSpec{
-				Repository: "ghcr.io/stubbi/hermes-agent",
+				Repository: "ghcr.io/paperclipinc/hermes-agent",
 				Tag:        "v1.0.0",
 			},
 			Storage: hermesv1.StorageSpec{
@@ -4323,7 +4323,7 @@ func newBenchInstanceFull() *hermesv1.HermesInstance {
 	}
 	inst.Spec.AutoUpdate = hermesv1.AutoUpdateSpec{
 		Enabled: true,
-		Source:  hermesv1.AutoUpdateSource{Registry: "ghcr.io/stubbi/hermes-agent", Channel: "1.x"},
+		Source:  hermesv1.AutoUpdateSource{Registry: "ghcr.io/paperclipinc/hermes-agent", Channel: "1.x"},
 	}
 	inst.Spec.Backup = hermesv1.BackupSpec{
 		S3: &hermesv1.S3Spec{
@@ -4525,7 +4525,7 @@ Create `internal/controller/controller_bench_test.go`:
 
 ```go
 /*
-Copyright 2026 stubbi
+Copyright 2026 Paperclip.inc
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -4543,7 +4543,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 )
 
 // BenchmarkReconcile_FullSpec runs the reconciler against a synthetic
@@ -4593,7 +4593,7 @@ func fullSpecInstance(ns, name string) *hermesv1.HermesInstance {
 		ObjectMeta: ctrl.ObjectMeta{Name: name, Namespace: ns},
 		Spec: hermesv1.HermesInstanceSpec{
 			Image: hermesv1.ImageSpec{
-				Repository: "ghcr.io/stubbi/hermes-agent",
+				Repository: "ghcr.io/paperclipinc/hermes-agent",
 				Tag:        "v1.0.0",
 			},
 			Storage: hermesv1.StorageSpec{
@@ -4793,7 +4793,7 @@ Overwrite `docs/release-process.md`:
 See Plan 6, Task 1. Summary:
 
 - Repository secret `RELEASE_PLEASE_TOKEN` is a classic PAT with `repo` +
-  `workflow` scopes on `stubbi/hermes-operator`.
+  `workflow` scopes on `paperclipinc/hermes-operator`.
 - Workflow permissions: default-write enabled.
 - Packages: write enabled.
 
@@ -4828,7 +4828,7 @@ already-published releases).
    - SBOM uploaded as a release asset
    - Release is flipped from draft → published (via the PAT, so the
      `release.published` event fires)
-   - Helm chart is packaged and pushed to `oci://ghcr.io/stubbi/charts`
+   - Helm chart is packaged and pushed to `oci://ghcr.io/paperclipinc/charts`
 6. **operatorhub-submit.yaml** fires on the published-release event:
    - Forks `k8s-operatorhub/community-operators`, creates a branch with the
      new bundle, opens a PR
@@ -4871,8 +4871,8 @@ git push origin vX.Y.Z   # uses your local git creds (not GHA's GITHUB_TOKEN)
 
 ```bash
 make verify-signing       # uses gh release view to find the latest tag
-cosign verify ghcr.io/stubbi/hermes-operator:vX.Y.Z \
-  --certificate-identity-regexp 'https://github.com/stubbi/hermes-operator/.github/workflows/.*' \
+cosign verify ghcr.io/paperclipinc/hermes-operator:vX.Y.Z \
+  --certificate-identity-regexp 'https://github.com/paperclipinc/hermes-operator/.github/workflows/.*' \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
 ```
 
@@ -4881,19 +4881,19 @@ See `docs/security/signing.md` for the full verification ritual.
 ## What ships with each release
 
 - Multi-arch (linux/amd64 + linux/arm64) operator image:
-  `ghcr.io/stubbi/hermes-operator:vX.Y.Z` and `:X.Y` and `:latest`
+  `ghcr.io/paperclipinc/hermes-operator:vX.Y.Z` and `:X.Y` and `:latest`
 - Multi-arch agent image:
-  `ghcr.io/stubbi/hermes-agent:vX.Y.Z` (built by a separate hermes-agent
+  `ghcr.io/paperclipinc/hermes-agent:vX.Y.Z` (built by a separate hermes-agent
   release; the operator's `appVersion` doesn't pin agent versions:
   `spec.image.tag` does)
 - OLM bundle image:
-  `ghcr.io/stubbi/hermes-operator-bundle:vX.Y.Z`
+  `ghcr.io/paperclipinc/hermes-operator-bundle:vX.Y.Z`
 - Helm chart (OCI):
-  `oci://ghcr.io/stubbi/charts/hermes-operator:X.Y.Z`
+  `oci://ghcr.io/paperclipinc/charts/hermes-operator:X.Y.Z`
 - Plain manifests:
-  `https://github.com/stubbi/hermes-operator/releases/download/vX.Y.Z/install.yaml`
+  `https://github.com/paperclipinc/hermes-operator/releases/download/vX.Y.Z/install.yaml`
 - SBOM:
-  `https://github.com/stubbi/hermes-operator/releases/download/vX.Y.Z/sbom.spdx.json`
+  `https://github.com/paperclipinc/hermes-operator/releases/download/vX.Y.Z/sbom.spdx.json`
 - Cosign signature + SBOM attestation against every image digest
 - OperatorHub PRs (auto-opened): community-operators + community-operators-prod
 
@@ -5034,12 +5034,12 @@ section with:
 # hermes-operator
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Go Report Card](https://goreportcard.com/badge/github.com/stubbi/hermes-operator)](https://goreportcard.com/report/github.com/stubbi/hermes-operator)
-[![CI](https://github.com/stubbi/hermes-operator/actions/workflows/ci.yaml/badge.svg)](https://github.com/stubbi/hermes-operator/actions/workflows/ci.yaml)
-[![E2E](https://github.com/stubbi/hermes-operator/actions/workflows/e2e.yaml/badge.svg)](https://github.com/stubbi/hermes-operator/actions/workflows/e2e.yaml)
-[![Conformance](https://github.com/stubbi/hermes-operator/actions/workflows/conformance.yaml/badge.svg)](https://github.com/stubbi/hermes-operator/actions/workflows/conformance.yaml)
-[![Release Please](https://github.com/stubbi/hermes-operator/actions/workflows/release-please.yaml/badge.svg)](https://github.com/stubbi/hermes-operator/actions/workflows/release-please.yaml)
-[![Verify Signing](https://github.com/stubbi/hermes-operator/actions/workflows/verify-signing.yaml/badge.svg)](https://github.com/stubbi/hermes-operator/actions/workflows/verify-signing.yaml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/paperclipinc/hermes-operator)](https://goreportcard.com/report/github.com/paperclipinc/hermes-operator)
+[![CI](https://github.com/paperclipinc/hermes-operator/actions/workflows/ci.yaml/badge.svg)](https://github.com/paperclipinc/hermes-operator/actions/workflows/ci.yaml)
+[![E2E](https://github.com/paperclipinc/hermes-operator/actions/workflows/e2e.yaml/badge.svg)](https://github.com/paperclipinc/hermes-operator/actions/workflows/e2e.yaml)
+[![Conformance](https://github.com/paperclipinc/hermes-operator/actions/workflows/conformance.yaml/badge.svg)](https://github.com/paperclipinc/hermes-operator/actions/workflows/conformance.yaml)
+[![Release Please](https://github.com/paperclipinc/hermes-operator/actions/workflows/release-please.yaml/badge.svg)](https://github.com/paperclipinc/hermes-operator/actions/workflows/release-please.yaml)
+[![Verify Signing](https://github.com/paperclipinc/hermes-operator/actions/workflows/verify-signing.yaml/badge.svg)](https://github.com/paperclipinc/hermes-operator/actions/workflows/verify-signing.yaml)
 ```
 
 Then add a "Supported Kubernetes versions" snippet immediately below the
@@ -5054,9 +5054,9 @@ never patch. See [`docs/supported-versions.md`](docs/supported-versions.md).
 
 ## Distribution channels
 
-- **Helm chart (OCI)**: `helm install hermes-operator oci://ghcr.io/stubbi/charts/hermes-operator --version X.Y.Z`
+- **Helm chart (OCI)**: `helm install hermes-operator oci://ghcr.io/paperclipinc/charts/hermes-operator --version X.Y.Z`
 - **OLM (OperatorHub)**: Hermes Operator → Install
-- **Plain kubectl**: `kubectl apply -f https://github.com/stubbi/hermes-operator/releases/download/vX.Y.Z/install.yaml`
+- **Plain kubectl**: `kubectl apply -f https://github.com/paperclipinc/hermes-operator/releases/download/vX.Y.Z/install.yaml`
 
 All images are Cosign-signed (keyless OIDC) with SPDX-JSON SBOM attestations.
 See [`docs/security/signing.md`](docs/security/signing.md) for verification.
@@ -5080,7 +5080,7 @@ git commit -m "docs: fill out release-process + conformance + README badges"
 ```bash
 npx release-please release-pr \
   --token "$RELEASE_PLEASE_TOKEN" \
-  --repo-url stubbi/hermes-operator \
+  --repo-url paperclipinc/hermes-operator \
   --target-branch main \
   --dry-run
 ```
@@ -5236,7 +5236,7 @@ git commit -m "chore: smoke-test outputs from Plan 6 Task 24" --allow-empty
 
 - [ ] **Type consistency with Plans 2-5**
   - Bench file uses `Ptr[T]`, `hermesv1.HermesInstance`, sub-spec types from spec §4: same names Plan 2 was instructed to create.
-  - Conformance test imports `hermesv1 "github.com/stubbi/hermes-operator/api/v1"`: same module path Plan 1 established.
+  - Conformance test imports `hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"`: same module path Plan 1 established.
   - Field manager `hermes.agent/selfconfig` matches spec §5 and Plan 4.
   - Finalizer `hermes.agent/backup-on-delete` matches spec §8.2 and Plan 5.
 

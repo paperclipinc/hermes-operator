@@ -72,4 +72,4 @@ formatters:
   settings:
     goimports:
       local-prefixes:
-        - github.com/stubbi/hermes-operator
+        - github.com/paperclipinc/hermes-operator
