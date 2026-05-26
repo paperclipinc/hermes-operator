@@ -15,6 +15,16 @@ jobs:
     name: Release
     runs-on: ubuntu-latest
     steps:
+      # Mint a short-lived App installation token. Required for the
+      # release-undraft and SBOM-upload steps: GITHUB_TOKEN-issued events
+      # don't fan out to downstream workflows. Replaces the long-lived
+      # RELEASE_PLEASE_TOKEN PAT.
+      - uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ vars.RELEASE_BOT_APP_ID }}
+          private-key: ${{ secrets.RELEASE_BOT_PRIVATE_KEY }}
+
       - name: Checkout
         uses: actions/checkout@v6
         with:
@@ -119,13 +129,13 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: sbom-${{ github.ref_name }}.spdx.json
-          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+          token: ${{ steps.app-token.outputs.token }}
 
       - name: Publish release (undraft)
         uses: softprops/action-gh-release@v2
         with:
           draft: false
-          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+          token: ${{ steps.app-token.outputs.token }}
 
   helm-release:
     name: Helm OCI Release
