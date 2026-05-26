@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.8](https://github.com/paperclipinc/hermes-operator/compare/v0.1.7...v0.1.8) (2026-05-26)
+
+
+### Bug Fixes
+
+* rename stubbi → paperclipinc across chart, CI, docs, Go module ([de3e0bd](https://github.com/paperclipinc/hermes-operator/commit/de3e0bd1f3e0ae8b1ee01b8748f005053f1f3b65))
+
 ## [0.1.7](https://github.com/paperclipinc/hermes-operator/compare/v0.1.6...v0.1.7) (2026-05-20)
 
 
