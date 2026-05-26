@@ -2,8 +2,8 @@ apiVersion: v2
 name: hermes-operator
 description: Kubernetes operator for nousresearch/hermes-agent
 type: application
-version: 0.1.8
-appVersion: 0.1.8
+version: 0.1.9
+appVersion: 0.1.9
 kubeVersion: '>=1.28.0-0'
 home: https://github.com/paperclipinc/hermes-operator
 sources:

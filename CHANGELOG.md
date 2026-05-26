@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.9](https://github.com/paperclipinc/hermes-operator/compare/v0.1.8...v0.1.9) (2026-05-26)
+
+
+### Bug Fixes
+
+* **ci:** operatorhub-submit uses classic PAT with public_repo scope ([#39](https://github.com/paperclipinc/hermes-operator/issues/39)) ([33273ad](https://github.com/paperclipinc/hermes-operator/commit/33273adf3bd6e0149ef174c12a434a5f06dcbde6))
+* **ci:** release-please auto-creates tag via commit-message detection ([#38](https://github.com/paperclipinc/hermes-operator/issues/38)) ([e36a8d4](https://github.com/paperclipinc/hermes-operator/commit/e36a8d471732109c0308a4b7642e8112b8b6ac58))
+
 ## [0.1.8](https://github.com/paperclipinc/hermes-operator/compare/v0.1.7...v0.1.8) (2026-05-26)
 
 
