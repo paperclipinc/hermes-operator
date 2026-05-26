@@ -8,7 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 )
 
 // StatefulSetName returns the deterministic name.
@@ -277,7 +277,7 @@ func BuildStatefulSet(inst *hermesv1.HermesInstance, extraInits []corev1.Contain
 func imageRef(inst *hermesv1.HermesInstance) string {
 	repo := inst.Spec.Image.Repository
 	if repo == "" {
-		repo = "ghcr.io/stubbi/hermes-agent"
+		repo = "ghcr.io/paperclipinc/hermes-agent"
 	}
 	tag := inst.Spec.Image.Tag
 	if tag == "" {

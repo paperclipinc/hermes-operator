@@ -4,7 +4,7 @@ metadata:
   name: migrated-from-sibling
 spec:
   image:
-    repository: ghcr.io/stubbi/hermes-agent
+    repository: ghcr.io/paperclipinc/hermes-agent
     tag: "1.4.2"
   storage:
     persistence:

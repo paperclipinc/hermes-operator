@@ -39,10 +39,10 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
-	"github.com/stubbi/hermes-operator/internal/controller"
-	"github.com/stubbi/hermes-operator/internal/oci"
-	internalwebhook "github.com/stubbi/hermes-operator/internal/webhook"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
+	"github.com/paperclipinc/hermes-operator/internal/controller"
+	"github.com/paperclipinc/hermes-operator/internal/oci"
+	internalwebhook "github.com/paperclipinc/hermes-operator/internal/webhook"
 	// +kubebuilder:scaffold:imports
 )
 

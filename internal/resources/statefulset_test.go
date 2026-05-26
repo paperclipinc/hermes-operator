@@ -9,7 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 )
 
 func TestBuildStatefulSet_NameNamespaceLabels(t *testing.T) {
@@ -22,12 +22,12 @@ func TestBuildStatefulSet_NameNamespaceLabels(t *testing.T) {
 
 func TestBuildStatefulSet_ContainerImage(t *testing.T) {
 	inst := minimalInstance()
-	inst.Spec.Image.Repository = "ghcr.io/stubbi/hermes-agent"
+	inst.Spec.Image.Repository = "ghcr.io/paperclipinc/hermes-agent"
 	inst.Spec.Image.Tag = "v1.0.0"
 	sts := BuildStatefulSet(inst, nil)
 	require := sts.Spec.Template.Spec.Containers
 	assert.Len(t, require, 1)
-	assert.Equal(t, "ghcr.io/stubbi/hermes-agent:v1.0.0", require[0].Image)
+	assert.Equal(t, "ghcr.io/paperclipinc/hermes-agent:v1.0.0", require[0].Image)
 	assert.Equal(t, corev1.PullIfNotPresent, require[0].ImagePullPolicy, "explicit default")
 }
 

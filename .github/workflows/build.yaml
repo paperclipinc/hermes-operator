@@ -29,6 +29,6 @@ jobs:
           context: .
           platforms: linux/amd64
           push: ${{ github.event_name == 'push' }}
-          tags: ghcr.io/stubbi/hermes-operator:dev,ghcr.io/stubbi/hermes-operator:${{ github.sha }}
+          tags: ghcr.io/paperclipinc/hermes-operator:dev,ghcr.io/paperclipinc/hermes-operator:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max

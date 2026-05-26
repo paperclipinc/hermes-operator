@@ -1,4 +1,4 @@
-module github.com/stubbi/hermes-operator
+module github.com/paperclipinc/hermes-operator
 
 go 1.26.0
 

@@ -21,8 +21,8 @@ import (
 	"fmt"
 	"time"
 
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
-	"github.com/stubbi/hermes-operator/internal/resources"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
+	"github.com/paperclipinc/hermes-operator/internal/resources"
 
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv2 "k8s.io/api/autoscaling/v2"

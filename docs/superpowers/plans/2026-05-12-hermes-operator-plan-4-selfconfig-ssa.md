@@ -723,7 +723,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 )
 
 func TestDetermineActions(t *testing.T) {
@@ -858,7 +858,7 @@ import (
 
 	"github.com/gobwas/glob"
 
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 )
 
 // DetermineActions inspects a HermesSelfConfig and returns the set of action
@@ -1018,7 +1018,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -1120,7 +1120,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 )
 
 // SelfConfigFieldManager is the SSA field manager string the operator uses
@@ -1310,7 +1310,7 @@ package resources
 import (
 	"strings"
 
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -1373,7 +1373,7 @@ Append to `internal/controller/selfconfig_apply.go`:
 
 ```go
 import (
-	"github.com/stubbi/hermes-operator/internal/resources"
+	"github.com/paperclipinc/hermes-operator/internal/resources"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -1587,7 +1587,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 )
 
 // HermesSelfConfigReconciler reconciles HermesSelfConfig resources by
@@ -1809,7 +1809,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -1871,7 +1871,7 @@ import (
 	"strings"
 	"time"
 
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -2198,7 +2198,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 )
 
 var _ = Describe("HermesSelfConfig controller", func() {
@@ -2292,7 +2292,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/tools/record"
 
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 )
 
 // Event reason codes: public for tests and for the conditions documentation.
@@ -2358,7 +2358,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -2411,7 +2411,7 @@ package controller
 
 import (
 	"github.com/prometheus/client_golang/prometheus"
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
 )
 
@@ -2520,7 +2520,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -2652,7 +2652,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 )
 
 // +kubebuilder:webhook:path=/validate-hermes-agent-v1-hermesselfconfig,mutating=false,failurePolicy=fail,sideEffects=None,groups=hermes.agent,resources=hermesselfconfigs,verbs=create;update,versions=v1,name=vhermesselfconfig.kb.io,admissionReviewVersions=v1
@@ -2826,7 +2826,7 @@ Below the reconciler block, after the existing instance-validator setup, append:
 	}
 ```
 
-Ensure `webhookpkg "github.com/stubbi/hermes-operator/internal/webhook"` is imported (it may already be: check the import block).
+Ensure `webhookpkg "github.com/paperclipinc/hermes-operator/internal/webhook"` is imported (it may already be: check the import block).
 
 - [ ] **Step 4: Regenerate RBAC + verify build**
 
@@ -2963,7 +2963,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 )
 
 var _ = Describe("HermesSelfConfig: GitOps coexistence (SSA)", func() {
@@ -2994,7 +2994,7 @@ var _ = Describe("HermesSelfConfig: GitOps coexistence (SSA)", func() {
 			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: ns},
 			Spec: hermesv1.HermesInstanceSpec{
 				Image: hermesv1.ImageSpec{
-					Repository: "ghcr.io/stubbi/hermes-agent",
+					Repository: "ghcr.io/paperclipinc/hermes-agent",
 					Tag:        "v1.0.0",
 				},
 				SelfConfigure: hermesv1.SelfConfigureSpec{
@@ -3376,7 +3376,7 @@ metadata:
   namespace: agents
 spec:
   image:
-    repository: ghcr.io/stubbi/hermes-agent
+    repository: ghcr.io/paperclipinc/hermes-agent
     tag: v1.0.0
   selfConfigure:
     enabled: true

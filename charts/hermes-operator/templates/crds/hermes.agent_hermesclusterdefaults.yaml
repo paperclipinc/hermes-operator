@@ -63,7 +63,7 @@ spec:
                     - Never
                     type: string
                   repository:
-                    default: ghcr.io/stubbi/hermes-agent
+                    default: ghcr.io/paperclipinc/hermes-agent
                     type: string
                   tag:
                     default: latest

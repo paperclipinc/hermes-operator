@@ -1,5 +1,5 @@
 image:
-  repository: ghcr.io/stubbi/hermes-operator
+  repository: ghcr.io/paperclipinc/hermes-operator
   tag: 0.1.7
   pullPolicy: IfNotPresent
 logLevel: info
@@ -24,7 +24,7 @@ webhook:
   caBundle: ''
   servingCertSecretName: hermes-operator-webhook-server-cert
 agentImage:
-  repository: ghcr.io/stubbi/hermes-agent
+  repository: ghcr.io/paperclipinc/hermes-agent
   tag: v0.13.0
   pullPolicy: IfNotPresent
 honchoImage:

@@ -5,7 +5,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 )
 
 // MigrationSourceVolumeName is the volume name the migration init container
@@ -28,7 +28,7 @@ func BuildMigrationInitContainer(inst *hermesv1.HermesInstance) *corev1.Containe
 	if image == "" {
 		repo := inst.Spec.Image.Repository
 		if repo == "" {
-			repo = "ghcr.io/stubbi/hermes-agent"
+			repo = "ghcr.io/paperclipinc/hermes-agent"
 		}
 		tag := inst.Spec.Image.Tag
 		if tag == "" {

@@ -6,7 +6,7 @@ domain: agent
 layout:
 - go.kubebuilder.io/v4
 projectName: hermes-operator
-repo: github.com/stubbi/hermes-operator
+repo: github.com/paperclipinc/hermes-operator
 resources:
 - api:
     crdVersion: v1
@@ -15,7 +15,7 @@ resources:
   domain: agent
   group: hermes
   kind: HermesInstance
-  path: github.com/stubbi/hermes-operator/api/v1
+  path: github.com/paperclipinc/hermes-operator/api/v1
   version: v1
 - api:
     crdVersion: v1
@@ -23,7 +23,7 @@ resources:
   domain: agent
   group: hermes
   kind: HermesSelfConfig
-  path: github.com/stubbi/hermes-operator/api/v1
+  path: github.com/paperclipinc/hermes-operator/api/v1
   version: v1
 - api:
     crdVersion: v1
@@ -31,6 +31,6 @@ resources:
   domain: agent
   group: hermes
   kind: HermesClusterDefaults
-  path: github.com/stubbi/hermes-operator/api/v1
+  path: github.com/paperclipinc/hermes-operator/api/v1
   version: v1
 version: "3"

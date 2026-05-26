@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 )
 
 var _ = Describe("HermesSelfConfig controller", func() {
@@ -42,7 +42,7 @@ var _ = Describe("HermesSelfConfig controller", func() {
 			ObjectMeta: metav1.ObjectMeta{Name: "deny-target", Namespace: ns},
 			Spec: hermesv1.HermesInstanceSpec{
 				Image: hermesv1.ImageSpec{
-					Repository: "ghcr.io/stubbi/hermes-agent",
+					Repository: "ghcr.io/paperclipinc/hermes-agent",
 					Tag:        "test",
 				},
 				// SelfConfigure.Enabled left nil/false on purpose.
@@ -75,7 +75,7 @@ var _ = Describe("HermesSelfConfig controller", func() {
 			ObjectMeta: metav1.ObjectMeta{Name: "happy-target", Namespace: ns},
 			Spec: hermesv1.HermesInstanceSpec{
 				Image: hermesv1.ImageSpec{
-					Repository: "ghcr.io/stubbi/hermes-agent",
+					Repository: "ghcr.io/paperclipinc/hermes-agent",
 					Tag:        "test",
 				},
 				SelfConfigure: hermesv1.SelfConfigureSpec{

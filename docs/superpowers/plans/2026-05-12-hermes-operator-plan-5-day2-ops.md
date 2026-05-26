@@ -217,7 +217,7 @@ type AutoUpdateSpec struct {
 // AutoUpdateSourceSpec is the OCI registry source for the channel.
 type AutoUpdateSourceSpec struct {
     // Registry is the fully-qualified OCI repository (e.g.,
-    // `ghcr.io/stubbi/hermes-agent`). When empty, the current spec.image.repository
+    // `ghcr.io/paperclipinc/hermes-agent`). When empty, the current spec.image.repository
     // is used.
     // +optional
     Registry string `json:"registry,omitempty"`
@@ -556,7 +556,7 @@ import (
     metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
     "sigs.k8s.io/controller-runtime/pkg/client/fake"
 
-    hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+    hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 )
 
 func TestReadS3CredsFromSecret_RequiredKeys(t *testing.T) {
@@ -622,7 +622,7 @@ import (
     "k8s.io/apimachinery/pkg/types"
     "sigs.k8s.io/controller-runtime/pkg/client"
 
-    hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+    hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 )
 
 // S3Creds is the minimal pair we need to authenticate against any S3-compatible API.
@@ -730,7 +730,7 @@ import (
     corev1 "k8s.io/api/core/v1"
     metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-    hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+    hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 )
 
 func TestJobNames(t *testing.T) {
@@ -784,7 +784,7 @@ import (
     "k8s.io/apimachinery/pkg/types"
     "sigs.k8s.io/controller-runtime/pkg/client"
 
-    hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+    hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 )
 
 // Deterministic job names: referenced from the backup, restore, autoupdate, migration controllers.
@@ -867,8 +867,8 @@ import (
 
 func TestFakeRegistry_ListTags(t *testing.T) {
     fake := NewFake()
-    fake.SetTags("ghcr.io/stubbi/hermes-agent", []string{"1.0.0", "1.0.1", "1.1.0", "2.0.0-rc1"})
-    tags, err := fake.ListTags(context.Background(), "ghcr.io/stubbi/hermes-agent")
+    fake.SetTags("ghcr.io/paperclipinc/hermes-agent", []string{"1.0.0", "1.0.1", "1.1.0", "2.0.0-rc1"})
+    tags, err := fake.ListTags(context.Background(), "ghcr.io/paperclipinc/hermes-agent")
     require.NoError(t, err)
     assert.ElementsMatch(t, []string{"1.0.0", "1.0.1", "1.1.0", "2.0.0-rc1"}, tags)
 }
@@ -936,7 +936,7 @@ var ErrNoMatchingTag = errors.New("no tag matches channel")
 // uses go-containerregistry; tests use Fake.
 type Registry interface {
     // ListTags returns the tag list for an OCI repository (e.g.
-    // `ghcr.io/stubbi/hermes-agent`). Implementations MAY cache responses by
+    // `ghcr.io/paperclipinc/hermes-agent`). Implementations MAY cache responses by
     // ETag; callers do not need to debounce.
     ListTags(ctx context.Context, repository string) ([]string, error)
 }
@@ -1110,7 +1110,7 @@ import (
     corev1 "k8s.io/api/core/v1"
     metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-    hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+    hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 )
 
 func backupInstance() *hermesv1.HermesInstance {
@@ -1213,7 +1213,7 @@ import (
     corev1 "k8s.io/api/core/v1"
     metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-    hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+    hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 )
 
 // ResticImage is the pinned default image. Mirrors internal/controller.ResticImage
@@ -1398,7 +1398,7 @@ import (
     batchv1 "k8s.io/api/batch/v1"
     metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-    hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+    hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 )
 
 func cronInstance() *hermesv1.HermesInstance {
@@ -1487,7 +1487,7 @@ import (
     corev1 "k8s.io/api/core/v1"
     metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-    hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+    hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 )
 
 // BackupCronJobName returns the deterministic name for the periodic backup CronJob.
@@ -1801,8 +1801,8 @@ import (
     "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
     "sigs.k8s.io/controller-runtime/pkg/log"
 
-    hermesv1 "github.com/stubbi/hermes-operator/api/v1"
-    "github.com/stubbi/hermes-operator/internal/resources"
+    hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
+    "github.com/paperclipinc/hermes-operator/internal/resources"
 )
 
 // BackupReconciler is a sub-controller invoked by HermesInstanceReconciler.
@@ -2116,7 +2116,7 @@ import (
     "sigs.k8s.io/controller-runtime/pkg/client"
     "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
-    hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+    hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 )
 
 var _ = Describe("Backup sub-controller", func() {
@@ -2338,7 +2338,7 @@ import (
     corev1 "k8s.io/api/core/v1"
     metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-    hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+    hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 )
 
 func restoreInstance() *hermesv1.HermesInstance {
@@ -2428,7 +2428,7 @@ import (
 
     corev1 "k8s.io/api/core/v1"
 
-    hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+    hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 )
 
 // BuildRestoreInitContainer returns the init container that restores a snapshot
@@ -2656,8 +2656,8 @@ import (
     "sigs.k8s.io/controller-runtime/pkg/client"
     "sigs.k8s.io/controller-runtime/pkg/log"
 
-    hermesv1 "github.com/stubbi/hermes-operator/api/v1"
-    "github.com/stubbi/hermes-operator/internal/resources"
+    hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
+    "github.com/paperclipinc/hermes-operator/internal/resources"
 )
 
 // RestoreReconciler watches the StatefulSet for init-restore completion.
@@ -2796,7 +2796,7 @@ import (
     metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
     "k8s.io/apimachinery/pkg/types"
 
-    hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+    hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 )
 
 var _ = Describe("Restore sub-controller", func() {
@@ -2974,9 +2974,9 @@ import (
     "sigs.k8s.io/controller-runtime/pkg/client"
     "sigs.k8s.io/controller-runtime/pkg/log"
 
-    hermesv1 "github.com/stubbi/hermes-operator/api/v1"
-    "github.com/stubbi/hermes-operator/internal/oci"
-    "github.com/stubbi/hermes-operator/internal/resources"
+    hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
+    "github.com/paperclipinc/hermes-operator/internal/oci"
+    "github.com/paperclipinc/hermes-operator/internal/resources"
 )
 
 // AutoUpdateReconciler drives OCI-registry polling and rollouts.
@@ -3142,7 +3142,7 @@ func (a *AutoUpdateReconciler) startRollout(ctx context.Context, inst *hermesv1.
 
     repo := inst.Spec.Image.Repository
     if repo == "" {
-        repo = "ghcr.io/stubbi/hermes-agent"
+        repo = "ghcr.io/paperclipinc/hermes-agent"
     }
     desiredImage := fmt.Sprintf("%s:%s", repo, targetTag)
     if len(sts.Spec.Template.Spec.Containers) == 0 {
@@ -3272,7 +3272,7 @@ func (a *AutoUpdateReconciler) rollback(ctx context.Context, inst *hermesv1.Herm
     }
     repo := inst.Spec.Image.Repository
     if repo == "" {
-        repo = "ghcr.io/stubbi/hermes-agent"
+        repo = "ghcr.io/paperclipinc/hermes-agent"
     }
     sts := &appsv1.StatefulSet{}
     if err := a.Get(ctx, types.NamespacedName{Name: resources.StatefulSetName(inst), Namespace: inst.Namespace}, sts); err != nil {
@@ -3418,8 +3418,8 @@ import (
     "k8s.io/client-go/tools/record"
     "sigs.k8s.io/controller-runtime/pkg/client"
 
-    hermesv1 "github.com/stubbi/hermes-operator/api/v1"
-    "github.com/stubbi/hermes-operator/internal/oci"
+    hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
+    "github.com/paperclipinc/hermes-operator/internal/oci"
 )
 
 var _ = Describe("AutoUpdate sub-controller", func() {
@@ -3463,7 +3463,7 @@ var _ = Describe("AutoUpdate sub-controller", func() {
         inst := &hermesv1.HermesInstance{
             ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace},
             Spec: hermesv1.HermesInstanceSpec{
-                Image: hermesv1.ImageSpec{Repository: "ghcr.io/stubbi/hermes-agent", Tag: "1.0.0"},
+                Image: hermesv1.ImageSpec{Repository: "ghcr.io/paperclipinc/hermes-agent", Tag: "1.0.0"},
                 AutoUpdate: hermesv1.AutoUpdateSpec{Enabled: false},
             },
         }
@@ -3474,15 +3474,15 @@ var _ = Describe("AutoUpdate sub-controller", func() {
 
         _, err := au.Reconcile(ctx, inst)
         Expect(err).ToNot(HaveOccurred())
-        Expect(fakeReg.CallCount["ghcr.io/stubbi/hermes-agent"]).To(Equal(0))
+        Expect(fakeReg.CallCount["ghcr.io/paperclipinc/hermes-agent"]).To(Equal(0))
     })
 
     It("polls the registry and records lastCheckTime", func() {
-        fakeReg.SetTags("ghcr.io/stubbi/hermes-agent", []string{"1.0.0"})
+        fakeReg.SetTags("ghcr.io/paperclipinc/hermes-agent", []string{"1.0.0"})
         inst := &hermesv1.HermesInstance{
             ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace},
             Spec: hermesv1.HermesInstanceSpec{
-                Image: hermesv1.ImageSpec{Repository: "ghcr.io/stubbi/hermes-agent", Tag: "1.0.0"},
+                Image: hermesv1.ImageSpec{Repository: "ghcr.io/paperclipinc/hermes-agent", Tag: "1.0.0"},
                 AutoUpdate: hermesv1.AutoUpdateSpec{Enabled: true},
             },
         }
@@ -3493,7 +3493,7 @@ var _ = Describe("AutoUpdate sub-controller", func() {
 
         _, err := au.Reconcile(ctx, inst)
         Expect(err).ToNot(HaveOccurred())
-        Expect(fakeReg.CallCount["ghcr.io/stubbi/hermes-agent"]).To(Equal(1))
+        Expect(fakeReg.CallCount["ghcr.io/paperclipinc/hermes-agent"]).To(Equal(1))
 
         Eventually(func(g Gomega) {
             var cur hermesv1.HermesInstance
@@ -3507,7 +3507,7 @@ var _ = Describe("AutoUpdate sub-controller", func() {
         inst := &hermesv1.HermesInstance{
             ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace},
             Spec: hermesv1.HermesInstanceSpec{
-                Image: hermesv1.ImageSpec{Repository: "ghcr.io/stubbi/hermes-agent", Tag: "1.0.0"},
+                Image: hermesv1.ImageSpec{Repository: "ghcr.io/paperclipinc/hermes-agent", Tag: "1.0.0"},
                 AutoUpdate: hermesv1.AutoUpdateSpec{Enabled: true,
                     Source:             hermesv1.AutoUpdateSourceSpec{Channel: "1.x"},
                     BackupBeforeUpdate: ptrBool(false),
@@ -3523,14 +3523,14 @@ var _ = Describe("AutoUpdate sub-controller", func() {
 
         Expect(k8sClient.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, inst)).To(Succeed())
 
-        fakeReg.SetTags("ghcr.io/stubbi/hermes-agent", []string{"1.0.0", "1.5.0"})
+        fakeReg.SetTags("ghcr.io/paperclipinc/hermes-agent", []string{"1.0.0", "1.5.0"})
         _, err := au.Reconcile(ctx, inst)
         Expect(err).ToNot(HaveOccurred())
 
         Eventually(func(g Gomega) {
             sts := &appsv1.StatefulSet{}
             g.Expect(k8sClient.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, sts)).To(Succeed())
-            g.Expect(sts.Spec.Template.Spec.Containers[0].Image).To(Equal("ghcr.io/stubbi/hermes-agent:1.5.0"))
+            g.Expect(sts.Spec.Template.Spec.Containers[0].Image).To(Equal("ghcr.io/paperclipinc/hermes-agent:1.5.0"))
         }).Should(Succeed())
 
         Eventually(func(g Gomega) {
@@ -3547,7 +3547,7 @@ var _ = Describe("AutoUpdate sub-controller", func() {
         inst := &hermesv1.HermesInstance{
             ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace},
             Spec: hermesv1.HermesInstanceSpec{
-                Image: hermesv1.ImageSpec{Repository: "ghcr.io/stubbi/hermes-agent", Tag: "1.0.0"},
+                Image: hermesv1.ImageSpec{Repository: "ghcr.io/paperclipinc/hermes-agent", Tag: "1.0.0"},
                 AutoUpdate: hermesv1.AutoUpdateSpec{Enabled: true,
                     Source:             hermesv1.AutoUpdateSourceSpec{Channel: "1.x"},
                     BackupBeforeUpdate: ptrBool(false),
@@ -3573,7 +3573,7 @@ var _ = Describe("AutoUpdate sub-controller", func() {
         sts := &appsv1.StatefulSet{}
         Expect(k8sClient.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, sts)).To(Succeed())
         origSTS := sts.DeepCopy()
-        sts.Spec.Template.Spec.Containers[0].Image = "ghcr.io/stubbi/hermes-agent:1.5.0"
+        sts.Spec.Template.Spec.Containers[0].Image = "ghcr.io/paperclipinc/hermes-agent:1.5.0"
         Expect(k8sClient.Patch(ctx, sts, client.MergeFrom(origSTS))).To(Succeed())
 
         // Synthesize two "Unhealthy" events on the pod.
@@ -3597,7 +3597,7 @@ var _ = Describe("AutoUpdate sub-controller", func() {
         Eventually(func(g Gomega) {
             sts := &appsv1.StatefulSet{}
             g.Expect(k8sClient.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, sts)).To(Succeed())
-            g.Expect(sts.Spec.Template.Spec.Containers[0].Image).To(Equal("ghcr.io/stubbi/hermes-agent:1.0.0"),
+            g.Expect(sts.Spec.Template.Spec.Containers[0].Image).To(Equal("ghcr.io/paperclipinc/hermes-agent:1.0.0"),
                 "image must be reverted to lastSuccessTag")
         }).Should(Succeed())
 
@@ -3658,14 +3658,14 @@ import (
     corev1 "k8s.io/api/core/v1"
     metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-    hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+    hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 )
 
 func migrationInstanceWithOpenClawRef() *hermesv1.HermesInstance {
     return &hermesv1.HermesInstance{
         ObjectMeta: metav1.ObjectMeta{Name: "demo", Namespace: "agents"},
         Spec: hermesv1.HermesInstanceSpec{
-            Image: hermesv1.ImageSpec{Repository: "ghcr.io/stubbi/hermes-agent", Tag: "1.0.0"},
+            Image: hermesv1.ImageSpec{Repository: "ghcr.io/paperclipinc/hermes-agent", Tag: "1.0.0"},
             Migration: hermesv1.MigrationSpec{
                 FromOpenClaw: &hermesv1.MigrationFromOpenClawSpec{
                     Mode: "copy",
@@ -3685,7 +3685,7 @@ func migrationInstanceWithS3() *hermesv1.HermesInstance {
     return &hermesv1.HermesInstance{
         ObjectMeta: metav1.ObjectMeta{Name: "demo", Namespace: "agents"},
         Spec: hermesv1.HermesInstanceSpec{
-            Image: hermesv1.ImageSpec{Repository: "ghcr.io/stubbi/hermes-agent", Tag: "1.0.0"},
+            Image: hermesv1.ImageSpec{Repository: "ghcr.io/paperclipinc/hermes-agent", Tag: "1.0.0"},
             Migration: hermesv1.MigrationSpec{
                 FromOpenClaw: &hermesv1.MigrationFromOpenClawSpec{
                     Mode: "copy",
@@ -3721,7 +3721,7 @@ func TestBuildMigrationInitContainer_OpenClawRef_Name(t *testing.T) {
     c := BuildMigrationInitContainer(migrationInstanceWithOpenClawRef())
     require.NotNil(t, c)
     assert.Equal(t, "init-migrate-from-openclaw", c.Name)
-    assert.Equal(t, "ghcr.io/stubbi/hermes-agent:1.0.0", c.Image)
+    assert.Equal(t, "ghcr.io/paperclipinc/hermes-agent:1.0.0", c.Image)
 }
 
 func TestBuildMigrationInitContainer_OpenClawRef_Args(t *testing.T) {
@@ -3786,7 +3786,7 @@ import (
 
     corev1 "k8s.io/api/core/v1"
 
-    hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+    hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 )
 
 // MigrationSourceVolumeName is the name of the volume the migration init
@@ -3816,7 +3816,7 @@ func BuildMigrationInitContainer(inst *hermesv1.HermesInstance) *corev1.Containe
     if image == "" {
         repo := inst.Spec.Image.Repository
         if repo == "" {
-            repo = "ghcr.io/stubbi/hermes-agent"
+            repo = "ghcr.io/paperclipinc/hermes-agent"
         }
         tag := inst.Spec.Image.Tag
         if tag == "" {
@@ -3955,8 +3955,8 @@ import (
     "sigs.k8s.io/controller-runtime/pkg/client"
     "sigs.k8s.io/controller-runtime/pkg/log"
 
-    hermesv1 "github.com/stubbi/hermes-operator/api/v1"
-    "github.com/stubbi/hermes-operator/internal/resources"
+    hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
+    "github.com/paperclipinc/hermes-operator/internal/resources"
 )
 
 // MigrationReconciler watches the StatefulSet pod's init container status and
@@ -4311,7 +4311,7 @@ if err = (&controller.HermesInstanceReconciler{
 
 Add imports:
 ```go
-"github.com/stubbi/hermes-operator/internal/oci"
+"github.com/paperclipinc/hermes-operator/internal/oci"
 "time"
 ```
 
@@ -4365,7 +4365,7 @@ import (
     metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
     "k8s.io/apimachinery/pkg/types"
 
-    hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+    hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 )
 
 var _ = Describe("Migration sub-controller", func() {
@@ -4386,7 +4386,7 @@ var _ = Describe("Migration sub-controller", func() {
         inst := &hermesv1.HermesInstance{
             ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace},
             Spec: hermesv1.HermesInstanceSpec{
-                Image: hermesv1.ImageSpec{Repository: "ghcr.io/stubbi/hermes-agent", Tag: "1.0.0"},
+                Image: hermesv1.ImageSpec{Repository: "ghcr.io/paperclipinc/hermes-agent", Tag: "1.0.0"},
                 Migration: hermesv1.MigrationSpec{
                     FromOpenClaw: &hermesv1.MigrationFromOpenClawSpec{
                         Mode: "copy",
@@ -4423,7 +4423,7 @@ var _ = Describe("Migration sub-controller", func() {
         inst := &hermesv1.HermesInstance{
             ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace},
             Spec: hermesv1.HermesInstanceSpec{
-                Image: hermesv1.ImageSpec{Repository: "ghcr.io/stubbi/hermes-agent", Tag: "1.0.0"},
+                Image: hermesv1.ImageSpec{Repository: "ghcr.io/paperclipinc/hermes-agent", Tag: "1.0.0"},
                 Migration: hermesv1.MigrationSpec{
                     FromOpenClaw: &hermesv1.MigrationFromOpenClawSpec{
                         Mode: "copy",
@@ -4469,7 +4469,7 @@ var _ = Describe("Migration sub-controller", func() {
         inst := &hermesv1.HermesInstance{
             ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace},
             Spec: hermesv1.HermesInstanceSpec{
-                Image: hermesv1.ImageSpec{Repository: "ghcr.io/stubbi/hermes-agent", Tag: "1.0.0"},
+                Image: hermesv1.ImageSpec{Repository: "ghcr.io/paperclipinc/hermes-agent", Tag: "1.0.0"},
                 Migration: hermesv1.MigrationSpec{
                     FromOpenClaw: &hermesv1.MigrationFromOpenClawSpec{
                         Mode: "move",
@@ -4623,7 +4623,7 @@ Add imports if missing:
 "encoding/json"
 "fmt"
 "k8s.io/apimachinery/pkg/util/validation/field"
-hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 ```
 
 - [ ] **Step 2: Hook the helpers into ValidateCreate / ValidateUpdate**
@@ -5166,7 +5166,7 @@ metadata:
   namespace: default
 spec:
   image:
-    repository: ghcr.io/stubbi/hermes-agent
+    repository: ghcr.io/paperclipinc/hermes-agent
     tag: 1.0.0
   storage:
     persistence:
@@ -5230,7 +5230,7 @@ metadata:
   name: hermes-backup-scheduled
 spec:
   image:
-    repository: ghcr.io/stubbi/hermes-agent
+    repository: ghcr.io/paperclipinc/hermes-agent
     tag: 1.0.0
   storage:
     persistence:
@@ -5258,7 +5258,7 @@ metadata:
   name: hermes-backup-ondelete
 spec:
   image:
-    repository: ghcr.io/stubbi/hermes-agent
+    repository: ghcr.io/paperclipinc/hermes-agent
     tag: 1.0.0
   storage:
     persistence:
@@ -5283,7 +5283,7 @@ metadata:
   name: hermes-restored
 spec:
   image:
-    repository: ghcr.io/stubbi/hermes-agent
+    repository: ghcr.io/paperclipinc/hermes-agent
     tag: 1.0.0
   storage:
     persistence:
@@ -5309,7 +5309,7 @@ metadata:
   name: hermes-autoupdate
 spec:
   image:
-    repository: ghcr.io/stubbi/hermes-agent
+    repository: ghcr.io/paperclipinc/hermes-agent
     tag: 1.0.0
   storage:
     persistence:
@@ -5328,7 +5328,7 @@ spec:
     pollInterval: 1h
     backupBeforeUpdate: true
     source:
-      registry: ghcr.io/stubbi/hermes-agent
+      registry: ghcr.io/paperclipinc/hermes-agent
       channel: "1.x"
     rollback:
       enabled: true
@@ -5344,7 +5344,7 @@ metadata:
   name: hermes-migrated-from-oc
 spec:
   image:
-    repository: ghcr.io/stubbi/hermes-agent
+    repository: ghcr.io/paperclipinc/hermes-agent
     tag: 1.0.0
   storage:
     persistence:
@@ -5368,7 +5368,7 @@ metadata:
   name: hermes-migrated-from-s3
 spec:
   image:
-    repository: ghcr.io/stubbi/hermes-agent
+    repository: ghcr.io/paperclipinc/hermes-agent
     tag: 1.0.0
   storage:
     persistence:
@@ -5604,14 +5604,14 @@ The `hermes-operator` can poll an OCI registry and roll the StatefulSet's image 
 ```yaml
 spec:
   image:
-    repository: ghcr.io/stubbi/hermes-agent
+    repository: ghcr.io/paperclipinc/hermes-agent
     tag: "1.4.0"                          # MUST be a concrete semver; do not use `latest`
   autoUpdate:
     enabled: true
     pollInterval: 1h                       # min 15m, max 168h
     backupBeforeUpdate: true              # default true; requires spec.backup.s3 set
     source:
-      registry: ghcr.io/stubbi/hermes-agent  # defaults to spec.image.repository
+      registry: ghcr.io/paperclipinc/hermes-agent  # defaults to spec.image.repository
       channel: "1.x"                       # Masterminds/semver constraint; defaults to "<major>.x"
     rollback:
       enabled: true

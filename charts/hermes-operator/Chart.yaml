@@ -5,9 +5,9 @@ type: application
 version: 0.1.7
 appVersion: 0.1.7
 kubeVersion: '>=1.28.0-0'
-home: https://github.com/stubbi/hermes-operator
+home: https://github.com/paperclipinc/hermes-operator
 sources:
-  - https://github.com/stubbi/hermes-operator
+  - https://github.com/paperclipinc/hermes-operator
 maintainers:
-  - name: stubbi
+  - name: paperclipinc
     email: jannes@aqora.io

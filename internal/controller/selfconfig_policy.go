@@ -23,7 +23,7 @@ import (
 
 	"github.com/gobwas/glob"
 
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 )
 
 // DetermineActions inspects a HermesSelfConfig and returns the set of action

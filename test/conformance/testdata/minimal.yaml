@@ -4,7 +4,7 @@ metadata:
   name: conformance-minimal
 spec:
   image:
-    repository: ghcr.io/stubbi/hermes-agent
+    repository: ghcr.io/paperclipinc/hermes-agent
     tag: latest
   storage:
     persistence:

@@ -3,7 +3,7 @@ package resources
 import (
 	"strings"
 
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
 )
 
 // Ptr returns a pointer to v. Use only for short-lived literals.

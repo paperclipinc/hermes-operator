@@ -28,8 +28,8 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	hermesv1 "github.com/stubbi/hermes-operator/api/v1"
-	"github.com/stubbi/hermes-operator/internal/resources"
+	hermesv1 "github.com/paperclipinc/hermes-operator/api/v1"
+	"github.com/paperclipinc/hermes-operator/internal/resources"
 )
 
 var _ = Describe("Backup sub-controller", func() {
@@ -50,7 +50,7 @@ var _ = Describe("Backup sub-controller", func() {
 			},
 			Spec: hermesv1.HermesInstanceSpec{
 				Image: hermesv1.ImageSpec{
-					Repository: "ghcr.io/stubbi/hermes-agent",
+					Repository: "ghcr.io/paperclipinc/hermes-agent",
 					Tag:        "1.0.0",
 				},
 				Backup: hermesv1.BackupSpec{
