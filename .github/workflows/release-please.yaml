@@ -10,10 +10,6 @@ permissions:
 jobs:
   release-please:
     runs-on: ubuntu-latest
-    outputs:
-      release_created: ${{ steps.release.outputs.release_created }}
-      tag_name: ${{ steps.release.outputs.tag_name }}
-      sha: ${{ steps.release.outputs.sha }}
     steps:
       # Mint a short-lived token (~1h) from the paperclip-release-bot App.
       # Avoids long-lived PATs that the paperclipinc org policy blocks.
@@ -30,51 +26,75 @@ jobs:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
 
-  # Because skip-github-release is true in release-please-config.json,
-  # release-please only creates the release PR and updates the manifest;
-  # it does NOT push the tag. We push the tag manually here so downstream
-  # GoReleaser/OLM jobs can key off it.
-  create-tag:
-    needs: release-please
-    if: ${{ needs.release-please.outputs.release_created == 'true' }}
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/create-github-app-token@v1
-        id: app-token
-        with:
-          app-id: ${{ vars.RELEASE_BOT_APP_ID }}
-          private-key: ${{ secrets.RELEASE_BOT_PRIVATE_KEY }}
-
-      - uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-          token: ${{ steps.app-token.outputs.token }}
-
-      - name: Create and push release tag
-        env:
-          TAG: ${{ needs.release-please.outputs.tag_name }}
-          SHA: ${{ needs.release-please.outputs.sha }}
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
-        run: |
-          git config user.name  "paperclip-release-bot[bot]"
-          git config user.email "paperclip-release-bot[bot]@users.noreply.github.com"
-          git tag -a "${TAG}" "${SHA}" -m "Release ${TAG}"
-          git push origin "${TAG}"
-
-      - name: Flip stale autorelease labels on older open PRs
+      # skip-github-release is true in release-please-config.json so that
+      # release-please does NOT create a GitHub release (which would
+      # conflict with GoReleaser's draft-then-publish flow on immutable
+      # releases). However, this also makes release-please's
+      # `release_created` output always false, so we cannot use it to gate
+      # tag creation. Instead, we detect a release-PR merge by inspecting
+      # the merge commit's subject line and create the tag manually.
+      - name: Create release tag
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
-          TAG: ${{ needs.release-please.outputs.tag_name }}
         run: |
-          # Remove autorelease:pending / autorelease:tagged from any PRs that
-          # are now superseded by this release.
-          gh pr list \
-            --label "autorelease: pending" \
-            --json number \
-            --jq '.[].number' \
-          | while read -r pr; do
-              gh pr edit "$pr" \
-                --remove-label "autorelease: pending" \
-                --add-label "autorelease: tagged" \
-                || true
+          # Detect if the current push merged a release-please PR.
+          # Check both the commit message (squash merge) and the merged
+          # PR title (merge commit) to handle all merge strategies.
+          COMMIT_MSG=$(gh api "repos/${{ github.repository }}/commits/${{ github.sha }}" \
+            --jq '.commit.message' | head -1)
+
+          VERSION=""
+          if [[ "$COMMIT_MSG" =~ ^chore\(main\):\ release\ ([0-9]+\.[0-9]+\.[0-9]+) ]]; then
+            VERSION="${BASH_REMATCH[1]}"
+          elif [[ "$COMMIT_MSG" =~ ^Merge\ pull\ request\ \#([0-9]+) ]]; then
+            # Merge commit - check the PR title instead
+            PR_NUM="${BASH_REMATCH[1]}"
+            PR_TITLE=$(gh api "repos/${{ github.repository }}/pulls/${PR_NUM}" --jq '.title')
+            if [[ "$PR_TITLE" =~ ^chore\(main\):\ release\ ([0-9]+\.[0-9]+\.[0-9]+) ]]; then
+              VERSION="${BASH_REMATCH[1]}"
+            fi
+          fi
+
+          if [[ -n "$VERSION" ]]; then
+            TAG="v${VERSION}"
+
+            # Only create if tag doesn't already exist
+            if gh api "repos/${{ github.repository }}/git/refs/tags/${TAG}" &>/dev/null; then
+              echo "Tag ${TAG} already exists, skipping"
+            else
+              echo "Creating tag ${TAG} at ${{ github.sha }}"
+              gh api "repos/${{ github.repository }}/git/refs" \
+                -f ref="refs/tags/${TAG}" \
+                -f sha="${{ github.sha }}"
+              echo "Tag ${TAG} created - release workflow will trigger"
+            fi
+          else
+            echo "Not a release commit, skipping tag creation"
+          fi
+
+      # Flip "autorelease: pending" to "autorelease: tagged" on any
+      # release PR that still has the stale label. Covers both merged
+      # and closed PRs -- closed-but-not-merged release PRs (e.g. a
+      # superseded vX.Y.Z PR) also block release-please if the label
+      # isn't cleaned up. Runs on every push to main so the label
+      # gets fixed even if the tag step above was skipped or failed.
+      - name: Fix stale autorelease labels
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          for STATE in merged closed; do
+            STALE_PRS=$(gh pr list \
+              --repo "${{ github.repository }}" \
+              --state "$STATE" \
+              --label "autorelease: pending" \
+              --json number,title \
+              --jq '.[].number')
+
+            for PR in $STALE_PRS; do
+              echo "Fixing stale label on ${STATE} PR #${PR}"
+              gh api "repos/${{ github.repository }}/issues/${PR}/labels/autorelease:%20pending" \
+                -X DELETE || true
+              gh api "repos/${{ github.repository }}/issues/${PR}/labels" \
+                -f "labels[]=autorelease: tagged" || true
             done
+          done
