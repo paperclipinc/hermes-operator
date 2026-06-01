@@ -10,14 +10,14 @@
 #                     Required. The CI workflow at .github/workflows/agent-image.yaml
 #                     drives this from a matrix.
 #   PYTHON_VERSION  : Python interpreter version. Default 3.11.
-#   UV_VERSION      : uv tool version. Default 0.5.0 (pinned for reproducibility).
+#   UV_VERSION      : uv tool version. Default 0.11.7 (pinned for reproducibility; keep in lockstep with the relock workflow).
 #   TINI_VERSION    : tini release tag (lesson openclaw #471: tini as PID 1).
 #
 # Output: a runtime image that, with no further configuration, runs
 #         `hermes-agent --config ~/.hermes/config.yaml` as UID 1000.
 
 ARG PYTHON_VERSION=3.11
-ARG UV_VERSION=0.5.0
+ARG UV_VERSION=0.11.7
 ARG TINI_VERSION=v0.19.0
 ARG HERMES_VERSION
 

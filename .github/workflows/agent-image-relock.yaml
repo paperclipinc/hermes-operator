@@ -1,12 +1,17 @@
 # .github/workflows/agent-image-relock.yaml
 #
-# Regenerates images/hermes-agent/uv.lock for a requested hermes-agent version
-# using the SAME pinned uv toolchain as `make agent-image-relock` (uv 0.5.0 in a
-# container), so contributors don't need Docker locally to bump the agent image.
+# Regenerates images/hermes-agent/uv.lock for a requested hermes-agent version,
+# so contributors don't need a local toolchain to bump the agent image.
+#
+# Runs pinned uv 0.5.0 (matching the Dockerfile's UV_VERSION, so the lock stays
+# compatible with `uv sync --frozen` at image-build time) directly on the runner,
+# which has git + a Python interpreter — both required to resolve the
+# `hermes-agent @ git+https://...` source dependency. (The astral uv container
+# image is distroless: no shell, git, or python, so it cannot resolve git deps.)
 #
 # Pushes the result to a branch `agent-image-relock-<version>`; open a PR from it
-# to main. Once merged, publish via the `agent-image` workflow (or an `agent/vX.Y.Z`
-# tag), which verifies the committed lock matches the requested version.
+# to main. Once merged, publish via the `agent-image` workflow (or an
+# `agent/vX.Y.Z` tag), which verifies the committed lock matches the version.
 name: agent-image-relock
 
 on:
@@ -27,8 +32,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Relock uv.lock (pinned uv via make agent-image-relock)
-        run: make agent-image-relock HERMES_VERSION="${{ inputs.hermes_version }}"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv (pinned, in lockstep with the Dockerfile UV_VERSION)
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.11.7"
+
+      - name: Relock uv.lock for the requested hermes-agent version
+        working-directory: images/hermes-agent
+        env:
+          UV_FROZEN: "false" # pyproject sets frozen=true for builds; relock must write
+        run: |
+          set -eux
+          v="${{ inputs.hermes_version }}"
+          sed -i -E "s|(hermes-agent @ git\+https://github.com/NousResearch/hermes-agent@)[^\"]+|\1${v}|" pyproject.toml
+          uv lock
 
       - name: Push lockfile branch
         run: |

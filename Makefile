@@ -150,14 +150,10 @@ agent-image-buildx:
 # ephemeral uv container so it works the same on developer laptops and in CI.
 # Requires network access to resolve the git dependency.
 .PHONY: agent-image-relock
-agent-image-relock:
+agent-image-relock: ## Relock images/hermes-agent/uv.lock for HERMES_VERSION. Requires local uv + git (resolves the git+https hermes-agent dep). CI alternative: run the agent-image-relock workflow (pins uv 0.5.0).
 	sed -i.bak -E 's|(hermes-agent @ git\+https://github.com/NousResearch/hermes-agent@)[^"]+|\1$(HERMES_VERSION)|' images/hermes-agent/pyproject.toml
 	rm -f images/hermes-agent/pyproject.toml.bak
-	docker run --rm \
-		-v $(PWD)/images/hermes-agent:/work \
-		-w /work \
-		ghcr.io/astral-sh/uv:0.5.0 \
-		lock
+	cd images/hermes-agent && UV_FROZEN=false uv lock
 	@echo "Updated images/hermes-agent/pyproject.toml and uv.lock for hermes-agent@$(HERMES_VERSION)"
 
 # Smoke-test a locally built image: --help should exit 0.
