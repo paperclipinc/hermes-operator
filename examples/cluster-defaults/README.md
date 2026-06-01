@@ -44,7 +44,7 @@ spec:
 YAML
 
 kubectl get hi defaulted -n agents -o jsonpath='{.spec.image}'
-# {"repository":"ghcr.io/paperclipinc/hermes-agent","tag":"1.4.2"}
+# {"repository":"ghcr.io/paperclipinc/hermes-agent","tag":"v2026.5.29.2"}
 ```
 
 ## What this defaults
@@ -52,7 +52,7 @@ kubectl get hi defaulted -n agents -o jsonpath='{.spec.image}'
 | Spec path | Default |
 |---|---|
 | `spec.image.repository` | `ghcr.io/paperclipinc/hermes-agent` |
-| `spec.image.tag` | `1.4.2` |
+| `spec.image.tag` | `v2026.5.29.2` |
 | `spec.image.imagePullSecrets[]` | `[{name: ghcr-pull}]` |
 | `spec.storage.persistence.storageClassName` | `gp3` |
 | `spec.storage.persistence.size` | `10Gi` |

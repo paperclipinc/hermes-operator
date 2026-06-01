@@ -34,8 +34,8 @@ kubectl apply -n agents -f hermesinstance.yaml
 ```bash
 kubectl get hi auto-update -n agents -w
 # NAME           READY   PHASE          IMAGE                                 AGE
-# auto-update    True    Ready          ghcr.io/paperclipinc/hermes-agent:1.4.2     2m
-# auto-update    False   Rolling        ghcr.io/paperclipinc/hermes-agent:1.4.2     3h
+# auto-update    True    Ready          ghcr.io/paperclipinc/hermes-agent:v2026.5.29.2     2m
+# auto-update    False   Rolling        ghcr.io/paperclipinc/hermes-agent:v2026.5.29.2     3h
 # auto-update    True    Ready          ghcr.io/paperclipinc/hermes-agent:1.4.3     3h1m
 
 kubectl get hi auto-update -n agents \

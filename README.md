@@ -29,9 +29,10 @@ in place from day one: no v0.x grind.
 ## Quickstart
 
 ```bash
-# 1. Install the CRDs and operator via Helm.
-helm repo add hermes https://paperclipinc.github.io/hermes-operator
-helm install hermes-operator hermes/hermes-operator \
+# 1. Install the CRDs and operator via Helm (OCI chart; Helm 3.8+).
+#    Omit --version for the latest release, or add --version X.Y.Z to pin.
+helm install hermes-operator \
+  oci://ghcr.io/paperclipinc/charts/hermes-operator \
   -n hermes-operator --create-namespace
 
 # 2. Apply a minimal instance.
@@ -43,7 +44,7 @@ metadata:
 spec:
   image:
     repository: ghcr.io/paperclipinc/hermes-agent
-    tag: "1.4.2"
+    tag: "v2026.5.29.2"
   storage:
     persistence:
       enabled: true
@@ -53,7 +54,7 @@ YAML
 # 3. Watch it converge.
 kubectl get hi -n agents -w
 # NAME        READY   PHASE   IMAGE                                AGE
-# my-hermes   True    Ready   ghcr.io/paperclipinc/hermes-agent:1.4.2    30s
+# my-hermes   True    Ready   ghcr.io/paperclipinc/hermes-agent:v2026.5.29.2    30s
 ```
 
 For more involved scenarios, see [`examples/`](examples/).
@@ -209,10 +210,10 @@ minor release. Patch releases never change the supported matrix.
 
 | Channel | What |
 |---|---|
-| Helm | `helm install hermes-operator hermes/hermes-operator` |
-| OLM / OperatorHub | `kubectl operator install hermes-operator` |
+| Helm (OCI) | `helm install hermes-operator oci://ghcr.io/paperclipinc/charts/hermes-operator` |
+| OLM / OperatorHub | `kubectl operator install hermes-operator` (pending first OperatorHub release) |
 | Plain manifests | `kubectl apply -f https://github.com/paperclipinc/hermes-operator/releases/latest/download/install.yaml` |
-| Container image | `ghcr.io/paperclipinc/hermes-operator:v1.0.0` (multi-arch, Cosign-signed, SBOM attested) |
+| Container image | `ghcr.io/paperclipinc/hermes-operator:v0.1.9` (multi-arch, Cosign-signed, SBOM attested) |
 
 ## Documentation
 
