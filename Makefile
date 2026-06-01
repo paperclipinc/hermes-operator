@@ -124,7 +124,7 @@ docker-buildx: ## Build and push docker image for the manager for cross-platform
 # -------- hermes-agent image (Plan 3) --------
 
 AGENT_IMAGE         ?= ghcr.io/paperclipinc/hermes-agent
-HERMES_VERSION      ?= v0.13.0
+HERMES_VERSION      ?= v2026.5.29.2
 AGENT_IMAGE_PLATFORMS ?= linux/amd64,linux/arm64
 
 # Build the agent image for the current platform. Local dev only.
