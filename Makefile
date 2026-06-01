@@ -157,7 +157,7 @@ agent-image-relock:
 		-v $(PWD)/images/hermes-agent:/work \
 		-w /work \
 		ghcr.io/astral-sh/uv:0.5.0 \
-		sh -c "uv lock"
+		lock
 	@echo "Updated images/hermes-agent/pyproject.toml and uv.lock for hermes-agent@$(HERMES_VERSION)"
 
 # Smoke-test a locally built image: --help should exit 0.
