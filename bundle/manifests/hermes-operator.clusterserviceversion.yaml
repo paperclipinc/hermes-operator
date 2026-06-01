@@ -214,7 +214,7 @@ spec:
     - python
   maintainers:
     - name: Jannes Stubbemann
-      email: jannes@aqora.io
+      email: jannes@paperclip.inc
   provider:
     name: paperclipinc
     url: https://github.com/paperclipinc/hermes-operator
