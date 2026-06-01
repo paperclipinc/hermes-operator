@@ -57,15 +57,17 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Verify uv.lock matches the requested HERMES_VERSION
+      - name: Verify uv.lock pins the requested hermes-agent git tag
         run: |
           set -eux
-          # The lockfile is the source of truth; refuse to ship if the committed lock
-          # disagrees with the requested version.
-          ver=$(awk '/^name = "hermes-agent"$/{getline; if ($0 ~ /^version =/) {gsub(/[" ]/, "", $3); print $3; exit}}' images/hermes-agent/uv.lock)
-          if [ "${ver}" != "${{ steps.ver.outputs.bare }}" ]; then
-            echo "uv.lock pins hermes-agent==${ver} but workflow requested ${{ steps.ver.outputs.bare }}" >&2
-            echo "Run: make agent-image-relock HERMES_VERSION=${{ steps.ver.outputs.tag }} and commit." >&2
+          # hermes-agent is a git dependency pinned by tag in the lock's source line:
+          #   source = { git = "https://github.com/NousResearch/hermes-agent?rev=<TAG>#<sha>" }
+          # Its package `version` is independent semver (upstream uses CalVer git tags),
+          # so validate the git rev, not the version field. Refuse a mismatched lock.
+          TAG="${{ steps.ver.outputs.tag }}"
+          if ! grep -qF "NousResearch/hermes-agent?rev=${TAG}#" images/hermes-agent/uv.lock; then
+            echo "uv.lock does not pin hermes-agent at git tag ${TAG}." >&2
+            echo "Run: make agent-image-relock HERMES_VERSION=${TAG} and commit." >&2
             exit 1
           fi
 
