@@ -1,0 +1,48 @@
+# .github/workflows/agent-image-relock.yaml
+#
+# Regenerates images/hermes-agent/uv.lock for a requested hermes-agent version
+# using the SAME pinned uv toolchain as `make agent-image-relock` (uv 0.5.0 in a
+# container), so contributors don't need Docker locally to bump the agent image.
+#
+# Pushes the result to a branch `agent-image-relock-<version>`; open a PR from it
+# to main. Once merged, publish via the `agent-image` workflow (or an `agent/vX.Y.Z`
+# tag), which verifies the committed lock matches the requested version.
+name: agent-image-relock
+
+on:
+  workflow_dispatch:
+    inputs:
+      hermes_version:
+        description: "hermes-agent release tag to lock (e.g. v0.13.0)"
+        required: true
+        default: "v0.13.0"
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  relock:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Relock uv.lock (pinned uv via make agent-image-relock)
+        run: make agent-image-relock HERMES_VERSION="${{ inputs.hermes_version }}"
+
+      - name: Push lockfile branch
+        run: |
+          set -eux
+          v="${{ inputs.hermes_version }}"
+          br="agent-image-relock-${v}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "${br}"
+          git add images/hermes-agent/uv.lock images/hermes-agent/pyproject.toml
+          if git diff --cached --quiet; then
+            echo "No lockfile changes for ${v} — nothing to push."
+            exit 0
+          fi
+          git commit -m "build(agent-image): lock hermes-agent ${v}"
+          git push -f origin "${br}"
+          echo "Pushed branch ${br}. Open a PR to main to enable publishing ghcr.io/paperclipinc/hermes-agent:${v}."
