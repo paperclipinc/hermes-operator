@@ -14,7 +14,7 @@ requires-python = ">=3.11"
 dependencies = [
     # Pinned upstream. `make agent-image-relock HERMES_VERSION=vX.Y.Z` rewrites
     # the @ ref and regenerates uv.lock for reproducible image builds.
-    "hermes-agent @ git+https://github.com/NousResearch/hermes-agent@v0.13.0",
+    "hermes-agent @ git+https://github.com/NousResearch/hermes-agent@v2026.5.29.2",
 ]
 
 [tool.uv]
