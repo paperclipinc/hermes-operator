@@ -23,7 +23,7 @@ Maintainers may step down at any time by sending a PR to `MAINTAINERS.md`. Maint
 
 ## Code of Conduct
 
-All participants are expected to follow the [Code of Conduct](CODE_OF_CONDUCT.md). Reports go to `jannes@aqora.io`.
+All participants are expected to follow the [Code of Conduct](CODE_OF_CONDUCT.md). Reports go to `jannes@paperclip.inc`.
 
 ## Security
 
