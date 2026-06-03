@@ -28,3 +28,7 @@ go.work
 *.swp
 *.swo
 *~
+
+# docs site build output and local virtualenv
+docs-site/site/
+docs-site/.venv/
