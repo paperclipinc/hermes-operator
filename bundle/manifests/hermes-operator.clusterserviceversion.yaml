@@ -1,12 +1,12 @@
 apiVersion: operators.coreos.com/v1alpha1
 kind: ClusterServiceVersion
 metadata:
-  name: 0.1.10
+  name: hermes-operator.v0.1.10
   namespace: placeholder
   annotations:
     capabilities: Auto Pilot
     categories: AI/Machine Learning, Developer Tools, Application Runtime
-    containerImage: 0.1.10
+    containerImage: ghcr.io/paperclipinc/hermes-operator:v0.1.10
     createdAt: '2026-05-12T00:00:00Z'
     support: paperclipinc
     repository: https://github.com/paperclipinc/hermes-operator
@@ -96,6 +96,9 @@ metadata:
     features.operators.openshift.io/token-auth-azure: 'false'
     features.operators.openshift.io/token-auth-gcp: 'false'
 spec:
+  icon:
+    - base64data: PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjggMTI4IiByb2xlPSJpbWciIGFyaWEtbGFiZWw9Ikhlcm1lcyBPcGVyYXRvciI+CiAgPHJlY3Qgd2lkdGg9IjEyOCIgaGVpZ2h0PSIxMjgiIHJ4PSIyNCIgZmlsbD0iIzBCMTAyMCIvPgogIDxwYXRoIGQ9Ik00NCAzNnY1Nk04NCAzNnY1Nk00NCA2NGg0MCIgc3Ryb2tlPSIjNUI4REVGIiBzdHJva2Utd2lkdGg9IjEwIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KICA8cGF0aCBkPSJNMzAgNTBjLTEwLTYtMjAtNi0yNi0yIDggMiAxNCA2IDE4IDEyek05OCA1MGMxMC02IDIwLTYgMjYtMi04IDItMTQgNi0xOCAxMnoiIGZpbGw9IiM3Q0UwQzMiLz4KPC9zdmc+Cg==
+      mediatype: image/svg+xml
   displayName: Hermes Operator
   description: >
     ## Hermes Kubernetes Operator
@@ -239,7 +242,7 @@ spec:
     - name: hermes-operator
       image: ghcr.io/paperclipinc/hermes-operator:v0.1.0
     - name: hermes-agent
-      image: ghcr.io/paperclipinc/hermes-agent:latest
+      image: ghcr.io/paperclipinc/hermes-agent:v2026.5.29.2
   customresourcedefinitions:
     owned:
       - name: hermesinstances.hermes.agent
