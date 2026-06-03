@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.10](https://github.com/paperclipinc/hermes-operator/compare/v0.1.9...v0.1.10) (2026-06-03)
+
+
+### Bug Fixes
+
+* **agent-image:** native pinned uv relock + bump uv to 0.11.7 ([#48](https://github.com/paperclipinc/hermes-operator/issues/48)) ([6e2615f](https://github.com/paperclipinc/hermes-operator/commit/6e2615f29de4e8e92d6fc0b9fdb0b0a2eac0978f))
+* **agent-image:** relock uses uv image entrypoint (unblocks hermes-agent publish) ([#46](https://github.com/paperclipinc/hermes-operator/issues/46)) ([9e456b1](https://github.com/paperclipinc/hermes-operator/commit/9e456b199741b0e279fa24587a1317be15f82f81))
+* **agent-image:** verify uv.lock by git tag (unblocks publish) ([#50](https://github.com/paperclipinc/hermes-operator/issues/50)) ([3cbcc7f](https://github.com/paperclipinc/hermes-operator/commit/3cbcc7f3fc17216d7fd24aceeeb5124966ab485c))
+
 ## [0.1.9](https://github.com/paperclipinc/hermes-operator/compare/v0.1.8...v0.1.9) (2026-05-26)
 
 
