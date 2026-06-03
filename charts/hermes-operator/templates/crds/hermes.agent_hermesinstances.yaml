@@ -4814,6 +4814,30 @@ spec:
                       enabled:
                         default: true
                         type: boolean
+                      grafanaDashboard:
+                        description: |-
+                          GrafanaDashboard configures auto-provisioned Grafana dashboard ConfigMaps
+                          (operator overview + per-instance). When enabled, the operator emits
+                          ConfigMaps labeled grafana_dashboard="1" so the Grafana sidecar provisioner
+                          picks them up automatically.
+                        properties:
+                          enabled:
+                            default: false
+                            description: Enabled enables Grafana dashboard ConfigMap
+                              creation.
+                            type: boolean
+                          folder:
+                            default: Hermes
+                            description: Folder is the Grafana folder to place the
+                              dashboards in.
+                            type: string
+                          labels:
+                            additionalProperties:
+                              type: string
+                            description: 'Labels to add to the dashboard ConfigMaps
+                              (in addition to grafana_dashboard: "1").'
+                            type: object
+                        type: object
                       port:
                         default: 9090
                         description: Port for the /metrics endpoint.

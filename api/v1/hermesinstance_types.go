@@ -591,6 +591,30 @@ type MetricsSpec struct {
 	// +kubebuilder:default=false
 	// +optional
 	Secure *bool `json:"secure,omitempty"`
+
+	// GrafanaDashboard configures auto-provisioned Grafana dashboard ConfigMaps
+	// (operator overview + per-instance). When enabled, the operator emits
+	// ConfigMaps labeled grafana_dashboard="1" so the Grafana sidecar provisioner
+	// picks them up automatically.
+	// +optional
+	GrafanaDashboard *GrafanaDashboardSpec `json:"grafanaDashboard,omitempty"`
+}
+
+// GrafanaDashboardSpec configures auto-provisioned Grafana dashboard ConfigMaps.
+type GrafanaDashboardSpec struct {
+	// Enabled enables Grafana dashboard ConfigMap creation.
+	// +kubebuilder:default=false
+	// +optional
+	Enabled *bool `json:"enabled,omitempty"`
+
+	// Labels to add to the dashboard ConfigMaps (in addition to grafana_dashboard: "1").
+	// +optional
+	Labels map[string]string `json:"labels,omitempty"`
+
+	// Folder is the Grafana folder to place the dashboards in.
+	// +kubebuilder:default="Hermes"
+	// +optional
+	Folder string `json:"folder,omitempty"`
 }
 
 // ServiceMonitorSpec controls Prometheus-Operator ServiceMonitor emission.
@@ -1033,8 +1057,9 @@ const (
 	ConditionTypePDBReady            = "PDBReady"
 	ConditionTypeHPAReady            = "HPAReady"
 	ConditionTypeIngressReady        = "IngressReady"
-	ConditionTypeServiceMonitorReady = "ServiceMonitorReady"
-	ConditionTypePrometheusRuleReady = "PrometheusRuleReady"
+	ConditionTypeServiceMonitorReady   = "ServiceMonitorReady"
+	ConditionTypePrometheusRuleReady   = "PrometheusRuleReady"
+	ConditionTypeGrafanaDashboardReady = "GrafanaDashboardReady"
 
 	ConditionBackupReady          = "BackupReady"
 	ConditionRestoreApplied       = "RestoreApplied"
