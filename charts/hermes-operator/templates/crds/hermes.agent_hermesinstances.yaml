@@ -4641,6 +4641,66 @@ spec:
               networking:
                 description: Networking exposes the agent via Service / Ingress.
                 properties:
+                  httpRoute:
+                    description: |-
+                      HTTPRoute controls optional Gateway API HTTPRoute creation. The operator
+                      emits an unstructured gateway.networking.k8s.io/v1 HTTPRoute; the Gateway
+                      API CRDs must be installed in the cluster for this to take effect.
+                    properties:
+                      annotations:
+                        additionalProperties:
+                          type: string
+                        description: Annotations are applied verbatim onto the HTTPRoute.
+                        type: object
+                      enabled:
+                        default: false
+                        description: |-
+                          Enabled: when true, the operator creates an HTTPRoute for the agent.
+                          Default false.
+                        type: boolean
+                      hostnames:
+                        description: Hostnames are the hostnames matched by this route.
+                        items:
+                          type: string
+                        type: array
+                        x-kubernetes-list-type: set
+                      parentRefs:
+                        description: |-
+                          ParentRefs are the Gateways (or other parents) this route attaches to.
+                          At least one is required for the route to take effect.
+                        items:
+                          description: HTTPRouteParentRef references a parent (typically
+                            a Gateway) the route attaches to.
+                          properties:
+                            name:
+                              description: Name of the parent resource (e.g. the Gateway
+                                name).
+                              minLength: 1
+                              type: string
+                            namespace:
+                              description: Namespace of the parent. Defaults to the
+                                HermesInstance namespace when empty.
+                              type: string
+                            sectionName:
+                              description: SectionName is the name of a section within
+                                the parent (e.g. a Gateway listener).
+                              type: string
+                          required:
+                          - name
+                          type: object
+                        type: array
+                      path:
+                        default: /
+                        description: Path is the path prefix routed to the agent Service.
+                          Default "/".
+                        type: string
+                      servicePortName:
+                        default: gateway
+                        description: |-
+                          ServicePortName: name of the Service port the route should target.
+                          Default "gateway".
+                        type: string
+                    type: object
                   ingress:
                     description: Ingress controls optional Ingress creation.
                     properties:

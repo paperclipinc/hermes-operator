@@ -76,6 +76,7 @@ const (
 // +kubebuilder:rbac:groups=apps,resources=statefulsets,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups="",resources=services;configmaps;persistentvolumeclaims;secrets;serviceaccounts;events,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=networking.k8s.io,resources=networkpolicies;ingresses,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=gateway.networking.k8s.io,resources=httproutes,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=policy,resources=poddisruptionbudgets,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=autoscaling,resources=horizontalpodautoscalers,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=roles;rolebindings,verbs=get;list;watch;create;update;patch;delete
@@ -131,6 +132,7 @@ func (r *HermesInstanceReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		{"PDB", hermesv1.ConditionTypePDBReady, r.reconcilePDB},
 		{"HPA", hermesv1.ConditionTypeHPAReady, r.reconcileHPA},
 		{"Ingress", hermesv1.ConditionTypeIngressReady, r.reconcileIngress},
+		{"HTTPRoute", hermesv1.ConditionTypeHTTPRouteReady, r.reconcileHTTPRoute},
 		{"ServiceMonitor", hermesv1.ConditionTypeServiceMonitorReady, r.reconcileServiceMonitor},
 		{"PrometheusRule", hermesv1.ConditionTypePrometheusRuleReady, r.reconcilePrometheusRule},
 		{"GrafanaDashboard", hermesv1.ConditionTypeGrafanaDashboardReady, r.reconcileGrafanaDashboards},
@@ -389,6 +391,49 @@ func (r *HermesInstanceReconciler) reconcileIngress(ctx context.Context, inst *h
 		obj.Spec = desired.Spec
 		return controllerutil.SetControllerReference(inst, obj, r.Scheme)
 	})
+	return err
+}
+
+func (r *HermesInstanceReconciler) reconcileHTTPRoute(ctx context.Context, inst *hermesv1.HermesInstance) error {
+	spec := inst.Spec.Networking.HTTPRoute
+	enabled := spec != nil && resources.BoolValue(spec.Enabled)
+	if !enabled {
+		obj := &unstructured.Unstructured{}
+		obj.SetGroupVersionKind(resources.HTTPRouteGVK())
+		obj.SetName(resources.HTTPRouteName(inst))
+		obj.SetNamespace(inst.Namespace)
+		// Tolerate clusters without the Gateway API CRDs: if the kind is not
+		// registered there is nothing to delete, so treat it as a no-op.
+		return ignoreNoGatewayAPI(r.deleteIfExists(ctx, obj))
+	}
+	desired := resources.BuildHTTPRoute(inst)
+	if err := controllerutil.SetControllerReference(inst, desired, r.Scheme); err != nil {
+		return err
+	}
+	obj := &unstructured.Unstructured{}
+	obj.SetGroupVersionKind(resources.HTTPRouteGVK())
+	obj.SetName(desired.GetName())
+	obj.SetNamespace(desired.GetNamespace())
+	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, obj, func() error {
+		obj.Object["spec"] = desired.Object["spec"]
+		obj.SetLabels(resources.MergePreservingForeign(obj.GetLabels(), desired.GetLabels(), operatorLabelPrefix))
+		obj.SetAnnotations(resources.MergePreservingForeign(obj.GetAnnotations(), desired.GetAnnotations(), operatorLabelPrefix))
+		obj.SetOwnerReferences(desired.GetOwnerReferences())
+		return nil
+	})
+	return err
+}
+
+// ignoreNoGatewayAPI swallows the "no matches for kind" error returned when the
+// Gateway API CRDs are not installed in the cluster. A user who never enables
+// spec.networking.httpRoute must not be forced to install Gateway API.
+func ignoreNoGatewayAPI(err error) error {
+	if err == nil {
+		return nil
+	}
+	if meta.IsNoMatchError(err) || runtime.IsNotRegisteredError(err) {
+		return nil
+	}
 	return err
 }
 

@@ -281,6 +281,47 @@ _Appears in:_
 | `behavior` _[HorizontalPodAutoscalerBehavior](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#horizontalpodautoscalerbehavior-v2-autoscaling)_ | Behavior is forwarded onto HPA's autoscaling/v2 behavior field.<br />Plan 6 conformance suite asserts the field is exposed; v1 forwards it raw. |  | Optional: \{\} <br /> |
 
 
+#### HTTPRouteParentRef
+
+
+
+HTTPRouteParentRef references a parent (typically a Gateway) the route attaches to.
+
+
+
+_Appears in:_
+- [HTTPRouteSpec](#httproutespec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `name` _string_ | Name of the parent resource (e.g. the Gateway name). |  | MinLength: 1 <br /> |
+| `namespace` _string_ | Namespace of the parent. Defaults to the HermesInstance namespace when empty. |  | Optional: \{\} <br /> |
+| `sectionName` _string_ | SectionName is the name of a section within the parent (e.g. a Gateway listener). |  | Optional: \{\} <br /> |
+
+
+#### HTTPRouteSpec
+
+
+
+HTTPRouteSpec controls optional Gateway API HTTPRoute creation. It mirrors the
+IngressSpec shape for consistency: a single prefix rule routing to the agent
+Service. The route is only created when Enabled is true.
+
+
+
+_Appears in:_
+- [NetworkingSpec](#networkingspec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `enabled` _boolean_ | Enabled: when true, the operator creates an HTTPRoute for the agent.<br />Default false. | false | Optional: \{\} <br /> |
+| `parentRefs` _[HTTPRouteParentRef](#httprouteparentref) array_ | ParentRefs are the Gateways (or other parents) this route attaches to.<br />At least one is required for the route to take effect. |  | Optional: \{\} <br /> |
+| `hostnames` _string array_ | Hostnames are the hostnames matched by this route. |  | Optional: \{\} <br /> |
+| `path` _string_ | Path is the path prefix routed to the agent Service. Default "/". | / | Optional: \{\} <br /> |
+| `servicePortName` _string_ | ServicePortName: name of the Service port the route should target.<br />Default "gateway". | gateway | Optional: \{\} <br /> |
+| `annotations` _object (keys:string, values:string)_ | Annotations are applied verbatim onto the HTTPRoute. |  | Optional: \{\} <br /> |
+
+
 #### HermesClusterDefaults
 
 
@@ -830,6 +871,7 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `service` _[ServiceSpec](#servicespec)_ | Service controls the Service kind and ports. |  | Optional: \{\} <br /> |
 | `ingress` _[IngressSpec](#ingressspec)_ | Ingress controls optional Ingress creation. |  | Optional: \{\} <br /> |
+| `httpRoute` _[HTTPRouteSpec](#httproutespec)_ | HTTPRoute controls optional Gateway API HTTPRoute creation. The operator<br />emits an unstructured gateway.networking.k8s.io/v1 HTTPRoute; the Gateway<br />API CRDs must be installed in the cluster for this to take effect. |  | Optional: \{\} <br /> |
 
 
 #### ObservabilityDefaults

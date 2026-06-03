@@ -11,9 +11,7 @@ metadata:
     support: paperclipinc
     repository: https://github.com/paperclipinc/hermes-operator
     description: >-
-      A production-grade Kubernetes operator for deploying and managing
-      nousresearch/hermes-agent: a Python-based self-improving multi-platform AI
-      agent.
+      A production-grade Kubernetes operator for deploying and managing nousresearch/hermes-agent: a Python-based self-improving multi-platform AI agent.
     alm-examples: |-
       [
         {
@@ -119,8 +117,7 @@ spec:
 
     WhatsApp, Signal), self-improves through a built-in learning loop, persists
 
-    session memory via FTS5, models users via Honcho dialectic profiles, and
-    runs
+    session memory via FTS5, models users via Honcho dialectic profiles, and runs
 
     scheduled automations via a native cron scheduler.
 
@@ -129,23 +126,31 @@ spec:
 
 
     - **Declarative Deployment**: every aspect of an agent's runtime, gateways,
+
       storage, networking, observability, and security through a single
       `HermesInstance` resource.
     - **Self-Configuration with Audit**: the agent persists learned skills, env
+
       vars, config patches, and workspace files via `HermesSelfConfig` CRs that
       the operator validates against an explicit allowlist, then applies via
       Server-Side Apply (no GitOps flap).
     - **Cluster Defaults**: `HermesClusterDefaults` (cluster-scoped singleton)
+
       supplies organization-wide defaults for image, storage class, IRSA, etc.
     - **Auto-Update with Rollback**: OCI registry polling with pre-update backup
+
       and probe-driven rollback.
     - **Backup / Restore**: S3-compatible (R2, MinIO, AWS), backup-on-delete
+
       finalizer, declarative restore from snapshot.
     - **OpenClaw Migration**: one-shot `spec.migration.fromOpenClaw` invokes
+
       hermes-agent's built-in importer.
     - **Honcho Profile Store**: optional companion Deployment with persistence
+
       for dialectic user profiles.
     - **Multi-Platform Gateways**: first-class config for Telegram, Discord,
+
       Slack, WhatsApp, Signal: each with isolated secret rotation.
 
     ### Default Security Posture
@@ -190,12 +195,14 @@ spec:
     3. Create a `HermesInstance` referencing the Secret.
 
     4. The operator handles the rest: deployment, networking, security,
+
        lifecycle.
 
     ### Prerequisites
 
 
     - Kubernetes 1.28+
+
   maturity: alpha
   version: 0.1.11
   minKubeVersion: 1.28.0
@@ -251,8 +258,7 @@ spec:
         kind: HermesInstance
         displayName: Hermes Instance
         description: >-
-          Represents a managed hermes-agent instance with security, networking,
-          gateways, storage, and observability.
+          Represents a managed hermes-agent instance with security, networking, gateways, storage, and observability.
         specDescriptors:
           - path: image.repository
             displayName: Image Repository
@@ -387,8 +393,7 @@ spec:
         kind: HermesSelfConfig
         displayName: Hermes SelfConfig
         description: >-
-          Agent-initiated mutation request, validated against the parent
-          instance's selfConfigure policy and applied via Server-Side Apply.
+          Agent-initiated mutation request, validated against the parent instance's selfConfigure policy and applied via Server-Side Apply.
         specDescriptors:
           - path: instanceRef
             displayName: Instance Reference
@@ -420,8 +425,7 @@ spec:
         kind: HermesClusterDefaults
         displayName: Hermes Cluster Defaults
         description: >-
-          Cluster-scoped singleton that fills nil fields on every
-          HermesInstance. Name must be 'cluster'.
+          Cluster-scoped singleton that fills nil fields on every HermesInstance. Name must be 'cluster'.
         specDescriptors:
           - path: image.repository
             displayName: Default Image Repository
@@ -443,7 +447,7 @@ spec:
         - serviceAccountName: hermes-operator-controller-manager
           rules:
             - apiGroups:
-                - ''
+                - ""
               resources:
                 - configmaps
                 - events
@@ -460,7 +464,7 @@ spec:
                 - update
                 - watch
             - apiGroups:
-                - ''
+                - ""
               resources:
                 - pods
               verbs:
@@ -497,6 +501,18 @@ spec:
               resources:
                 - cronjobs
                 - jobs
+              verbs:
+                - create
+                - delete
+                - get
+                - list
+                - patch
+                - update
+                - watch
+            - apiGroups:
+                - gateway.networking.k8s.io
+              resources:
+                - httproutes
               verbs:
                 - create
                 - delete

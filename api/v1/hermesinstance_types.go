@@ -449,6 +449,63 @@ type NetworkingSpec struct {
 	// Ingress controls optional Ingress creation.
 	// +optional
 	Ingress IngressSpec `json:"ingress,omitempty"`
+
+	// HTTPRoute controls optional Gateway API HTTPRoute creation. The operator
+	// emits an unstructured gateway.networking.k8s.io/v1 HTTPRoute; the Gateway
+	// API CRDs must be installed in the cluster for this to take effect.
+	// +optional
+	HTTPRoute *HTTPRouteSpec `json:"httpRoute,omitempty"`
+}
+
+// HTTPRouteSpec controls optional Gateway API HTTPRoute creation. It mirrors the
+// IngressSpec shape for consistency: a single prefix rule routing to the agent
+// Service. The route is only created when Enabled is true.
+type HTTPRouteSpec struct {
+	// Enabled: when true, the operator creates an HTTPRoute for the agent.
+	// Default false.
+	// +kubebuilder:default=false
+	// +optional
+	Enabled *bool `json:"enabled,omitempty"`
+
+	// ParentRefs are the Gateways (or other parents) this route attaches to.
+	// At least one is required for the route to take effect.
+	// +optional
+	ParentRefs []HTTPRouteParentRef `json:"parentRefs,omitempty"`
+
+	// Hostnames are the hostnames matched by this route.
+	// +listType=set
+	// +optional
+	Hostnames []string `json:"hostnames,omitempty"`
+
+	// Path is the path prefix routed to the agent Service. Default "/".
+	// +kubebuilder:default="/"
+	// +optional
+	Path string `json:"path,omitempty"`
+
+	// ServicePortName: name of the Service port the route should target.
+	// Default "gateway".
+	// +kubebuilder:default="gateway"
+	// +optional
+	ServicePortName string `json:"servicePortName,omitempty"`
+
+	// Annotations are applied verbatim onto the HTTPRoute.
+	// +optional
+	Annotations map[string]string `json:"annotations,omitempty"`
+}
+
+// HTTPRouteParentRef references a parent (typically a Gateway) the route attaches to.
+type HTTPRouteParentRef struct {
+	// Name of the parent resource (e.g. the Gateway name).
+	// +kubebuilder:validation:MinLength=1
+	Name string `json:"name"`
+
+	// Namespace of the parent. Defaults to the HermesInstance namespace when empty.
+	// +optional
+	Namespace *string `json:"namespace,omitempty"`
+
+	// SectionName is the name of a section within the parent (e.g. a Gateway listener).
+	// +optional
+	SectionName *string `json:"sectionName,omitempty"`
 }
 
 // ServiceSpec controls the agent's Service.
@@ -1057,6 +1114,7 @@ const (
 	ConditionTypePDBReady              = "PDBReady"
 	ConditionTypeHPAReady              = "HPAReady"
 	ConditionTypeIngressReady          = "IngressReady"
+	ConditionTypeHTTPRouteReady        = "HTTPRouteReady"
 	ConditionTypeServiceMonitorReady   = "ServiceMonitorReady"
 	ConditionTypePrometheusRuleReady   = "PrometheusRuleReady"
 	ConditionTypeGrafanaDashboardReady = "GrafanaDashboardReady"
