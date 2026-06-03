@@ -22,8 +22,6 @@
         { "type": "yaml", "path": "charts/hermes-operator/Chart.yaml", "jsonpath": "$.version" },
         { "type": "yaml", "path": "charts/hermes-operator/Chart.yaml", "jsonpath": "$.appVersion" },
         { "type": "yaml", "path": "charts/hermes-operator/values.yaml", "jsonpath": "$.image.tag" },
-        { "type": "yaml", "path": "bundle/manifests/hermes-operator.clusterserviceversion.yaml", "jsonpath": "$.metadata.name" },
-        { "type": "yaml", "path": "bundle/manifests/hermes-operator.clusterserviceversion.yaml", "jsonpath": "$.metadata.annotations.containerImage" },
         { "type": "yaml", "path": "bundle/manifests/hermes-operator.clusterserviceversion.yaml", "jsonpath": "$.spec.version" }
       ]
     }

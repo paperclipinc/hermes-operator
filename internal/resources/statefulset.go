@@ -164,6 +164,7 @@ func BuildStatefulSet(inst *hermesv1.HermesInstance, extraInits []corev1.Contain
 		DNSPolicy:                     corev1.DNSClusterFirst,
 		SchedulerName:                 "default-scheduler",
 		TerminationGracePeriodSeconds: Ptr(int64(30)),
+		ShareProcessNamespace:         shareProcessNamespace(inst),
 		SecurityContext:               podSecurityCtx,
 		NodeSelector:                  inst.Spec.Scheduling.NodeSelector,
 		Tolerations:                   inst.Spec.Scheduling.Tolerations,
@@ -274,10 +275,27 @@ func BuildStatefulSet(inst *hermesv1.HermesInstance, extraInits []corev1.Contain
 	return sts
 }
 
+// shareProcessNamespace returns the effective ShareProcessNamespace value,
+// defaulting to true. The kubebuilder default would otherwise populate this at
+// the API server, but explicit handling lets instances stored before the field
+// was added still get the zombie-reaping behavior on the next reconcile. With
+// PID namespace sharing the infrastructure (pause) container becomes PID 1 and
+// reaps defunct helper processes (git, plugins, shells) spawned under the agent
+// process, which otherwise accumulate when the entrypoint does not waitpid().
+func shareProcessNamespace(inst *hermesv1.HermesInstance) *bool {
+	if inst.Spec.ShareProcessNamespace != nil {
+		return inst.Spec.ShareProcessNamespace
+	}
+	return Ptr(true)
+}
+
 func imageRef(inst *hermesv1.HermesInstance) string {
 	repo := inst.Spec.Image.Repository
 	if repo == "" {
 		repo = "ghcr.io/paperclipinc/hermes-agent"
+	}
+	if digest := inst.Spec.Image.Digest; digest != "" {
+		return fmt.Sprintf("%s@%s", repo, digest)
 	}
 	tag := inst.Spec.Image.Tag
 	if tag == "" {

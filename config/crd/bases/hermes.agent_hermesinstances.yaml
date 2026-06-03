@@ -3016,6 +3016,11 @@ spec:
               image:
                 description: Image selects the hermes-agent container image.
                 properties:
+                  digest:
+                    description: |-
+                      Digest overrides the tag with an image digest (e.g. sha256:abc...). When set
+                      it takes precedence over the tag for the resolved image reference.
+                    type: string
                   pullPolicy:
                     default: IfNotPresent
                     enum:
@@ -3027,9 +3032,18 @@ spec:
                     default: ghcr.io/paperclipinc/hermes-agent
                     type: string
                   tag:
-                    default: latest
+                    description: |-
+                      Tag is the container image tag. Either tag or digest must be set; there is
+                      no default, because pinning to a mutable tag like :latest can silently pull
+                      a broken upstream build.
                     type: string
                 type: object
+                x-kubernetes-validations:
+                - message: 'spec.image: one of tag or digest must be set and the tag
+                    must not be the floating '':latest'' (pick a specific upstream
+                    release tag or pin a digest)'
+                  rule: (has(self.tag) && size(self.tag) > 0 && self.tag != 'latest')
+                    || (has(self.digest) && size(self.digest) > 0)
               initContainers:
                 description: |-
                   InitContainers is a user-supplied list of init containers appended after
@@ -4800,6 +4814,30 @@ spec:
                       enabled:
                         default: true
                         type: boolean
+                      grafanaDashboard:
+                        description: |-
+                          GrafanaDashboard configures auto-provisioned Grafana dashboard ConfigMaps
+                          (operator overview + per-instance). When enabled, the operator emits
+                          ConfigMaps labeled grafana_dashboard="1" so the Grafana sidecar provisioner
+                          picks them up automatically.
+                        properties:
+                          enabled:
+                            default: false
+                            description: Enabled enables Grafana dashboard ConfigMap
+                              creation.
+                            type: boolean
+                          folder:
+                            default: Hermes
+                            description: Folder is the Grafana folder to place the
+                              dashboards in.
+                            type: string
+                          labels:
+                            additionalProperties:
+                              type: string
+                            description: 'Labels to add to the dashboard ConfigMaps
+                              (in addition to grafana_dashboard: "1").'
+                            type: object
+                        type: object
                       port:
                         default: 9090
                         description: Port for the /metrics endpoint.
@@ -7331,6 +7369,21 @@ spec:
                     type: array
                     x-kubernetes-list-type: set
                 type: object
+              shareProcessNamespace:
+                default: true
+                description: |-
+                  ShareProcessNamespace enables PID namespace sharing between all containers
+                  in the pod. When true (the default), the infrastructure (pause) container
+                  becomes PID 1 and reaps zombie processes, preventing accumulation of defunct
+                  helper processes (git, plugins, shells) spawned under the agent entrypoint
+                  when it does not call waitpid().
+
+                  Security note: enabling this lets every container in the pod see and signal
+                  every other container's processes. A compromised sidecar could send signals
+                  to the agent and vice versa. Set to false to keep per-container PID isolation;
+                  you are then responsible for reaping zombies (e.g. by baking tini or dumb-init
+                  into the image).
+                type: boolean
               sidecars:
                 description: |-
                   Sidecars is a user-supplied list of sidecars appended after operator-managed

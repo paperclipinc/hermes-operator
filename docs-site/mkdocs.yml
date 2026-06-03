@@ -1,0 +1,105 @@
+site_name: Hermes Operator
+site_url: https://paperclip.inc/docs/operators/hermes/
+site_description: Kubernetes operator for managing Hermes AI agent instances with production-grade security, observability, and lifecycle management.
+site_author: Paperclip Inc.
+repo_url: https://github.com/paperclipinc/hermes-operator
+repo_name: paperclipinc/hermes-operator
+edit_uri: edit/main/docs/
+copyright: Copyright &copy; Paperclip Inc.
+
+docs_dir: ../docs
+
+# Internal planning material and design specs are not part of the published site.
+exclude_docs: |
+  superpowers/
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.top
+    - navigation.indexes
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.action.edit
+    - content.action.view
+    - toc.follow
+  icon:
+    repo: fontawesome/brands/github
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+
+# Existing docs cross-link with relative paths that resolve in GitHub but may not
+# all map to site routes; do not fail the strict build on those.
+validation:
+  links:
+    not_found: ignore
+  nav:
+    omitted_files: ignore
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/paperclipinc/hermes-operator
+
+nav:
+  - Home: index.md
+  - Reference:
+      - Conventions: conventions.md
+      - API Reference: api-reference.md
+      - Generated API Reference: api-reference-generated.md
+      - Conditions: conditions.md
+  - Operations:
+      - Backup and Restore: backup-restore.md
+      - Backup Format: backup-format.md
+      - Auto-Update: autoupdate.md
+      - Self-Configuration: selfconfig.md
+      - Platform Gateways Runbook: runbook-platform-gateways.md
+  - Migration and Compatibility:
+      - Migration: migration.md
+      - API Versioning: api-versioning.md
+      - Supported Versions: supported-versions.md
+      - Deprecations: deprecations.md
+  - Distribution:
+      - Conformance: conformance.md
+      - Release Process: release-process.md
+      - Signing: security/signing.md
