@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.12](https://github.com/paperclipinc/hermes-operator/compare/v0.1.11...v0.1.12) (2026-06-03)
+
+
+### Features
+
+* optional Gateway API HTTPRoute for HermesInstance ([#59](https://github.com/paperclipinc/hermes-operator/issues/59)) ([ff5d781](https://github.com/paperclipinc/hermes-operator/commit/ff5d7817a991a64c6e124190787d103dea9f40e0))
+* tier-1/2 parity (digest-pin, bench, image CEL, zombie reaping, Grafana, docs-site) ([#56](https://github.com/paperclipinc/hermes-operator/issues/56)) ([712ed2b](https://github.com/paperclipinc/hermes-operator/commit/712ed2b1928d363abade3fd3caf5158db798d5fc))
+
+
+### Bug Fixes
+
+* **olm:** declare webhookDefinitions so OLM provisions the webhook cert ([#57](https://github.com/paperclipinc/hermes-operator/issues/57)) ([4420511](https://github.com/paperclipinc/hermes-operator/commit/44205118a0fd3cd3d08c847449684f472ebb14b3))
+
 ## [0.1.11](https://github.com/paperclipinc/hermes-operator/compare/v0.1.10...v0.1.11) (2026-06-03)
 
 
