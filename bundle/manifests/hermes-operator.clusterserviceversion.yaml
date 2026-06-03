@@ -97,7 +97,8 @@ metadata:
     features.operators.openshift.io/token-auth-gcp: 'false'
 spec:
   icon:
-    - base64data: PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjggMTI4IiByb2xlPSJpbWciIGFyaWEtbGFiZWw9Ikhlcm1lcyBPcGVyYXRvciI+CiAgPHJlY3Qgd2lkdGg9IjEyOCIgaGVpZ2h0PSIxMjgiIHJ4PSIyNCIgZmlsbD0iIzBCMTAyMCIvPgogIDxwYXRoIGQ9Ik00NCAzNnY1Nk04NCAzNnY1Nk00NCA2NGg0MCIgc3Ryb2tlPSIjNUI4REVGIiBzdHJva2Utd2lkdGg9IjEwIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KICA8cGF0aCBkPSJNMzAgNTBjLTEwLTYtMjAtNi0yNi0yIDggMiAxNCA2IDE4IDEyek05OCA1MGMxMC02IDIwLTYgMjYtMi04IDItMTQgNi0xOCAxMnoiIGZpbGw9IiM3Q0UwQzMiLz4KPC9zdmc+Cg==
+    - base64data: >-
+        PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjggMTI4IiByb2xlPSJpbWciIGFyaWEtbGFiZWw9Ikhlcm1lcyBPcGVyYXRvciI+CiAgPHJlY3Qgd2lkdGg9IjEyOCIgaGVpZ2h0PSIxMjgiIHJ4PSIyNCIgZmlsbD0iIzBCMTAyMCIvPgogIDxwYXRoIGQ9Ik00NCAzNnY1Nk04NCAzNnY1Nk00NCA2NGg0MCIgc3Ryb2tlPSIjNUI4REVGIiBzdHJva2Utd2lkdGg9IjEwIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KICA8cGF0aCBkPSJNMzAgNTBjLTEwLTYtMjAtNi0yNi0yIDggMiAxNCA2IDE4IDEyek05OCA1MGMxMC02IDIwLTYgMjYtMi04IDItMTQgNi0xOCAxMnoiIGZpbGw9IiM3Q0UwQzMiLz4KPC9zdmc+Cg==
       mediatype: image/svg+xml
   displayName: Hermes Operator
   description: >
@@ -196,7 +197,7 @@ spec:
 
     - Kubernetes 1.28+
   maturity: alpha
-  version: 0.1.10
+  version: 0.1.11
   minKubeVersion: 1.28.0
   keywords:
     - ai

@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.11](https://github.com/paperclipinc/hermes-operator/compare/v0.1.10...v0.1.11) (2026-06-03)
+
+
+### Bug Fixes
+
+* **olm:** correct CSV image refs so OperatorHub submission passes ([#54](https://github.com/paperclipinc/hermes-operator/issues/54)) ([edaa87d](https://github.com/paperclipinc/hermes-operator/commit/edaa87ddf333a7610e3d451666f02c4bd8362880))
+
 ## [0.1.10](https://github.com/paperclipinc/hermes-operator/compare/v0.1.9...v0.1.10) (2026-06-03)
 
 
