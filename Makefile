@@ -69,6 +69,10 @@ test: manifests generate fmt vet envtest ## Run tests.
 test-e2e:
 	go test ./test/e2e/ -v -ginkgo.v
 
+.PHONY: bench
+bench: ## Run benchmarks for resource builders.
+	go test ./internal/resources/ -bench=. -benchmem -run=^$$ -count=1
+
 .PHONY: lint
 lint: golangci-lint ## Run golangci-lint linter
 	$(GOLANGCI_LINT) run
