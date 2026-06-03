@@ -123,6 +123,12 @@ var _ = Describe("HermesInstance controller", func() {
 
 		inst := &hermesv1.HermesInstance{
 			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace},
+			Spec: hermesv1.HermesInstanceSpec{
+				Image: hermesv1.ImageSpec{
+					Repository: "ghcr.io/paperclipinc/hermes-agent",
+					Tag:        "v1.0.0",
+				},
+			},
 		}
 		Expect(k8sClient.Create(ctx, inst)).To(Succeed())
 
@@ -285,7 +291,7 @@ var _ = Describe("HermesInstance reconciler: gateways", func() {
 		inst := &hermesv1.HermesInstance{
 			ObjectMeta: metav1.ObjectMeta{Name: instName, Namespace: ns},
 			Spec: hermesv1.HermesInstanceSpec{
-				Image:   hermesv1.ImageSpec{Repository: "ghcr.io/paperclipinc/hermes-agent"},
+				Image:   hermesv1.ImageSpec{Repository: "ghcr.io/paperclipinc/hermes-agent", Tag: "v1.0.0"},
 				Storage: hermesv1.StorageSpec{Persistence: hermesv1.PersistenceSpec{Size: "1Gi"}},
 				Gateways: hermesv1.GatewaysSpec{
 					Telegram: hermesv1.TelegramGatewaySpec{
@@ -334,7 +340,7 @@ var _ = Describe("HermesInstance reconciler: gateways", func() {
 		inst := &hermesv1.HermesInstance{
 			ObjectMeta: metav1.ObjectMeta{Name: instName, Namespace: ns},
 			Spec: hermesv1.HermesInstanceSpec{
-				Image:   hermesv1.ImageSpec{Repository: "ghcr.io/paperclipinc/hermes-agent"},
+				Image:   hermesv1.ImageSpec{Repository: "ghcr.io/paperclipinc/hermes-agent", Tag: "v1.0.0"},
 				Storage: hermesv1.StorageSpec{Persistence: hermesv1.PersistenceSpec{Size: "1Gi"}},
 				Gateways: hermesv1.GatewaysSpec{
 					Telegram: hermesv1.TelegramGatewaySpec{
@@ -400,7 +406,7 @@ var _ = Describe("HermesInstance reconciler: Honcho profile store", func() {
 		inst := &hermesv1.HermesInstance{
 			ObjectMeta: metav1.ObjectMeta{Name: instName, Namespace: ns},
 			Spec: hermesv1.HermesInstanceSpec{
-				Image:   hermesv1.ImageSpec{Repository: "ghcr.io/paperclipinc/hermes-agent"},
+				Image:   hermesv1.ImageSpec{Repository: "ghcr.io/paperclipinc/hermes-agent", Tag: "v1.0.0"},
 				Storage: hermesv1.StorageSpec{Persistence: hermesv1.PersistenceSpec{Size: "1Gi"}},
 				ProfileStore: hermesv1.ProfileStoreSpec{
 					Honcho: hermesv1.HonchoSpec{
@@ -443,7 +449,7 @@ var _ = Describe("HermesInstance reconciler: Honcho profile store", func() {
 		inst := &hermesv1.HermesInstance{
 			ObjectMeta: metav1.ObjectMeta{Name: instName, Namespace: ns},
 			Spec: hermesv1.HermesInstanceSpec{
-				Image:   hermesv1.ImageSpec{Repository: "ghcr.io/paperclipinc/hermes-agent"},
+				Image:   hermesv1.ImageSpec{Repository: "ghcr.io/paperclipinc/hermes-agent", Tag: "v1.0.0"},
 				Storage: hermesv1.StorageSpec{Persistence: hermesv1.PersistenceSpec{Size: "1Gi"}},
 				ProfileStore: hermesv1.ProfileStoreSpec{
 					Honcho: hermesv1.HonchoSpec{
@@ -505,7 +511,7 @@ var _ = Describe("HermesInstance reconciler: idempotency canary (Plan 3 surface)
 		inst := &hermesv1.HermesInstance{
 			ObjectMeta: metav1.ObjectMeta{Name: instName, Namespace: ns},
 			Spec: hermesv1.HermesInstanceSpec{
-				Image:   hermesv1.ImageSpec{Repository: "ghcr.io/paperclipinc/hermes-agent"},
+				Image:   hermesv1.ImageSpec{Repository: "ghcr.io/paperclipinc/hermes-agent", Tag: "v1.0.0"},
 				Storage: hermesv1.StorageSpec{Persistence: hermesv1.PersistenceSpec{Size: "1Gi"}},
 				Runtime: hermesv1.RuntimeSpec{
 					UV:               hermesv1.UVSpec{Enabled: Ptr(true)},
