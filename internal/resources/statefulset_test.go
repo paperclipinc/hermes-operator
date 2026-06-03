@@ -31,6 +31,21 @@ func TestBuildStatefulSet_ContainerImage(t *testing.T) {
 	assert.Equal(t, corev1.PullIfNotPresent, require[0].ImagePullPolicy, "explicit default")
 }
 
+func TestBuildStatefulSet_ContainerImageDigest(t *testing.T) {
+	inst := minimalInstance()
+	inst.Spec.Image.Repository = "ghcr.io/paperclipinc/hermes-agent"
+	inst.Spec.Image.Tag = "v1.0.0"
+	inst.Spec.Image.Digest = "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+	sts := BuildStatefulSet(inst, nil)
+	c := sts.Spec.Template.Spec.Containers
+	assert.Len(t, c, 1)
+	assert.Equal(t,
+		"ghcr.io/paperclipinc/hermes-agent@sha256:0000000000000000000000000000000000000000000000000000000000000000",
+		c[0].Image,
+		"digest takes precedence over tag",
+	)
+}
+
 func TestBuildStatefulSet_ExplicitK8sDefaults(t *testing.T) {
 	sts := BuildStatefulSet(minimalInstance(), nil)
 	podSpec := sts.Spec.Template.Spec

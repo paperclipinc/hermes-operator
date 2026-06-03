@@ -3016,6 +3016,11 @@ spec:
               image:
                 description: Image selects the hermes-agent container image.
                 properties:
+                  digest:
+                    description: |-
+                      Digest overrides the tag with an image digest (e.g. sha256:abc...). When set
+                      it takes precedence over the tag for the resolved image reference.
+                    type: string
                   pullPolicy:
                     default: IfNotPresent
                     enum:
@@ -3027,9 +3032,18 @@ spec:
                     default: ghcr.io/paperclipinc/hermes-agent
                     type: string
                   tag:
-                    default: latest
+                    description: |-
+                      Tag is the container image tag. Either tag or digest must be set; there is
+                      no default, because pinning to a mutable tag like :latest can silently pull
+                      a broken upstream build.
                     type: string
                 type: object
+                x-kubernetes-validations:
+                - message: 'spec.image: one of tag or digest must be set and the tag
+                    must not be the floating '':latest'' (pick a specific upstream
+                    release tag or pin a digest)'
+                  rule: (has(self.tag) && size(self.tag) > 0 && self.tag != 'latest')
+                    || (has(self.digest) && size(self.digest) > 0)
               initContainers:
                 description: |-
                   InitContainers is a user-supplied list of init containers appended after

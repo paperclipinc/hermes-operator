@@ -159,14 +159,22 @@ type HermesInstanceSpec struct {
 }
 
 // ImageSpec selects an OCI image.
+// +kubebuilder:validation:XValidation:rule="(has(self.tag) && size(self.tag) > 0 && self.tag != 'latest') || (has(self.digest) && size(self.digest) > 0)",message="spec.image: one of tag or digest must be set and the tag must not be the floating ':latest' (pick a specific upstream release tag or pin a digest)"
 type ImageSpec struct {
 	// +kubebuilder:default="ghcr.io/paperclipinc/hermes-agent"
 	// +optional
 	Repository string `json:"repository,omitempty"`
 
-	// +kubebuilder:default="latest"
+	// Tag is the container image tag. Either tag or digest must be set; there is
+	// no default, because pinning to a mutable tag like :latest can silently pull
+	// a broken upstream build.
 	// +optional
 	Tag string `json:"tag,omitempty"`
+
+	// Digest overrides the tag with an image digest (e.g. sha256:abc...). When set
+	// it takes precedence over the tag for the resolved image reference.
+	// +optional
+	Digest string `json:"digest,omitempty"`
 
 	// +kubebuilder:default=IfNotPresent
 	// +kubebuilder:validation:Enum=Always;IfNotPresent;Never

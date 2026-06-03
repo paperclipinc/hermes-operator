@@ -279,6 +279,9 @@ func imageRef(inst *hermesv1.HermesInstance) string {
 	if repo == "" {
 		repo = "ghcr.io/paperclipinc/hermes-agent"
 	}
+	if digest := inst.Spec.Image.Digest; digest != "" {
+		return fmt.Sprintf("%s@%s", repo, digest)
+	}
 	tag := inst.Spec.Image.Tag
 	if tag == "" {
 		tag = "latest"
