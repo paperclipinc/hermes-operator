@@ -133,6 +133,7 @@ func (r *HermesInstanceReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		{"Ingress", hermesv1.ConditionTypeIngressReady, r.reconcileIngress},
 		{"ServiceMonitor", hermesv1.ConditionTypeServiceMonitorReady, r.reconcileServiceMonitor},
 		{"PrometheusRule", hermesv1.ConditionTypePrometheusRuleReady, r.reconcilePrometheusRule},
+		{"GrafanaDashboard", hermesv1.ConditionTypeGrafanaDashboardReady, r.reconcileGrafanaDashboards},
 		{"StatefulSet", "StatefulSetReady", r.reconcileStatefulSet},
 		{"Honcho", "ProfileStoreReady", r.reconcileHoncho},
 	}
@@ -451,6 +452,41 @@ func (r *HermesInstanceReconciler) reconcilePrometheusRule(ctx context.Context, 
 		return nil
 	})
 	return err
+}
+
+// reconcileGrafanaDashboards reconciles the operator overview and per-instance
+// Grafana dashboard ConfigMaps. When disabled, any previously created ConfigMaps
+// are deleted so toggling the feature off cleans up after itself.
+func (r *HermesInstanceReconciler) reconcileGrafanaDashboards(ctx context.Context, inst *hermesv1.HermesInstance) error {
+	if !resources.GrafanaDashboardEnabled(inst) {
+		for _, name := range []string{
+			resources.GrafanaDashboardOperatorName(inst),
+			resources.GrafanaDashboardInstanceName(inst),
+		} {
+			cm := &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: inst.Namespace}}
+			if err := r.deleteIfExists(ctx, cm); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
+	for _, desired := range []*corev1.ConfigMap{
+		resources.BuildGrafanaDashboardOperator(inst),
+		resources.BuildGrafanaDashboardInstance(inst),
+	} {
+		obj := &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: desired.Name, Namespace: desired.Namespace}}
+		d := desired
+		if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, obj, func() error {
+			obj.Labels = resources.MergePreservingForeign(obj.Labels, d.Labels, operatorLabelPrefix)
+			obj.Annotations = resources.MergePreservingForeign(obj.Annotations, d.Annotations, operatorLabelPrefix)
+			obj.Data = d.Data
+			return controllerutil.SetControllerReference(inst, obj, r.Scheme)
+		}); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (r *HermesInstanceReconciler) reconcileStatefulSet(ctx context.Context, inst *hermesv1.HermesInstance) error {

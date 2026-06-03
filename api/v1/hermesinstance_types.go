@@ -77,6 +77,21 @@ type HermesInstanceSpec struct {
 	// +optional
 	Scheduling SchedulingSpec `json:"scheduling,omitempty"`
 
+	// ShareProcessNamespace enables PID namespace sharing between all containers
+	// in the pod. When true (the default), the infrastructure (pause) container
+	// becomes PID 1 and reaps zombie processes, preventing accumulation of defunct
+	// helper processes (git, plugins, shells) spawned under the agent entrypoint
+	// when it does not call waitpid().
+	//
+	// Security note: enabling this lets every container in the pod see and signal
+	// every other container's processes. A compromised sidecar could send signals
+	// to the agent and vice versa. Set to false to keep per-container PID isolation;
+	// you are then responsible for reaping zombies (e.g. by baking tini or dumb-init
+	// into the image).
+	// +kubebuilder:default=true
+	// +optional
+	ShareProcessNamespace *bool `json:"shareProcessNamespace,omitempty"`
+
 	// InitContainers is a user-supplied list of init containers appended after
 	// any operator-managed init containers (e.g. runtime-init from Plan 3).
 	// +optional
@@ -159,14 +174,22 @@ type HermesInstanceSpec struct {
 }
 
 // ImageSpec selects an OCI image.
+// +kubebuilder:validation:XValidation:rule="(has(self.tag) && size(self.tag) > 0 && self.tag != 'latest') || (has(self.digest) && size(self.digest) > 0)",message="spec.image: one of tag or digest must be set and the tag must not be the floating ':latest' (pick a specific upstream release tag or pin a digest)"
 type ImageSpec struct {
 	// +kubebuilder:default="ghcr.io/paperclipinc/hermes-agent"
 	// +optional
 	Repository string `json:"repository,omitempty"`
 
-	// +kubebuilder:default="latest"
+	// Tag is the container image tag. Either tag or digest must be set; there is
+	// no default, because pinning to a mutable tag like :latest can silently pull
+	// a broken upstream build.
 	// +optional
 	Tag string `json:"tag,omitempty"`
+
+	// Digest overrides the tag with an image digest (e.g. sha256:abc...). When set
+	// it takes precedence over the tag for the resolved image reference.
+	// +optional
+	Digest string `json:"digest,omitempty"`
 
 	// +kubebuilder:default=IfNotPresent
 	// +kubebuilder:validation:Enum=Always;IfNotPresent;Never
@@ -568,6 +591,30 @@ type MetricsSpec struct {
 	// +kubebuilder:default=false
 	// +optional
 	Secure *bool `json:"secure,omitempty"`
+
+	// GrafanaDashboard configures auto-provisioned Grafana dashboard ConfigMaps
+	// (operator overview + per-instance). When enabled, the operator emits
+	// ConfigMaps labeled grafana_dashboard="1" so the Grafana sidecar provisioner
+	// picks them up automatically.
+	// +optional
+	GrafanaDashboard *GrafanaDashboardSpec `json:"grafanaDashboard,omitempty"`
+}
+
+// GrafanaDashboardSpec configures auto-provisioned Grafana dashboard ConfigMaps.
+type GrafanaDashboardSpec struct {
+	// Enabled enables Grafana dashboard ConfigMap creation.
+	// +kubebuilder:default=false
+	// +optional
+	Enabled *bool `json:"enabled,omitempty"`
+
+	// Labels to add to the dashboard ConfigMaps (in addition to grafana_dashboard: "1").
+	// +optional
+	Labels map[string]string `json:"labels,omitempty"`
+
+	// Folder is the Grafana folder to place the dashboards in.
+	// +kubebuilder:default="Hermes"
+	// +optional
+	Folder string `json:"folder,omitempty"`
 }
 
 // ServiceMonitorSpec controls Prometheus-Operator ServiceMonitor emission.
@@ -1000,18 +1047,19 @@ type MigrationStatus struct {
 
 // Condition type constants. Centralised so Plan 4-6 and docs/conditions.md stay aligned.
 const (
-	ConditionTypeReady               = "Ready"
-	ConditionTypeStorageReady        = "StorageReady"
-	ConditionTypeConfigReady         = "ConfigReady"
-	ConditionTypeSecretsReady        = "SecretsReady"
-	ConditionTypeNetworkPolicyReady  = "NetworkPolicyReady"
-	ConditionTypeRBACReady           = "RBACReady"
-	ConditionTypeServiceReady        = "ServiceReady"
-	ConditionTypePDBReady            = "PDBReady"
-	ConditionTypeHPAReady            = "HPAReady"
-	ConditionTypeIngressReady        = "IngressReady"
-	ConditionTypeServiceMonitorReady = "ServiceMonitorReady"
-	ConditionTypePrometheusRuleReady = "PrometheusRuleReady"
+	ConditionTypeReady                 = "Ready"
+	ConditionTypeStorageReady          = "StorageReady"
+	ConditionTypeConfigReady           = "ConfigReady"
+	ConditionTypeSecretsReady          = "SecretsReady"
+	ConditionTypeNetworkPolicyReady    = "NetworkPolicyReady"
+	ConditionTypeRBACReady             = "RBACReady"
+	ConditionTypeServiceReady          = "ServiceReady"
+	ConditionTypePDBReady              = "PDBReady"
+	ConditionTypeHPAReady              = "HPAReady"
+	ConditionTypeIngressReady          = "IngressReady"
+	ConditionTypeServiceMonitorReady   = "ServiceMonitorReady"
+	ConditionTypePrometheusRuleReady   = "PrometheusRuleReady"
+	ConditionTypeGrafanaDashboardReady = "GrafanaDashboardReady"
 
 	ConditionBackupReady          = "BackupReady"
 	ConditionRestoreApplied       = "RestoreApplied"

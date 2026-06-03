@@ -34,7 +34,7 @@ metadata:
 spec:
   image:
     repository: ghcr.io/paperclipinc/hermes-agent
-    tag: latest
+    tag: "v1.0.0"
   storage:
     persistence:
       enabled: true
@@ -65,7 +65,7 @@ metadata:
 spec:
   image:
     repository: ""
-    tag: latest
+    tag: "v1.0.0"
   storage:
     persistence:
       enabled: true
@@ -84,7 +84,7 @@ metadata:
 spec:
   image:
     repository: ghcr.io/paperclipinc/hermes-agent
-    tag: latest
+    tag: "v1.0.0"
   storage:
     persistence:
       enabled: true
@@ -103,7 +103,7 @@ metadata:
 spec:
   image:
     repository: ghcr.io/paperclipinc/hermes-agent
-    tag: latest
+    tag: "v1.0.0"
   storage:
     persistence:
       enabled: true
@@ -126,7 +126,7 @@ metadata:
 spec:
   image:
     repository: ghcr.io/paperclipinc/hermes-agent
-    tag: latest
+    tag: "v1.0.0"
   storage:
     persistence:
       enabled: true
@@ -149,7 +149,7 @@ metadata:
 spec:
   image:
     repository: ghcr.io/paperclipinc/hermes-agent
-    tag: latest
+    tag: "v1.0.0"
   storage:
     persistence:
       enabled: true
@@ -174,7 +174,7 @@ metadata:
 spec:
   image:
     repository: ghcr.io/paperclipinc/hermes-agent
-    tag: latest
+    tag: "v1.0.0"
   storage:
     persistence:
       enabled: true
@@ -198,7 +198,7 @@ metadata:
 spec:
   image:
     repository: ghcr.io/paperclipinc/hermes-agent
-    tag: latest
+    tag: "v1.0.0"
   storage:
     persistence:
       enabled: true
@@ -222,7 +222,7 @@ metadata:
 spec:
   image:
     repository: ghcr.io/paperclipinc/hermes-agent
-    tag: latest
+    tag: "v1.0.0"
   storage:
     persistence:
       enabled: true
@@ -249,7 +249,7 @@ metadata:
 spec:
   image:
     repository: ghcr.io/paperclipinc/hermes-agent
-    tag: latest
+    tag: "v1.0.0"
   storage:
     persistence:
       enabled: true
@@ -282,7 +282,7 @@ metadata:
 spec:
   image:
     repository: ghcr.io/paperclipinc/hermes-agent
-    tag: latest
+    tag: "v1.0.0"
   storage:
     persistence:
       enabled: true
@@ -306,7 +306,7 @@ metadata:
 spec:
   image:
     repository: ghcr.io/paperclipinc/hermes-agent
-    tag: latest
+    tag: "v1.0.0"
   storage:
     persistence:
       enabled: true
@@ -320,7 +320,7 @@ metadata:
 spec:
   image:
     repository: ghcr.io/paperclipinc/hermes-agent
-    tag: latest
+    tag: "v1.0.0"
   storage:
     persistence:
       enabled: true
@@ -340,7 +340,7 @@ metadata:
 spec:
   image:
     repository: ghcr.io/paperclipinc/hermes-agent
-    tag: latest
+    tag: "v1.0.0"
   storage:
     persistence:
       enabled: true
@@ -362,7 +362,7 @@ metadata:
 spec:
   image:
     repository: ghcr.io/paperclipinc/hermes-agent
-    tag: latest
+    tag: "v1.0.0"
   storage:
     persistence:
       enabled: true
@@ -384,7 +384,7 @@ metadata:
 spec:
   image:
     repository: ghcr.io/paperclipinc/hermes-agent
-    tag: latest
+    tag: "v1.0.0"
   storage:
     persistence:
       enabled: true
@@ -406,7 +406,7 @@ metadata:
 spec:
   image:
     repository: ghcr.io/paperclipinc/hermes-agent
-    tag: latest
+    tag: "v1.0.0"
   storage:
     persistence:
       enabled: true
@@ -428,7 +428,7 @@ metadata:
 spec:
   image:
     repository: ghcr.io/paperclipinc/hermes-agent
-    tag: latest
+    tag: "v1.0.0"
   storage:
     persistence:
       enabled: true
@@ -452,7 +452,7 @@ metadata:
 spec:
   image:
     repository: ghcr.io/paperclipinc/hermes-agent
-    tag: latest
+    tag: "v1.0.0"
   storage:
     persistence:
       enabled: true

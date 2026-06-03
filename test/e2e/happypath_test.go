@@ -21,7 +21,7 @@ metadata:
 spec:
   image:
     repository: ghcr.io/nginx/nginx-unprivileged
-    tag: latest
+    tag: "1.27"
     pullPolicy: IfNotPresent
   storage:
     persistence:
