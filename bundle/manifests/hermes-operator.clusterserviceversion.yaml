@@ -648,6 +648,10 @@ spec:
                     args:
                       - '--leader-elect'
                       - '--health-probe-bind-address=:8081'
+                    ports:
+                      - containerPort: 9443
+                        name: webhook-server
+                        protocol: TCP
                     securityContext:
                       allowPrivilegeEscalation: false
                       capabilities:
@@ -674,3 +678,84 @@ spec:
                       requests:
                         cpu: 100m
                         memory: 128Mi
+  webhookdefinitions:
+    - type: MutatingAdmissionWebhook
+      admissionReviewVersions:
+        - v1
+      containerPort: 443
+      targetPort: 9443
+      deploymentName: hermes-operator-controller-manager
+      failurePolicy: Fail
+      generateName: mhermesinstance.hermes.agent
+      rules:
+        - apiGroups:
+            - hermes.agent
+          apiVersions:
+            - v1
+          operations:
+            - CREATE
+            - UPDATE
+          resources:
+            - hermesinstances
+      sideEffects: None
+      webhookPath: /mutate-hermes-agent-v1-hermesinstance
+    - type: ValidatingAdmissionWebhook
+      admissionReviewVersions:
+        - v1
+      containerPort: 443
+      targetPort: 9443
+      deploymentName: hermes-operator-controller-manager
+      failurePolicy: Fail
+      generateName: vhermesinstance.hermes.agent
+      rules:
+        - apiGroups:
+            - hermes.agent
+          apiVersions:
+            - v1
+          operations:
+            - CREATE
+            - UPDATE
+          resources:
+            - hermesinstances
+      sideEffects: None
+      webhookPath: /validate-hermes-agent-v1-hermesinstance
+    - type: ValidatingAdmissionWebhook
+      admissionReviewVersions:
+        - v1
+      containerPort: 443
+      targetPort: 9443
+      deploymentName: hermes-operator-controller-manager
+      failurePolicy: Fail
+      generateName: vhermesclusterdefaults.hermes.agent
+      rules:
+        - apiGroups:
+            - hermes.agent
+          apiVersions:
+            - v1
+          operations:
+            - CREATE
+            - UPDATE
+          resources:
+            - hermesclusterdefaults
+      sideEffects: None
+      webhookPath: /validate-hermes-agent-v1-hermesclusterdefaults
+    - type: ValidatingAdmissionWebhook
+      admissionReviewVersions:
+        - v1
+      containerPort: 443
+      targetPort: 9443
+      deploymentName: hermes-operator-controller-manager
+      failurePolicy: Fail
+      generateName: vhermesselfconfig.hermes.agent
+      rules:
+        - apiGroups:
+            - hermes.agent
+          apiVersions:
+            - v1
+          operations:
+            - CREATE
+            - UPDATE
+          resources:
+            - hermesselfconfigs
+      sideEffects: None
+      webhookPath: /validate-hermes-agent-v1-hermesselfconfig
