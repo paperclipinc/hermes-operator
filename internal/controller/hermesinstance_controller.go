@@ -402,7 +402,9 @@ func (r *HermesInstanceReconciler) reconcileHTTPRoute(ctx context.Context, inst 
 		obj.SetGroupVersionKind(resources.HTTPRouteGVK())
 		obj.SetName(resources.HTTPRouteName(inst))
 		obj.SetNamespace(inst.Namespace)
-		return r.deleteIfExists(ctx, obj)
+		// Tolerate clusters without the Gateway API CRDs: if the kind is not
+		// registered there is nothing to delete, so treat it as a no-op.
+		return ignoreNoGatewayAPI(r.deleteIfExists(ctx, obj))
 	}
 	desired := resources.BuildHTTPRoute(inst)
 	if err := controllerutil.SetControllerReference(inst, desired, r.Scheme); err != nil {
@@ -419,6 +421,19 @@ func (r *HermesInstanceReconciler) reconcileHTTPRoute(ctx context.Context, inst 
 		obj.SetOwnerReferences(desired.GetOwnerReferences())
 		return nil
 	})
+	return err
+}
+
+// ignoreNoGatewayAPI swallows the "no matches for kind" error returned when the
+// Gateway API CRDs are not installed in the cluster. A user who never enables
+// spec.networking.httpRoute must not be forced to install Gateway API.
+func ignoreNoGatewayAPI(err error) error {
+	if err == nil {
+		return nil
+	}
+	if meta.IsNoMatchError(err) || runtime.IsNotRegisteredError(err) {
+		return nil
+	}
 	return err
 }
 
