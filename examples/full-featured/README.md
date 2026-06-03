@@ -60,8 +60,6 @@ kubectl apply -n agents -f hermesinstance.yaml
 | `runtime` | Pinned Python + extra apt + extra pip. |
 | `gateways` | Telegram + Discord. |
 | `profileStore` | Honcho with persistence. |
-| `webTerminal` | Enabled (attach via `kubectl attach`). |
-| `tailscale` | Tailscale Serve. |
 | `autoUpdate` | Channel-pinned with rollback. |
 | `selfConfigure` | Enabled with a strict `protectedKeys`. |
 | `scheduling` | Node selector + toleration. |
@@ -70,6 +68,14 @@ kubectl apply -n agents -f hermesinstance.yaml
 | `extraVolumes` / `extraVolumeMounts` | Extra hostPath for tracing. |
 | `envFrom` / `env` | A configMapRef + a literal env var. |
 | `suspended` | Set to `false` (default): flip to `true` to scale to zero. |
+
+### Planned (not yet in the v1 CRD)
+
+First-class `spec.webTerminal` and `spec.tailscale` (Tailscale Serve) fields are
+on the roadmap, tracked in [#42](https://github.com/paperclipinc/hermes-operator/issues/42).
+They are not yet exposed on the v1 CRD, so setting them has no effect (the
+apiserver prunes unknown fields). Until they land, run a web-terminal or
+Tailscale container through the generic `spec.sidecars` escape hatch.
 
 The corresponding conditions on `kubectl describe hi full-featured` are:
 `Ready`, `StorageReady`, `ConfigReady`, `SecretsReady`, `NetworkPolicyReady`,
