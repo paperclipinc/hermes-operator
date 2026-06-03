@@ -42,7 +42,7 @@
 **Short names:** `hi`, `hermes`
 **Categories:** `hermes`, `agents`
 
-HermesInstance describes a single hermes-agent deployment backed by a StatefulSet and a PVC. The controller reconciles all subsystems (ConfigMap, Service, StatefulSet, NetworkPolicy, RBAC, PDB, HPA, Ingress, ServiceMonitor, PrometheusRule) and reports readiness via `.status.conditions`.
+HermesInstance describes a single hermes-agent deployment backed by a StatefulSet and a PVC. The controller reconciles all subsystems (ConfigMap, Service, StatefulSet, NetworkPolicy, RBAC, PDB, HPA, Ingress, HTTPRoute, ServiceMonitor, PrometheusRule) and reports readiness via `.status.conditions`.
 
 ### spec.image
 
@@ -189,6 +189,23 @@ Exposes the agent via a Service and optionally an Ingress.
 | `spec.networking.ingress.pathType` | `string` (enum) | `Prefix` | Path type. Allowed: `Exact`, `Prefix`, `ImplementationSpecific`. |
 | `spec.networking.ingress.path` | `string` | `/` | URL path for the Ingress rule. |
 | `spec.networking.ingress.servicePortName` | `string` | `gateway` | Name of the Service port the Ingress routes to. |
+
+#### spec.networking.httpRoute
+
+Optional Gateway API HTTPRoute, an alternative to the Ingress for clusters that
+run a Gateway API implementation. The operator emits an unstructured
+`gateway.networking.k8s.io/v1` HTTPRoute (no extra controller dependency); the
+Gateway API CRDs must be installed for the route to take effect. The route
+mirrors the Ingress shape: a single prefix rule routing to the agent Service.
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `spec.networking.httpRoute.enabled` | `*bool` | `false` | When true, the operator creates an HTTPRoute for the agent. |
+| `spec.networking.httpRoute.parentRefs` | `[]HTTPRouteParentRef` | `[]` | Gateways (or other parents) the route attaches to. Each entry has a required `name` and optional `namespace` and `sectionName`. |
+| `spec.networking.httpRoute.hostnames` | `[]string` (listType=set) | `[]` | Hostnames matched by the route. |
+| `spec.networking.httpRoute.path` | `string` | `/` | Path prefix routed to the agent Service. |
+| `spec.networking.httpRoute.servicePortName` | `string` | `gateway` | Name of the Service port the route targets; resolved to the Service port number. |
+| `spec.networking.httpRoute.annotations` | `map[string]string` | `nil` | Annotations applied verbatim to the HTTPRoute. |
 
 ### spec.observability
 
@@ -433,7 +450,7 @@ The Honcho-side PVC layout that Plan 4's `addProfileSnapshot` Job writes to is `
 | `status.phase` | `string` | Short human-readable status. Values: `Pending`, `Ready`, `Degraded`, `Suspended`. |
 | `status.replicas` | `int32` | Latest observed StatefulSet replica count. |
 | `status.readyReplicas` | `int32` | Latest observed ready-replica count. |
-| `status.conditions` | `[]metav1.Condition` (listType=map, listMapKey=type) | Subsystem readiness conditions. See `docs/conditions.md` for the full catalogue. Condition types: `StorageReady`, `ConfigReady`, `SecretsReady`, `NetworkPolicyReady`, `RBACReady`, `ServiceReady`, `PDBReady`, `HPAReady`, `IngressReady`, `ServiceMonitorReady`, `PrometheusRuleReady`, `Ready`. |
+| `status.conditions` | `[]metav1.Condition` (listType=map, listMapKey=type) | Subsystem readiness conditions. See `docs/conditions.md` for the full catalogue. Condition types: `StorageReady`, `ConfigReady`, `SecretsReady`, `NetworkPolicyReady`, `RBACReady`, `ServiceReady`, `PDBReady`, `HPAReady`, `IngressReady`, `HTTPRouteReady`, `ServiceMonitorReady`, `PrometheusRuleReady`, `Ready`. |
 
 ---
 

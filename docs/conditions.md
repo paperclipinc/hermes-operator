@@ -107,6 +107,18 @@ The agent's ServiceAccount and (when SelfConfig is enabled) the Role+RoleBinding
 
 Troubleshooting: `kubectl get sa,role,rolebinding -l app.kubernetes.io/instance=<name>`.
 
+### `HTTPRouteReady`
+
+Optional Gateway API HTTPRoute (`spec.networking.httpRoute`). Only meaningful
+when a Gateway API implementation is installed.
+
+| Status | Reason | When |
+|---|---|---|
+| True | `Reconciled` | `spec.networking.httpRoute.enabled=true` and the `gateway.networking.k8s.io/v1` HTTPRoute named `<instance>` exists with owner-ref and matches the spec, OR `enabled=false`/unset and no operator-owned route exists. |
+| False | `Error` | The HTTPRoute could not be applied (most often the Gateway API CRDs are not installed). `message` carries the API error. |
+
+Troubleshooting: ensure the Gateway API CRDs are installed (`kubectl get crd httproutes.gateway.networking.k8s.io`) and inspect with `kubectl get httproute -l app.kubernetes.io/instance=<name>`.
+
 ### `GatewayReady`
 
 Per-platform gateway wiring (Telegram/Discord/Slack/WhatsApp/Signal).
