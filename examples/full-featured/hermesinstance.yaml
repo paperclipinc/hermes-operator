@@ -5,7 +5,7 @@ metadata:
 spec:
   image:
     repository: ghcr.io/paperclipinc/hermes-agent
-    tag: "1.4.2"
+    tag: "v2026.5.29.2"
     imagePullPolicy: IfNotPresent
     imagePullSecrets:
       - name: ghcr-pull
@@ -191,7 +191,7 @@ spec:
         effect: NoSchedule
   initContainers:
     - name: warm-cache
-      image: ghcr.io/paperclipinc/hermes-agent:1.4.2
+      image: ghcr.io/paperclipinc/hermes-agent:v2026.5.29.2
       command: ["sh", "-c", "echo warming cache && sleep 2"]
   sidecars:
     - name: log-shipper

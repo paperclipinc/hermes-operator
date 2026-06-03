@@ -5,7 +5,7 @@ metadata:
 spec:
   image:
     repository: ghcr.io/paperclipinc/hermes-agent
-    tag: "1.4.2"
+    tag: "v2026.5.29.2"
     imagePullSecrets:
       - name: ghcr-pull
   registry:
