@@ -539,6 +539,11 @@ func (in *HermesInstanceSpec) DeepCopyInto(out *HermesInstanceSpec) {
 	in.Availability.DeepCopyInto(&out.Availability)
 	in.Probes.DeepCopyInto(&out.Probes)
 	in.Scheduling.DeepCopyInto(&out.Scheduling)
+	if in.ShareProcessNamespace != nil {
+		in, out := &in.ShareProcessNamespace, &out.ShareProcessNamespace
+		*out = new(bool)
+		**out = **in
+	}
 	if in.InitContainers != nil {
 		in, out := &in.InitContainers, &out.InitContainers
 		*out = make([]corev1.Container, len(*in))

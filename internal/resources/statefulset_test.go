@@ -46,6 +46,22 @@ func TestBuildStatefulSet_ContainerImageDigest(t *testing.T) {
 	)
 }
 
+func TestBuildStatefulSet_ShareProcessNamespace(t *testing.T) {
+	t.Parallel()
+
+	// Default: zombie reaping on (PID namespace shared).
+	sts := BuildStatefulSet(minimalInstance(), nil)
+	require.NotNil(t, sts.Spec.Template.Spec.ShareProcessNamespace)
+	assert.True(t, *sts.Spec.Template.Spec.ShareProcessNamespace, "defaults to true for zombie reaping")
+
+	// Explicit opt-out.
+	inst := minimalInstance()
+	inst.Spec.ShareProcessNamespace = Ptr(false)
+	sts = BuildStatefulSet(inst, nil)
+	require.NotNil(t, sts.Spec.Template.Spec.ShareProcessNamespace)
+	assert.False(t, *sts.Spec.Template.Spec.ShareProcessNamespace, "honors explicit opt-out")
+}
+
 func TestBuildStatefulSet_ExplicitK8sDefaults(t *testing.T) {
 	sts := BuildStatefulSet(minimalInstance(), nil)
 	podSpec := sts.Spec.Template.Spec

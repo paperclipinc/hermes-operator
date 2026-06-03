@@ -77,6 +77,21 @@ type HermesInstanceSpec struct {
 	// +optional
 	Scheduling SchedulingSpec `json:"scheduling,omitempty"`
 
+	// ShareProcessNamespace enables PID namespace sharing between all containers
+	// in the pod. When true (the default), the infrastructure (pause) container
+	// becomes PID 1 and reaps zombie processes, preventing accumulation of defunct
+	// helper processes (git, plugins, shells) spawned under the agent entrypoint
+	// when it does not call waitpid().
+	//
+	// Security note: enabling this lets every container in the pod see and signal
+	// every other container's processes. A compromised sidecar could send signals
+	// to the agent and vice versa. Set to false to keep per-container PID isolation;
+	// you are then responsible for reaping zombies (e.g. by baking tini or dumb-init
+	// into the image).
+	// +kubebuilder:default=true
+	// +optional
+	ShareProcessNamespace *bool `json:"shareProcessNamespace,omitempty"`
+
 	// InitContainers is a user-supplied list of init containers appended after
 	// any operator-managed init containers (e.g. runtime-init from Plan 3).
 	// +optional
