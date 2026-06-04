@@ -87,7 +87,10 @@ jobs:
 
           mkdir -p operators/hermes-operator
           cp -r ../submission/operators/hermes-operator/${VERSION} operators/hermes-operator/${VERSION}
-          cp -f ../submission/operators/hermes-operator/ci.yaml operators/hermes-operator/ci.yaml 2>/dev/null || true
+          # Only seed ci.yaml when the catalog does not already have one. Overwriting
+          # it on every release is a privileged change that withholds the
+          # authorized-changes label and blocks auto-merge.
+          [ -f operators/hermes-operator/ci.yaml ] || cp ../submission/operators/hermes-operator/ci.yaml operators/hermes-operator/ci.yaml 2>/dev/null || true
 
           git add "operators/hermes-operator"
           git commit -m "operator hermes-operator (${VERSION})"
