@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.13](https://github.com/paperclipinc/hermes-operator/compare/v0.1.12...v0.1.13) (2026-06-04)
+
+
+### Bug Fixes
+
+* **olm:** use the official Hermes logo for the bundle icon ([#60](https://github.com/paperclipinc/hermes-operator/issues/60)) ([45c2f38](https://github.com/paperclipinc/hermes-operator/commit/45c2f38e1e89fafe8443fbed9b98d6c2da288b15))
+
 ## [0.1.12](https://github.com/paperclipinc/hermes-operator/compare/v0.1.11...v0.1.12) (2026-06-03)
 
 
