@@ -128,7 +128,26 @@ func buildEgressRules(inst *hermesv1.HermesInstance) []networkingv1.NetworkPolic
 	rules = append(rules, inst.Spec.Security.NetworkPolicy.AdditionalEgress...)
 
 	rules = append(rules, ExtraEgressRules(inst)...)
+
+	rules = append(rules, buildTailscaleEgressRules(inst)...)
 	return rules
+}
+
+func buildTailscaleEgressRules(inst *hermesv1.HermesInstance) []networkingv1.NetworkPolicyEgressRule {
+	if !tailscaleEnabled(inst) {
+		return nil
+	}
+	udp := corev1.ProtocolUDP
+	stun := intstr.FromInt32(3478)
+	direct := intstr.FromInt32(41641)
+	return []networkingv1.NetworkPolicyEgressRule{{
+		// Tailscale direct connections (STUN + WireGuard). Control plane and
+		// DERP relay use TCP/443, already allowed by the baseline.
+		Ports: []networkingv1.NetworkPolicyPort{
+			{Protocol: &udp, Port: &stun},
+			{Protocol: &udp, Port: &direct},
+		},
+	}}
 }
 
 // ExtraEgressRules returns the per-instance egress rules driven by spec.gateways

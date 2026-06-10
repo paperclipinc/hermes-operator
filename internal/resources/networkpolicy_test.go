@@ -209,3 +209,35 @@ func TestBuildHonchoNetworkPolicy_IngressOnlyFromHermes(t *testing.T) {
 	assert.Empty(t, np.Spec.Egress)
 	assert.Contains(t, np.Spec.PolicyTypes, networkingv1.PolicyTypeEgress)
 }
+
+func TestBuildNetworkPolicy_TailscaleEgress(t *testing.T) {
+	t.Parallel()
+	np := BuildNetworkPolicy(tailscaleInstance())
+
+	var sawUDP3478, sawUDP41641 bool
+	for _, e := range np.Spec.Egress {
+		for _, p := range e.Ports {
+			if p.Protocol != nil && *p.Protocol == corev1.ProtocolUDP && p.Port != nil {
+				switch p.Port.IntValue() {
+				case 3478:
+					sawUDP3478 = true
+				case 41641:
+					sawUDP41641 = true
+				}
+			}
+		}
+	}
+	assert.True(t, sawUDP3478, "expected STUN UDP/3478 egress")
+	assert.True(t, sawUDP41641, "expected Tailscale UDP/41641 egress")
+
+	// Disabled: no UDP tailscale rules.
+	npOff := BuildNetworkPolicy(minimalInstance())
+	for _, e := range npOff.Spec.Egress {
+		for _, p := range e.Ports {
+			if p.Protocol != nil && *p.Protocol == corev1.ProtocolUDP && p.Port != nil {
+				assert.NotEqual(t, 3478, p.Port.IntValue())
+				assert.NotEqual(t, 41641, p.Port.IntValue())
+			}
+		}
+	}
+}
