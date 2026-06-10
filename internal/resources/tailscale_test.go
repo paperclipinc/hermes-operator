@@ -131,6 +131,24 @@ func TestBuildTailscaleServeConfig(t *testing.T) {
 	assert.Contains(t, cfg, "${TS_CERT_DOMAIN}")
 }
 
+// TestBuildTailscaleServeConfig_ModeAgnostic pins the assumption that the
+// serve mapping is emitted regardless of Mode. The CRD enum admits only
+// "serve", but Mode can be "" when the spec is built in Go (CRD defaulting
+// only materializes when the tailscale key is present in the manifest).
+// If this test breaks because a second mode was added, BuildTailscaleServeConfig
+// must learn to branch on Mode.
+func TestBuildTailscaleServeConfig_ModeAgnostic(t *testing.T) {
+	t.Parallel()
+	want := BuildTailscaleServeConfig(tailscaleInstance())
+
+	for _, mode := range []string{"", "serve"} {
+		inst := tailscaleInstance()
+		inst.Spec.Tailscale.Mode = mode
+		assert.Equal(t, want, BuildTailscaleServeConfig(inst),
+			"serve config must be the serve mapping for Mode=%q", mode)
+	}
+}
+
 func TestBuildConfigMap_IncludesTailscaleServe(t *testing.T) {
 	t.Parallel()
 	cm := BuildConfigMap(tailscaleInstance(), "")

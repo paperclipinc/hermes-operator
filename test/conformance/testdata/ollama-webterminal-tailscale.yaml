@@ -29,15 +29,22 @@ spec:
         requests:
           cpu: 50m
           memory: 64Mi
-    - name: tailscale
-      image: tailscale/tailscale:latest
-      env:
-        - name: TS_AUTHKEY
-          valueFrom:
-            secretKeyRef:
-              name: tailscale-auth
-              key: authkey
-      resources:
-        requests:
-          cpu: 50m
-          memory: 64Mi
+  tailscale:
+    enabled: true
+    mode: serve
+    authKey:
+      secretRef:
+        name: conformance-tailscale-auth
+        key: authKey
+---
+# Dummy auth key so the operator-managed tailscale sidecar's TS_AUTHKEY
+# secretKeyRef resolves and the pod can start on a live conformance cluster.
+# The HermesInstance doc must stay first: extractName() in idempotency_test.go
+# picks the first metadata.name in the file.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: conformance-tailscale-auth
+type: Opaque
+stringData:
+  authKey: "tskey-dummy-not-a-real-key"

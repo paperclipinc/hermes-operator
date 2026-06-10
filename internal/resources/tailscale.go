@@ -45,6 +45,13 @@ func tailscaleHostname(inst *hermesv1.HermesInstance) string {
 
 // BuildTailscaleServeConfig renders the Tailscale Serve config JSON that fronts
 // the local hermes gateway (127.0.0.1:<GatewayPort>) on tailnet :443.
+//
+// Spec.Tailscale.Mode is intentionally not read here: the CRD enum admits only
+// "serve", so every enabled instance gets this serve mapping. Note that Mode
+// can also be "" (CRD defaulting only materializes when the tailscale key is
+// present, and unit tests build specs directly); "" must behave like "serve".
+// If a second mode is ever added to the enum, this function is where the
+// behavior must branch.
 func BuildTailscaleServeConfig(_ *hermesv1.HermesInstance) string {
 	return fmt.Sprintf(`{
   "TCP": { "443": { "HTTPS": true } },
