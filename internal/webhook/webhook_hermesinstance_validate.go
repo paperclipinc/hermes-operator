@@ -54,6 +54,11 @@ func (v *HermesInstanceValidator) ValidateCreate(ctx context.Context, obj runtim
 	if gwErr != nil {
 		return warnings, gwErr
 	}
+	tsWarns, tsErr := v.validateTailscale(ctx, inst)
+	warnings = append(warnings, tsWarns...)
+	if tsErr != nil {
+		return warnings, tsErr
+	}
 	return warnings, nil
 }
 
@@ -84,6 +89,11 @@ func (v *HermesInstanceValidator) ValidateUpdate(ctx context.Context, oldObj, ne
 	warnings = append(warnings, gwWarns...)
 	if gwErr != nil {
 		return warnings, gwErr
+	}
+	tsWarns, tsErr := v.validateTailscale(ctx, newI)
+	warnings = append(warnings, tsWarns...)
+	if tsErr != nil {
+		return warnings, tsErr
 	}
 	return warnings, nil
 }
@@ -164,6 +174,74 @@ func (v *HermesInstanceValidator) validateGateways(ctx context.Context, inst *he
 		}
 	}
 
+	return warnings, nil
+}
+
+// Pod-level names the operator injects when spec.tailscale.enabled is true.
+// Kept in sync with internal/resources/tailscale.go.
+const (
+	tailscaleReservedContainerName = "tailscale"
+	tailscaleReservedServeVolume   = "tailscale-serve"
+	tailscaleReservedTmpVolume     = "tailscale-tmp"
+)
+
+// validateTailscale enforces design §5: enabled requires an authKey secretRef
+// (deny), a missing Secret or missing key is a warning (it may be created
+// later, matching validateGateways), and user-supplied sidecar/volume names
+// must not collide with the operator-managed tailscale names (deny, because
+// the pod would otherwise fail validation at runtime with a confusing error).
+func (v *HermesInstanceValidator) validateTailscale(ctx context.Context, inst *hermesv1.HermesInstance) (admission.Warnings, error) {
+	var warnings admission.Warnings
+	ts := inst.Spec.Tailscale
+	if ts.Enabled == nil || !*ts.Enabled {
+		return nil, nil
+	}
+
+	if ts.AuthKey == nil || ts.AuthKey.SecretRef == nil {
+		return warnings, fmt.Errorf("spec.tailscale.authKey.secretRef is required when tailscale is enabled")
+	}
+
+	for i, sc := range inst.Spec.Sidecars {
+		if sc.Name == tailscaleReservedContainerName {
+			return warnings, fmt.Errorf(
+				"spec.sidecars[%d].name %q collides with the operator-managed tailscale container (spec.tailscale.enabled=true); rename the sidecar",
+				i, sc.Name,
+			)
+		}
+	}
+	for i, vol := range inst.Spec.ExtraVolumes {
+		if vol.Name == tailscaleReservedServeVolume || vol.Name == tailscaleReservedTmpVolume {
+			return warnings, fmt.Errorf(
+				"spec.extraVolumes[%d].name %q collides with an operator-managed tailscale volume (spec.tailscale.enabled=true); rename the volume",
+				i, vol.Name,
+			)
+		}
+	}
+
+	ref := ts.AuthKey.SecretRef
+	if v.Client == nil {
+		// No client available: skip the existence check, fail-open.
+		return warnings, nil
+	}
+	var s corev1.Secret
+	if err := v.Client.Get(ctx, types.NamespacedName{Namespace: inst.Namespace, Name: ref.Name}, &s); err != nil {
+		if apierrors.IsNotFound(err) {
+			warnings = append(warnings, fmt.Sprintf(
+				"spec.tailscale.authKey.secretRef references Secret %q which is not present yet in namespace %q; the instance will block on rollout until the secret is created",
+				ref.Name, inst.Namespace,
+			))
+			return warnings, nil
+		}
+		return warnings, fmt.Errorf("look up spec.tailscale.authKey.secretRef: %w", err)
+	}
+	if ref.Key != "" {
+		if _, ok := s.Data[ref.Key]; !ok {
+			warnings = append(warnings, fmt.Sprintf(
+				"spec.tailscale.authKey.secretRef references key %q in Secret %q which is not present in the Secret's data",
+				ref.Key, ref.Name,
+			))
+		}
+	}
 	return warnings, nil
 }
 

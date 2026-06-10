@@ -232,6 +232,136 @@ func TestValidateSelfConfigure_UnknownActionDenied(t *testing.T) {
 	assert.Contains(t, err.Error(), "reboot-cluster")
 }
 
+func tailscaleEnabledInstance(secretName string) *hermesv1.HermesInstance {
+	inst := &hermesv1.HermesInstance{
+		ObjectMeta: metav1.ObjectMeta{Name: "demo", Namespace: "agents"},
+		Spec: hermesv1.HermesInstanceSpec{
+			Image:   hermesv1.ImageSpec{Repository: "x"},
+			Storage: hermesv1.StorageSpec{Persistence: hermesv1.PersistenceSpec{Size: "1Gi"}},
+			Tailscale: hermesv1.TailscaleSpec{
+				Enabled: Ptr(true),
+			},
+		},
+	}
+	if secretName != "" {
+		inst.Spec.Tailscale.AuthKey = &hermesv1.TailscaleAuthKey{
+			SecretRef: &corev1.SecretKeySelector{
+				LocalObjectReference: corev1.LocalObjectReference{Name: secretName},
+				Key:                  "authkey",
+			},
+		}
+	}
+	return inst
+}
+
+func TestValidateTailscale_RequiresAuthKey(t *testing.T) {
+	t.Parallel()
+	v := newValidatorWithObjs(t)
+
+	// authKey nil entirely.
+	inst := tailscaleEnabledInstance("")
+	_, err := v.ValidateCreate(context.Background(), inst)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "spec.tailscale.authKey")
+
+	// authKey set but secretRef nil.
+	inst = tailscaleEnabledInstance("")
+	inst.Spec.Tailscale.AuthKey = &hermesv1.TailscaleAuthKey{}
+	_, err = v.ValidateCreate(context.Background(), inst)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "spec.tailscale.authKey")
+
+	// Same rule on update.
+	old := tailscaleEnabledInstance("ts-auth")
+	_, err = v.ValidateUpdate(context.Background(), old, tailscaleEnabledInstance(""))
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "spec.tailscale.authKey")
+}
+
+func TestValidateTailscale_MissingSecretWarns(t *testing.T) {
+	t.Parallel()
+	v := newValidatorWithObjs(t)
+	inst := tailscaleEnabledInstance("missing")
+	warnings, err := v.ValidateCreate(context.Background(), inst)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, warnings)
+}
+
+func TestValidateTailscale_MissingKeyWarns(t *testing.T) {
+	t.Parallel()
+	v := newValidatorWithObjs(t, &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{Name: "ts-auth", Namespace: "agents"},
+		Data:       map[string][]byte{"other": []byte("x")},
+	})
+	inst := tailscaleEnabledInstance("ts-auth")
+	warnings, err := v.ValidateCreate(context.Background(), inst)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, warnings)
+}
+
+func TestValidateTailscale_ReservedNames(t *testing.T) {
+	t.Parallel()
+	v := newValidatorWithObjs(t, &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{Name: "ts-auth", Namespace: "agents"},
+		Data:       map[string][]byte{"authkey": []byte("x")},
+	})
+
+	// User sidecar named "tailscale" collides with the operator-managed container.
+	inst := tailscaleEnabledInstance("ts-auth")
+	inst.Spec.Sidecars = []corev1.Container{{Name: "tailscale", Image: "busybox"}}
+	_, err := v.ValidateCreate(context.Background(), inst)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "tailscale")
+	assert.Contains(t, err.Error(), "spec.sidecars")
+
+	// User extra volume named "tailscale-serve" collides.
+	inst = tailscaleEnabledInstance("ts-auth")
+	inst.Spec.ExtraVolumes = []corev1.Volume{{Name: "tailscale-serve"}}
+	_, err = v.ValidateCreate(context.Background(), inst)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "tailscale-serve")
+	assert.Contains(t, err.Error(), "spec.extraVolumes")
+
+	// User extra volume named "tailscale-tmp" collides.
+	inst = tailscaleEnabledInstance("ts-auth")
+	inst.Spec.ExtraVolumes = []corev1.Volume{{Name: "tailscale-tmp"}}
+	_, err = v.ValidateCreate(context.Background(), inst)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "tailscale-tmp")
+}
+
+func TestValidateTailscale_HappyPathAndDisabledSkipped(t *testing.T) {
+	t.Parallel()
+	v := newValidatorWithObjs(t, &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{Name: "ts-auth", Namespace: "agents"},
+		Data:       map[string][]byte{"authkey": []byte("x")},
+	})
+
+	// Enabled with the secret + key present: no error, no tailscale warnings.
+	inst := tailscaleEnabledInstance("ts-auth")
+	warnings, err := v.ValidateCreate(context.Background(), inst)
+	assert.NoError(t, err)
+	for _, w := range warnings {
+		assert.NotContains(t, w, "tailscale")
+	}
+
+	// Disabled: validation is skipped entirely, even with reserved names in use.
+	inst = tailscaleEnabledInstance("")
+	inst.Spec.Tailscale.Enabled = Ptr(false)
+	inst.Spec.Sidecars = []corev1.Container{{Name: "tailscale", Image: "busybox"}}
+	inst.Spec.ExtraVolumes = []corev1.Volume{{Name: "tailscale-serve"}}
+	warnings, err = v.ValidateCreate(context.Background(), inst)
+	assert.NoError(t, err)
+	for _, w := range warnings {
+		assert.NotContains(t, w, "tailscale")
+	}
+
+	// Enabled flag nil counts as disabled too.
+	inst.Spec.Tailscale.Enabled = nil
+	_, err = v.ValidateCreate(context.Background(), inst)
+	assert.NoError(t, err)
+}
+
 func TestValidateRestoreFromImmutableAfterLatch(t *testing.T) {
 	old := &hermesv1.HermesInstance{
 		Spec:   hermesv1.HermesInstanceSpec{RestoreFrom: "k1"},
