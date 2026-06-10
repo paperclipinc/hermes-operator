@@ -4,7 +4,7 @@
 
 **Goal:** Add a first-class `spec.tailscale.mode=serve` field to `HermesInstance` that exposes the hermes gateway (container port 8443) over a Tailscale tailnet via Tailscale Serve, using an ephemeral node with a stable hostname.
 
-**Architecture:** A `tailscale/tailscale` sidecar is injected into the existing hermes StatefulSet pod (userspace networking, in-memory state, `--ephemeral`). Serve config is rendered into the per-instance ConfigMap and mounted read-only, mapping tailnet `:443` to `http://127.0.0.1:8443`. The default-deny NetworkPolicy gains Tailscale UDP egress; a `TailscaleReady` condition and webhook validation follow the existing gateway patterns.
+**Architecture:** A `tailscale/tailscale` sidecar is injected into the existing hermes StatefulSet pod (userspace networking; containerboot's default in-memory state, ephemeral via the reusable + ephemeral auth key). Serve config is rendered into the per-instance ConfigMap and mounted read-only, mapping tailnet `:443` to `http://127.0.0.1:8443`. The default-deny NetworkPolicy gains Tailscale UDP egress; a `TailscaleReady` condition and webhook validation follow the existing gateway patterns.
 
 **Tech Stack:** Go 1.24, kubebuilder v4 / controller-runtime, Ginkgo/Gomega (e2e), testify (unit), Helm.
 
@@ -196,8 +196,10 @@ func TestBuildTailscaleSidecar(t *testing.T) {
 	assert.Equal(t, "hermes-tailscale", env["TS_AUTHKEY"].ValueFrom.SecretKeyRef.Name)
 	assert.Equal(t, "authKey", env["TS_AUTHKEY"].ValueFrom.SecretKeyRef.Key)
 	assert.Equal(t, "true", env["TS_USERSPACE"].Value)
-	assert.Equal(t, "mem:", env["TS_STATE_DIR"].Value)
-	assert.Contains(t, env["TS_EXTRA_ARGS"].Value, "--ephemeral")
+	// containerboot defaults to --state=mem: --statedir=/tmp when neither
+	// TS_KUBE_SECRET nor TS_STATE_DIR is set; do not override it.
+	assert.NotContains(t, env, "TS_STATE_DIR")
+	assert.NotContains(t, env, "TS_EXTRA_ARGS")
 	// hostname defaults to metadata.name
 	assert.Equal(t, tailscaleInstance().Name, env["TS_HOSTNAME"].Value)
 	// serve config is referenced and mounted
@@ -313,10 +315,12 @@ func BuildTailscaleSidecar(inst *hermesv1.HermesInstance) *corev1.Container {
 		pullPolicy = corev1.PullIfNotPresent
 	}
 
+	// No TS_KUBE_SECRET and no TS_STATE_DIR: containerboot then defaults to
+	// `--state=mem: --statedir=/tmp`, i.e. in-memory ephemeral state.
+	// Ephemerality itself comes from the auth key, which the user supplies as
+	// reusable + ephemeral.
 	env := []corev1.EnvVar{
 		{Name: "TS_USERSPACE", Value: "true"},
-		{Name: "TS_STATE_DIR", Value: "mem:"},
-		{Name: "TS_EXTRA_ARGS", Value: "--ephemeral"},
 		{Name: "TS_HOSTNAME", Value: tailscaleHostname(inst)},
 		{Name: "TS_SERVE_CONFIG", Value: tailscaleServeMount + "/" + tailscaleServeFile},
 	}

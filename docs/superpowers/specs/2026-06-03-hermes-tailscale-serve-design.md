@@ -75,10 +75,16 @@ mode with:
 
 - `TS_AUTHKEY` from `spec.tailscale.authKey.secretRef`
 - `TS_HOSTNAME` = `spec.tailscale.hostname` or `metadata.name`
-- `TS_USERSPACE=true`, `TS_STATE_DIR=mem:` (ephemeral, in-memory state)
-- `TS_EXTRA_ARGS=--ephemeral`
+- `TS_USERSPACE=true`; neither `TS_KUBE_SECRET` nor `TS_STATE_DIR` is set, so
+  containerboot defaults to `--state=mem: --statedir=/tmp` (in-memory, ephemeral
+  state). Ephemerality itself comes from the user-supplied reusable + ephemeral
+  auth key.
 - `TS_SERVE_CONFIG` pointing at a small serve config JSON mounted from the
   instance ConfigMap, mapping tailnet `:443` to `http://127.0.0.1:8443`.
+
+The sidecar runs as UID 1000 (`runAsNonRoot`) with a read-only root filesystem;
+a dedicated `/tmp` emptyDir gives containerboot a writable spot for its state
+dir, LocalAPI socket, and TLS certs.
 
 The serve-config JSON is rendered by a new builder and added to the existing
 per-instance ConfigMap volume, mounted read-only into the sidecar. This keeps Serve
@@ -163,7 +169,7 @@ Data flow: user creates Secret + `HermesInstance{spec.tailscale.enabled}` -> web
 
 ## 6. Testing
 
-- **Unit** (`internal/resources/statefulset_test.go`, new `tailscale_test.go`): assert the sidecar is present with correct image, `TS_AUTHKEY` env from the secret ref, `TS_HOSTNAME`, ephemeral args, and the serve-config mount; assert the serve config JSON maps `:443 -> 127.0.0.1:8443`; assert NetworkPolicy gains the UDP egress rules only when enabled.
+- **Unit** (`internal/resources/statefulset_test.go`, new `tailscale_test.go`): assert the sidecar is present with correct image, `TS_AUTHKEY` env from the secret ref, `TS_HOSTNAME`, no state-dir override (neither `TS_STATE_DIR` nor `TS_EXTRA_ARGS` is set, so containerboot keeps its in-memory default), the hardened security context, and the serve-config plus `/tmp` mounts; assert the serve config JSON maps `:443 -> 127.0.0.1:8443`; assert NetworkPolicy gains the UDP egress rules only when enabled.
 - **Webhook** unit tests: required-secret rejection + missing-secret warning.
 - **E2E** (`test/e2e/tailscale_test.go`, gated by `HERMES_E2E_FULL=1`): apply an instance with tailscale enabled and a dummy auth-key Secret, assert the StatefulSet reaches `readyReplicas=1` with a `tailscale` container, and assert the NetworkPolicy carries the expected egress. (Real tailnet join is not exercised in CI; covered by manual/homelab validation per the issue author's offer to test.)
 - **Conformance:** replace the raw-sidecar `ollama-webterminal-tailscale.yaml` usage with the first-class field for the tailscale portion.
