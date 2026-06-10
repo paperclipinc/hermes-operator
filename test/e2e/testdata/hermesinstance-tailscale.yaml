@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: e2e-tailscale-auth
+  namespace: default
+type: Opaque
+stringData:
+  authKey: "tskey-dummy-not-a-real-key"
+---
+apiVersion: hermes.agent/v1
+kind: HermesInstance
+metadata:
+  name: e2e-tailscale
+  namespace: default
+spec:
+  image:
+    repository: ghcr.io/paperclipinc/hermes-agent
+    tag: "v0.13.0"
+    pullPolicy: IfNotPresent
+  storage:
+    persistence:
+      enabled: true
+      size: 1Gi
+  tailscale:
+    enabled: true
+    mode: serve
+    authKey:
+      secretRef:
+        name: e2e-tailscale-auth
+        key: authKey
