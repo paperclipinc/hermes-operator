@@ -138,6 +138,7 @@ func (r *HermesInstanceReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		{"GrafanaDashboard", hermesv1.ConditionTypeGrafanaDashboardReady, r.reconcileGrafanaDashboards},
 		{"StatefulSet", "StatefulSetReady", r.reconcileStatefulSet},
 		{"Honcho", "ProfileStoreReady", r.reconcileHoncho},
+		{"Tailscale", hermesv1.ConditionTailscaleReady, r.reconcileTailscale},
 	}
 	for _, s := range steps {
 		if err := s.fn(ctx, inst); err != nil {
@@ -648,6 +649,16 @@ func (r *HermesInstanceReconciler) reconcileHoncho(ctx context.Context, inst *he
 		}
 	}
 
+	return nil
+}
+
+// reconcileTailscale is a no-op resource step: the sidecar, serve config, and
+// NetworkPolicy egress are owned by the StatefulSet, ConfigMap, and
+// NetworkPolicy reconciled earlier. It exists so the TailscaleReady condition
+// tracks the feature explicitly, like the other per-subsystem conditions.
+// Pod-level tailscaled health is observed via StatefulSet readiness, which
+// already gates the Ready condition.
+func (r *HermesInstanceReconciler) reconcileTailscale(_ context.Context, _ *hermesv1.HermesInstance) error {
 	return nil
 }
 
