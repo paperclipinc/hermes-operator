@@ -28,6 +28,10 @@ kubectl create secret generic hermes-s3-creds \
 kubectl create secret generic hermes-honcho \
   -n agents --from-literal=apiKey=REPLACE
 
+# Tailscale auth key (must be REUSABLE + EPHEMERAL; see the main README).
+kubectl create secret generic hermes-tailscale \
+  -n agents --from-literal=authKey=REPLACE_WITH_TS_AUTH_KEY
+
 # Image pull secret (if your registry needs auth).
 kubectl create secret docker-registry ghcr-pull \
   -n agents \
@@ -60,6 +64,7 @@ kubectl apply -n agents -f hermesinstance.yaml
 | `runtime` | Pinned Python + extra apt + extra pip. |
 | `gateways` | Telegram + Discord. |
 | `profileStore` | Honcho with persistence. |
+| `tailscale` | Serve mode: gateway exposed on the tailnet with a Tailscale TLS cert. |
 | `autoUpdate` | Channel-pinned with rollback. |
 | `selfConfigure` | Enabled with a strict `protectedKeys`. |
 | `scheduling` | Node selector + toleration. |
@@ -71,14 +76,14 @@ kubectl apply -n agents -f hermesinstance.yaml
 
 ### Planned (not yet in the v1 CRD)
 
-First-class `spec.webTerminal` and `spec.tailscale` (Tailscale Serve) fields are
-on the roadmap, tracked in [#42](https://github.com/paperclipinc/hermes-operator/issues/42).
-They are not yet exposed on the v1 CRD, so setting them has no effect (the
-apiserver prunes unknown fields). Until they land, run a web-terminal or
-Tailscale container through the generic `spec.sidecars` escape hatch.
+A first-class `spec.webTerminal` field is on the roadmap, tracked in
+[#42](https://github.com/paperclipinc/hermes-operator/issues/42). It is not yet
+exposed on the v1 CRD, so setting it has no effect (the apiserver prunes
+unknown fields). Until it lands, run a web-terminal container through the
+generic `spec.sidecars` escape hatch.
 
 The corresponding conditions on `kubectl describe hi full-featured` are:
 `Ready`, `StorageReady`, `ConfigReady`, `SecretsReady`, `NetworkPolicyReady`,
-`RBACReady`, `GatewayReady`, `ProfileStoreReady`, `BackupReady`,
-`AutoUpdated`, `WebhookReady`. (`RestoreApplied`, `MigrationCompleted`, and
+`RBACReady`, `GatewayReady`, `ProfileStoreReady`, `TailscaleReady`,
+`BackupReady`, `AutoUpdated`, `WebhookReady`. (`RestoreApplied`, `MigrationCompleted`, and
 `AutoUpdateRolledBack` are absent because nothing triggers them.)

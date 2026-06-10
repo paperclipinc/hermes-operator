@@ -6,6 +6,17 @@
 > shipped: roadmap items do not introduce breaking changes to existing
 > `hermes.agent/v1` surfaces.
 
+## Unreleased
+
+- `spec.tailscale` (Tailscale Serve): an operator-managed `tailscale`
+  sidecar exposes the gateway on the tailnet under a per-instance MagicDNS
+  hostname with a Tailscale TLS cert. Includes serve config in the instance
+  ConfigMap, NetworkPolicy UDP egress (STUN/WireGuard) with DERP-over-TCP/443
+  fallback, webhook validation of `authKey.secretRef`, and the
+  `TailscaleReady` condition. Earlier revisions of this roadmap listed
+  `spec.tailscale` under v1.0.0 by mistake; it first ships in the next
+  release.
+
 ## Shipped (v1.0.0)
 
 All design-spec §1.G1 ("Full feature parity with openclaw-operator v0.32
@@ -15,7 +26,7 @@ adapted to hermes-agent's Python/uv runtime") items are in v1.0.0:
   config, workspace, resources, security, storage, networking,
   observability, availability, probes, backup, restoreFrom, runtime,
   gateways (Telegram, Discord, Slack, WhatsApp, Signal), profileStore
-  (Honcho), ollama, webTerminal, tailscale, autoUpdate, selfConfigure,
+  (Honcho), ollama, webTerminal, autoUpdate, selfConfigure,
   migration (`fromOpenClaw`), scheduling, initContainers, sidecars,
   extraVolumes, envFrom, env, suspended.
 - `HermesSelfConfig` CRD with SSA-driven application, namespace-scoped

@@ -133,6 +133,7 @@ fields only: explicit values on the instance always win.
 | **Adaptive** | OCI-registry-driven auto-update | Channel-pinned polling, pre-update backup, probe-failure rollback. |
 | **Secure** | Default-deny NetworkPolicy + per-gateway allow rules | Derived from `spec.gateways` and `spec.networking.egress`. |
 | **Secure** | Read-only root filesystem | Writable `emptyDir`s for `/tmp` and `~/.config` subPaths. |
+| **Secure** | Optional Tailscale Serve sidecar | Per-instance MagicDNS hostname + Tailscale TLS cert, no LoadBalancer/Ingress. See [Tailscale Serve](#tailscale-serve). |
 | **Secure** | Per-CRD validating + defaulting webhooks | Plus warnings on unknown config keys and unresolvable gateway tokens. |
 | **Secure** | RBAC aggregation labels | `kubectl auth can-i create hermesinstances --as=jane` works out of the box. |
 | **Secure** | Image signing + SBOM | Cosign keyless OIDC, SPDX SBOM on every release. |
@@ -156,6 +157,52 @@ fields only: explicit values on the instance always win.
 | **Cloud-native** | Multi-arch (`amd64`+`arm64`), Cosign-signed, SBOM-attested | |
 | **GitOps** | SSA-based SelfConfig coexists with Argo/Flux | No flap on shared instances. |
 | **Stability** | v1.0 ships with [versioning](docs/api-versioning.md) + [deprecation](docs/deprecations.md) policies | Conversion-webhook scaffolding in place for future v2. |
+
+## Tailscale Serve
+
+Set `spec.tailscale.enabled=true` to expose the gateway on your private
+tailnet. The operator injects a `tailscale` sidecar running
+[Tailscale Serve](https://tailscale.com/kb/1312/serve): each instance gets its
+own MagicDNS hostname (`https://<hostname>.<tailnet>.ts.net`) with a
+Tailscale-issued TLS certificate, terminated in the sidecar and proxied to the
+gateway over localhost. No LoadBalancer or Ingress is needed. The field is
+additive: the existing Service is unchanged.
+
+```yaml
+spec:
+  tailscale:
+    enabled: true
+    mode: serve          # only "serve" is implemented today
+    hostname: my-hermes  # MagicDNS hostname; defaults to metadata.name
+    authKey:
+      secretRef:
+        name: hermes-tailscale
+        key: authKey
+    # image.{repository,tag,pullPolicy} and resources are also available.
+```
+
+Requirements and notes:
+
+- **Auth key.** `authKey.secretRef` is required and must reference a
+  **reusable + ephemeral** [Tailscale auth key](https://tailscale.com/kb/1085/auth-keys).
+  Ephemeral means the node auto-removes from the tailnet when the pod stops;
+  reusable means the sidecar re-registers under the same stable hostname on
+  restart. The validating webhook rejects `enabled=true` without a
+  `secretRef` and warns when the Secret or key does not resolve.
+- **Tailnet prerequisites.** MagicDNS and HTTPS certificates must be enabled
+  on the tailnet: Serve waits for `TS_CERT_DOMAIN` and never becomes ready
+  without them.
+- **NetworkPolicy.** When the operator-managed NetworkPolicy is enabled, it
+  gains UDP egress on 3478 (STUN) and 41641 (WireGuard) for direct
+  connections. If the network blocks UDP, Tailscale falls back to DERP relays
+  over TCP/443, which the policy already allows.
+- **Reserved names.** User sidecars must not be named `tailscale`, and
+  `extraVolumes` must not be named `tailscale-serve` or `tailscale-tmp`: the
+  webhook rejects them.
+
+The sidecar's wiring status is reported via the `TailscaleReady` condition.
+See [`docs/api-reference.md`](docs/api-reference.md#spectailscale) for the
+full field list.
 
 ## Worked example: self-configure
 

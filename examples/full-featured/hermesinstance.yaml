@@ -153,11 +153,17 @@ spec:
     secret:
       name: hermes-honcho
       apiKeyKey: apiKey
-  # Planned sidecars (web-terminal, Tailscale Serve) are on the roadmap (#42)
-  # and are NOT yet first-class fields on the v1 CRD. Applying spec.webTerminal
-  # or spec.tailscale today has no effect: the apiserver prunes unknown fields.
-  # Until they land, run them through the generic spec.sidecars escape hatch
-  # below (a tailscale container with TS_AUTHKEY + TS_SERVE_CONFIG, etc.).
+  tailscale:
+    enabled: true
+    mode: serve
+    authKey:
+      secretRef:
+        name: hermes-tailscale
+        key: authKey
+  # The planned web-terminal sidecar is on the roadmap (#42) and is NOT yet a
+  # first-class field on the v1 CRD. Applying spec.webTerminal today has no
+  # effect: the apiserver prunes unknown fields. Until it lands, run a
+  # web-terminal container through the generic spec.sidecars escape hatch below.
   autoUpdate:
     enabled: true
     source:
