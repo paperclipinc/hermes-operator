@@ -216,6 +216,34 @@ func BuildStatefulSet(inst *hermesv1.HermesInstance, extraInits []corev1.Contain
 		podSpec.Volumes = append(podSpec.Volumes, corev1.Volume{Name: "ca-bundle", VolumeSource: *caBundleVolumeSource})
 	}
 
+	// Operator-managed tailscale sidecar goes BEFORE user sidecars. Its serve
+	// config comes from the instance ConfigMap (key remapped to serve.json) and
+	// it gets a dedicated /tmp emptyDir: containerboot writes its socket, state,
+	// and TLS certs under /tmp, and the pod-level "tmp" volume is deliberately
+	// not shared so the hermes container cannot reach tailscaled's LocalAPI
+	// socket.
+	if ts := BuildTailscaleSidecar(inst); ts != nil {
+		podSpec.Containers = append(podSpec.Containers, *ts)
+		podSpec.Volumes = append(podSpec.Volumes,
+			corev1.Volume{
+				Name: tailscaleServeVolume,
+				VolumeSource: corev1.VolumeSource{
+					ConfigMap: &corev1.ConfigMapVolumeSource{
+						LocalObjectReference: corev1.LocalObjectReference{Name: ConfigMapName(inst)},
+						Items:                []corev1.KeyToPath{{Key: tailscaleServeKey, Path: tailscaleServeFile}},
+						DefaultMode:          Ptr(int32(0o644)),
+					},
+				},
+			},
+			corev1.Volume{
+				Name: tailscaleTmpVolume,
+				VolumeSource: corev1.VolumeSource{
+					EmptyDir: &corev1.EmptyDirVolumeSource{},
+				},
+			},
+		)
+	}
+
 	// Append sidecars and extra volumes (init containers assembled below)
 	podSpec.Containers = append(podSpec.Containers, inst.Spec.Sidecars...)
 	podSpec.Volumes = append(podSpec.Volumes, inst.Spec.ExtraVolumes...)

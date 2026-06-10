@@ -440,3 +440,48 @@ func TestBuildStatefulSet_AcceptsInitContainers(t *testing.T) {
 	require.NotEmpty(t, sts.Spec.Template.Spec.InitContainers)
 	assert.Equal(t, "init-restore", sts.Spec.Template.Spec.InitContainers[0].Name)
 }
+
+func TestBuildStatefulSet_TailscaleSidecar(t *testing.T) {
+	t.Parallel()
+	inst := tailscaleInstance()
+	sts := BuildStatefulSet(inst, nil)
+
+	var ts *corev1.Container
+	for i := range sts.Spec.Template.Spec.Containers {
+		if sts.Spec.Template.Spec.Containers[i].Name == "tailscale" {
+			ts = &sts.Spec.Template.Spec.Containers[i]
+		}
+	}
+	require.NotNil(t, ts, "tailscale sidecar must be present when enabled")
+	assert.Equal(t, "tailscale/tailscale:v1.86.2", ts.Image)
+
+	// serve-config volume from the instance ConfigMap with key->path mapping
+	var serveVol *corev1.Volume
+	var tmpVol *corev1.Volume
+	for i := range sts.Spec.Template.Spec.Volumes {
+		switch sts.Spec.Template.Spec.Volumes[i].Name {
+		case "tailscale-serve":
+			serveVol = &sts.Spec.Template.Spec.Volumes[i]
+		case "tailscale-tmp":
+			tmpVol = &sts.Spec.Template.Spec.Volumes[i]
+		}
+	}
+	require.NotNil(t, serveVol, "serve-config volume must exist")
+	require.NotNil(t, serveVol.ConfigMap)
+	assert.Equal(t, ConfigMapName(inst), serveVol.ConfigMap.Name, "serve config comes from the instance ConfigMap")
+	require.Len(t, serveVol.ConfigMap.Items, 1)
+	assert.Equal(t, "tailscale-serve.json", serveVol.ConfigMap.Items[0].Key)
+	assert.Equal(t, "serve.json", serveVol.ConfigMap.Items[0].Path)
+	require.NotNil(t, tmpVol, "tailscale tmp emptyDir must exist")
+	require.NotNil(t, tmpVol.EmptyDir)
+
+	// Disabled: no sidecar, no tailscale volumes.
+	stsOff := BuildStatefulSet(minimalInstance(), nil)
+	for _, c := range stsOff.Spec.Template.Spec.Containers {
+		assert.NotEqual(t, "tailscale", c.Name)
+	}
+	for _, v := range stsOff.Spec.Template.Spec.Volumes {
+		assert.NotEqual(t, "tailscale-serve", v.Name)
+		assert.NotEqual(t, "tailscale-tmp", v.Name)
+	}
+}
