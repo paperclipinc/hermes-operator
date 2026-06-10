@@ -442,6 +442,21 @@ The agent receives `HONCHO_BASE_URL=http://<inst>-honcho:8000` automatically.
 
 The Honcho-side PVC layout that Plan 4's `addProfileSnapshot` Job writes to is `/data/snapshots/<profileID>/<RFC3339-timestamp>.json` (relative to the Honcho container, which mounts the PVC at `/data`).
 
+### `spec.tailscale`
+
+Exposes the hermes gateway over a Tailscale tailnet via an operator-managed sidecar. The sidecar's wiring status is reported via the `TailscaleReady` condition.
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `enabled` | *bool | `false` | Turns on the operator-managed Tailscale sidecar. |
+| `mode` | string | `serve` | How the gateway is exposed over the tailnet. Only `serve` is implemented today (private tailnet exposure with a Tailscale TLS cert). |
+| `authKey.secretRef` | SecretKeySelector | nil | Secret key holding a reusable, ephemeral Tailscale auth key. Surfaced to the sidecar as `TS_AUTHKEY`. Required when `enabled=true`. |
+| `hostname` | string | `""` | Overrides the tailnet/MagicDNS hostname. Defaults to `metadata.name`. Must be a DNS label (lowercase alphanumeric and `-`, max 63 chars). |
+| `image.repository` | string | `"tailscale/tailscale"` | Tailscale sidecar image. |
+| `image.tag` | string | `"v1.86.2"` | Tailscale sidecar image tag. |
+| `image.pullPolicy` | string | `IfNotPresent` | One of `Always`, `IfNotPresent`, `Never`. |
+| `resources` | ResourceRequirements | `{}` | Sidecar container resource requests/limits. |
+
 ### HermesInstance status
 
 | Field | Type | Description |

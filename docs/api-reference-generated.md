@@ -424,6 +424,7 @@ _Appears in:_
 | `runtime` _[RuntimeSpec](#runtimespec)_ | Runtime controls the agent's Python toolchain and OS-level dependencies.<br />All fields default to the values that match the operator's published<br />ghcr.io/paperclipinc/hermes-agent image. |  | Optional: \{\} <br /> |
 | `gateways` _[GatewaysSpec](#gatewaysspec)_ | Gateways configures the platform-side messaging bindings (Telegram, Discord,<br />Slack, WhatsApp, Signal). Each gateway is opt-in and references its own<br />Secret(s) so tokens are rotatable independently. |  | Optional: \{\} <br /> |
 | `profileStore` _[ProfileStoreSpec](#profilestorespec)_ | ProfileStore configures the optional Honcho profile-store companion. |  | Optional: \{\} <br /> |
+| `tailscale` _[TailscaleSpec](#tailscalespec)_ | Tailscale exposes the gateway over a Tailscale tailnet. |  | Optional: \{\} <br /> |
 
 
 #### HermesSelfConfig
@@ -1465,6 +1466,61 @@ _Appears in:_
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `persistence` _[PersistenceSpec](#persistencespec)_ |  |  |  |
+
+
+#### TailscaleAuthKey
+
+
+
+TailscaleAuthKey points at the Secret key holding the Tailscale auth key.
+
+
+
+_Appears in:_
+- [TailscaleSpec](#tailscalespec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `secretRef` _[SecretKeySelector](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#secretkeyselector-v1-core)_ |  |  | Optional: \{\} <br /> |
+
+
+#### TailscaleImageSpec
+
+
+
+TailscaleImageSpec pins the tailscale sidecar image.
+
+
+
+_Appears in:_
+- [TailscaleSpec](#tailscalespec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `repository` _string_ |  | tailscale/tailscale | Optional: \{\} <br /> |
+| `tag` _string_ |  | v1.86.2 | Optional: \{\} <br /> |
+| `pullPolicy` _string_ |  | IfNotPresent | Enum: [Always IfNotPresent Never] <br />Optional: \{\} <br /> |
+
+
+#### TailscaleSpec
+
+
+
+TailscaleSpec configures exposing the hermes gateway over a Tailscale tailnet.
+
+
+
+_Appears in:_
+- [HermesInstanceSpec](#hermesinstancespec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `enabled` _boolean_ | Enabled turns on the operator-managed Tailscale sidecar. | false | Optional: \{\} <br /> |
+| `mode` _string_ | Mode selects how the gateway is exposed over the tailnet. Only "serve"<br />is implemented today (private tailnet exposure with a Tailscale TLS cert). | serve | Enum: [serve] <br />Optional: \{\} <br /> |
+| `authKey` _[TailscaleAuthKey](#tailscaleauthkey)_ | AuthKey references the Secret holding a reusable, ephemeral Tailscale auth<br />key, exposed to the sidecar as TS_AUTHKEY. Required when Enabled is true. |  | Optional: \{\} <br /> |
+| `hostname` _string_ | Hostname overrides the tailnet/MagicDNS hostname. Defaults to metadata.name. |  | MaxLength: 63 <br />Pattern: `^[a-z0-9]([a-z0-9-]*[a-z0-9])?$` <br />Optional: \{\} <br /> |
+| `image` _[TailscaleImageSpec](#tailscaleimagespec)_ | Image overrides the tailscale sidecar image. |  | Optional: \{\} <br /> |
+| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#resourcerequirements-v1-core)_ | Resources sets the sidecar resource requirements. |  | Optional: \{\} <br /> |
 
 
 #### TelegramGatewaySpec

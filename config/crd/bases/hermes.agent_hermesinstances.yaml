@@ -9013,6 +9013,134 @@ spec:
                 description: Suspended scales the StatefulSet to zero replicas without
                   deleting state.
                 type: boolean
+              tailscale:
+                description: Tailscale exposes the gateway over a Tailscale tailnet.
+                properties:
+                  authKey:
+                    description: |-
+                      AuthKey references the Secret holding a reusable, ephemeral Tailscale auth
+                      key, exposed to the sidecar as TS_AUTHKEY. Required when Enabled is true.
+                    properties:
+                      secretRef:
+                        description: SecretKeySelector selects a key of a Secret.
+                        properties:
+                          key:
+                            description: The key of the secret to select from.  Must
+                              be a valid secret key.
+                            type: string
+                          name:
+                            default: ""
+                            description: |-
+                              Name of the referent.
+                              This field is effectively required, but due to backwards compatibility is
+                              allowed to be empty. Instances of this type with an empty value here are
+                              almost certainly wrong.
+                              More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                            type: string
+                          optional:
+                            description: Specify whether the Secret or its key must
+                              be defined
+                            type: boolean
+                        required:
+                        - key
+                        type: object
+                        x-kubernetes-map-type: atomic
+                    type: object
+                  enabled:
+                    default: false
+                    description: Enabled turns on the operator-managed Tailscale sidecar.
+                    type: boolean
+                  hostname:
+                    description: Hostname overrides the tailnet/MagicDNS hostname.
+                      Defaults to metadata.name.
+                    maxLength: 63
+                    pattern: ^[a-z0-9]([a-z0-9-]*[a-z0-9])?$
+                    type: string
+                  image:
+                    description: Image overrides the tailscale sidecar image.
+                    properties:
+                      pullPolicy:
+                        default: IfNotPresent
+                        enum:
+                        - Always
+                        - IfNotPresent
+                        - Never
+                        type: string
+                      repository:
+                        default: tailscale/tailscale
+                        type: string
+                      tag:
+                        default: v1.86.2
+                        type: string
+                    type: object
+                  mode:
+                    default: serve
+                    description: |-
+                      Mode selects how the gateway is exposed over the tailnet. Only "serve"
+                      is implemented today (private tailnet exposure with a Tailscale TLS cert).
+                    enum:
+                    - serve
+                    type: string
+                  resources:
+                    description: Resources sets the sidecar resource requirements.
+                    properties:
+                      claims:
+                        description: |-
+                          Claims lists the names of resources, defined in spec.resourceClaims,
+                          that are used by this container.
+
+                          This field depends on the
+                          DynamicResourceAllocation feature gate.
+
+                          This field is immutable. It can only be set for containers.
+                        items:
+                          description: ResourceClaim references one entry in PodSpec.ResourceClaims.
+                          properties:
+                            name:
+                              description: |-
+                                Name must match the name of one entry in pod.spec.resourceClaims of
+                                the Pod where this field is used. It makes that resource available
+                                inside a container.
+                              type: string
+                            request:
+                              description: |-
+                                Request is the name chosen for a request in the referenced claim.
+                                If empty, everything from the claim is made available, otherwise
+                                only the result of this request.
+                              type: string
+                          required:
+                          - name
+                          type: object
+                        type: array
+                        x-kubernetes-list-map-keys:
+                        - name
+                        x-kubernetes-list-type: map
+                      limits:
+                        additionalProperties:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        description: |-
+                          Limits describes the maximum amount of compute resources allowed.
+                          More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+                        type: object
+                      requests:
+                        additionalProperties:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        description: |-
+                          Requests describes the minimum amount of compute resources required.
+                          If Requests is omitted for a container, it defaults to Limits if that is explicitly specified,
+                          otherwise to an implementation-defined value. Requests cannot exceed Limits.
+                          More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+                        type: object
+                    type: object
+                type: object
               workspace:
                 description: Workspace seeds initial files and directories into ~/.hermes
                   on first start.

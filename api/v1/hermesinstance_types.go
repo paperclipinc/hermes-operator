@@ -171,6 +171,10 @@ type HermesInstanceSpec struct {
 	// ProfileStore configures the optional Honcho profile-store companion.
 	// +optional
 	ProfileStore ProfileStoreSpec `json:"profileStore,omitempty"`
+
+	// Tailscale exposes the gateway over a Tailscale tailnet.
+	// +optional
+	Tailscale TailscaleSpec `json:"tailscale,omitempty"`
 }
 
 // ImageSpec selects an OCI image.
@@ -1125,6 +1129,10 @@ const (
 	ConditionAutoUpdateRolledBack = "AutoUpdateRolledBack"
 	ConditionMigrationCompleted   = "MigrationCompleted"
 
+	// ConditionTailscaleReady reports whether the operator-managed Tailscale
+	// sidecar wiring is up to date.
+	ConditionTailscaleReady = "TailscaleReady"
+
 	FinalizerBackupOnDelete    = "hermes.agent/backup-on-delete"
 	AnnotationAutoUpdateTarget = "hermes.agent/autoupdate-target"
 	AnnotationSkipFinalBackup  = "hermes.agent/skip-final-backup"
@@ -1394,6 +1402,60 @@ type HonchoPersistenceSpec struct {
 
 	// +optional
 	StorageClassName *string `json:"storageClassName,omitempty"`
+}
+
+// TailscaleSpec configures exposing the hermes gateway over a Tailscale tailnet.
+type TailscaleSpec struct {
+	// Enabled turns on the operator-managed Tailscale sidecar.
+	// +kubebuilder:default=false
+	// +optional
+	Enabled *bool `json:"enabled,omitempty"`
+
+	// Mode selects how the gateway is exposed over the tailnet. Only "serve"
+	// is implemented today (private tailnet exposure with a Tailscale TLS cert).
+	// +kubebuilder:validation:Enum=serve
+	// +kubebuilder:default=serve
+	// +optional
+	Mode string `json:"mode,omitempty"`
+
+	// AuthKey references the Secret holding a reusable, ephemeral Tailscale auth
+	// key, exposed to the sidecar as TS_AUTHKEY. Required when Enabled is true.
+	// +optional
+	AuthKey *TailscaleAuthKey `json:"authKey,omitempty"`
+
+	// Hostname overrides the tailnet/MagicDNS hostname. Defaults to metadata.name.
+	// +kubebuilder:validation:MaxLength=63
+	// +kubebuilder:validation:Pattern=`^[a-z0-9]([a-z0-9-]*[a-z0-9])?$`
+	// +optional
+	Hostname string `json:"hostname,omitempty"`
+
+	// Image overrides the tailscale sidecar image.
+	// +optional
+	Image TailscaleImageSpec `json:"image,omitempty"`
+
+	// Resources sets the sidecar resource requirements.
+	// +optional
+	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
+}
+
+// TailscaleAuthKey points at the Secret key holding the Tailscale auth key.
+type TailscaleAuthKey struct {
+	// +optional
+	SecretRef *corev1.SecretKeySelector `json:"secretRef,omitempty"`
+}
+
+// TailscaleImageSpec pins the tailscale sidecar image.
+type TailscaleImageSpec struct {
+	// +kubebuilder:default="tailscale/tailscale"
+	// +optional
+	Repository string `json:"repository,omitempty"`
+	// +kubebuilder:default="v1.86.2"
+	// +optional
+	Tag string `json:"tag,omitempty"`
+	// +kubebuilder:default=IfNotPresent
+	// +kubebuilder:validation:Enum=Always;IfNotPresent;Never
+	// +optional
+	PullPolicy string `json:"pullPolicy,omitempty"`
 }
 
 func init() {
