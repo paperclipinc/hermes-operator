@@ -43,7 +43,7 @@ func BuildConfigMap(inst *hermesv1.HermesInstance, resolvedBody string) *corev1.
 	// On parse error we keep the original body: the validating webhook is
 	// responsible for rejecting malformed config; we don't want a pure builder
 	// to panic.
-	return &corev1.ConfigMap{
+	cm := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      ConfigMapName(inst),
 			Namespace: inst.Namespace,
@@ -53,6 +53,10 @@ func BuildConfigMap(inst *hermesv1.HermesInstance, resolvedBody string) *corev1.
 			"config.yaml": body,
 		},
 	}
+	if tailscaleEnabled(inst) {
+		cm.Data[tailscaleServeKey] = BuildTailscaleServeConfig(inst)
+	}
+	return cm
 }
 
 // mergeGatewayFragments deep-merges builder-derived gateway config fragments

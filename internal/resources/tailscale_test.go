@@ -131,6 +131,18 @@ func TestBuildTailscaleServeConfig(t *testing.T) {
 	assert.Contains(t, cfg, "${TS_CERT_DOMAIN}")
 }
 
+func TestBuildConfigMap_IncludesTailscaleServe(t *testing.T) {
+	t.Parallel()
+	cm := BuildConfigMap(tailscaleInstance(), "")
+	got, ok := cm.Data[tailscaleServeKey]
+	require.True(t, ok, "ConfigMap must carry the tailscale serve config when enabled")
+	assert.Contains(t, got, "127.0.0.1:8443")
+
+	cmOff := BuildConfigMap(minimalInstance(), "")
+	_, ok = cmOff.Data[tailscaleServeKey]
+	assert.False(t, ok)
+}
+
 func TestBuildTailscaleSidecar_HostnameOverride(t *testing.T) {
 	t.Parallel()
 	inst := tailscaleInstance()
