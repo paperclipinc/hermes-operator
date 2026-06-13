@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.15](https://github.com/paperclipinc/hermes-operator/compare/v0.1.14...v0.1.15) (2026-06-13)
+
+
+### Bug Fixes
+
+* **agent-image:** broken runtime venv + invalid smoke workflow YAML ([#66](https://github.com/paperclipinc/hermes-operator/issues/66)) ([ec6016c](https://github.com/paperclipinc/hermes-operator/commit/ec6016c141813a84f673d9c7cc77b824abbc180a))
+
 ## [0.1.14](https://github.com/paperclipinc/hermes-operator/compare/v0.1.13...v0.1.14) (2026-06-10)
 
 
