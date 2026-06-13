@@ -16,10 +16,7 @@ jobs:
   negative:
     name: Negative (webhook deny paths)
     runs-on: ubuntu-latest
-    # Now that the suite actually runs (see #64) the job builds the operator
-    # image, installs cert-manager, and executes the specs. cert-manager's
-    # --wait can be slow on loaded runners, so give the kind-based jobs headroom.
-    timeout-minutes: 35
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-go@v6
@@ -36,13 +33,7 @@ jobs:
         run: echo "KUBECONFIG=$HOME/.kube/config" >> "$GITHUB_ENV"
       - uses: azure/setup-helm@v5
       - name: Install cert-manager
-        run: |
-          helm repo add jetstack https://charts.jetstack.io
-          helm repo update
-          helm install cert-manager jetstack/cert-manager \
-            --namespace cert-manager --create-namespace \
-            --set crds.enabled=true \
-            --wait --timeout 5m
+        run: bash hack/install-cert-manager.sh
       # conformance-install depends on docker-build, so the image is built here
       # (no separate docker-build step needed).
       - run: make conformance-install IMG=hermes-operator:dev
@@ -64,13 +55,7 @@ jobs:
         run: echo "KUBECONFIG=$HOME/.kube/config" >> "$GITHUB_ENV"
       - uses: azure/setup-helm@v5
       - name: Install cert-manager
-        run: |
-          helm repo add jetstack https://charts.jetstack.io
-          helm repo update
-          helm install cert-manager jetstack/cert-manager \
-            --namespace cert-manager --create-namespace \
-            --set crds.enabled=true \
-            --wait --timeout 5m
+        run: bash hack/install-cert-manager.sh
       # conformance-install depends on docker-build, so the image is built here
       # (no separate docker-build step needed).
       - run: make conformance-install IMG=hermes-operator:dev
