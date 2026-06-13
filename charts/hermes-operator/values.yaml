@@ -1,6 +1,6 @@
 image:
   repository: ghcr.io/paperclipinc/hermes-operator
-  tag: 0.1.13
+  tag: 0.1.14
   pullPolicy: IfNotPresent
 logLevel: info
 createRBAC: true

@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.14](https://github.com/paperclipinc/hermes-operator/compare/v0.1.13...v0.1.14) (2026-06-10)
+
+
+### Features
+
+* spec.tailscale.mode=serve (private tailnet exposure) ([#63](https://github.com/paperclipinc/hermes-operator/issues/63)) ([da7c307](https://github.com/paperclipinc/hermes-operator/commit/da7c307ecf1c738c145cc096cb064a2fdb1e6d45))
+
 ## [0.1.13](https://github.com/paperclipinc/hermes-operator/compare/v0.1.12...v0.1.13) (2026-06-04)
 
 
