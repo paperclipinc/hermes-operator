@@ -16,7 +16,10 @@ jobs:
   negative:
     name: Negative (webhook deny paths)
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # Now that the suite actually runs (see #64) the job builds the operator
+    # image, installs cert-manager, and executes the specs. cert-manager's
+    # --wait can be slow on loaded runners, so give the kind-based jobs headroom.
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-go@v6
@@ -40,7 +43,8 @@ jobs:
             --namespace cert-manager --create-namespace \
             --set crds.enabled=true \
             --wait --timeout 5m
-      - run: make docker-build IMG=hermes-operator:dev
+      # conformance-install depends on docker-build, so the image is built here
+      # (no separate docker-build step needed).
       - run: make conformance-install IMG=hermes-operator:dev
       - run: make conformance-negative
 
@@ -67,7 +71,8 @@ jobs:
             --namespace cert-manager --create-namespace \
             --set crds.enabled=true \
             --wait --timeout 5m
-      - run: make docker-build IMG=hermes-operator:dev
+      # conformance-install depends on docker-build, so the image is built here
+      # (no separate docker-build step needed).
       - run: make conformance-install IMG=hermes-operator:dev
       - run: make conformance-idempotency
 
@@ -87,7 +92,7 @@ jobs:
   gitops:
     name: GitOps coexistence
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-go@v6
@@ -107,14 +112,15 @@ jobs:
             --namespace cert-manager --create-namespace \
             --set crds.enabled=true \
             --wait --timeout 5m
-      - run: make docker-build IMG=hermes-operator:dev
+      # conformance-install depends on docker-build, so the image is built here
+      # (no separate docker-build step needed).
       - run: make conformance-install IMG=hermes-operator:dev
       - run: make conformance-gitops
 
   failure-injection:
     name: Failure injection
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-go@v6
@@ -134,7 +140,8 @@ jobs:
             --namespace cert-manager --create-namespace \
             --set crds.enabled=true \
             --wait --timeout 5m
-      - run: make docker-build IMG=hermes-operator:dev
+      # conformance-install depends on docker-build, so the image is built here
+      # (no separate docker-build step needed).
       - run: make conformance-install IMG=hermes-operator:dev
       - run: make conformance-failure
 
