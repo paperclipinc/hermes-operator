@@ -89,60 +89,34 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: make conformance-upgrade
 
+  # The GitOps-coexistence and failure-injection suites are not implemented yet
+  # (gitops_coexistence_test.go is a t.Skip placeholder and there is no
+  # failure_injection_test.go), so `make conformance-gitops` / `-failure` match
+  # zero Ginkgo specs. Standing up a kind cluster + cert-manager + an operator
+  # image build for them runs nothing and, worse, the extra parallel kind
+  # clusters starve the runner so cert-manager's `--wait` blows past its timeout
+  # in the jobs that DO run specs (negative). So until those suites land, run
+  # the targets without a cluster: the focus matches nothing and BeforeSuite
+  # skips cleanly. Restore the kind/cert-manager/install steps (mirroring the
+  # negative job) when the specs are written.
   gitops:
     name: GitOps coexistence
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-go@v6
         with: { go-version-file: go.mod }
-      - uses: helm/kind-action@v1
-        with:
-          cluster_name: hermes-conformance
-          config: hack/kind-config.yaml
-      - name: Export KUBECONFIG to environment
-        run: echo "KUBECONFIG=$HOME/.kube/config" >> "$GITHUB_ENV"
-      - uses: azure/setup-helm@v5
-      - name: Install cert-manager
-        run: |
-          helm repo add jetstack https://charts.jetstack.io
-          helm repo update
-          helm install cert-manager jetstack/cert-manager \
-            --namespace cert-manager --create-namespace \
-            --set crds.enabled=true \
-            --wait --timeout 5m
-      # conformance-install depends on docker-build, so the image is built here
-      # (no separate docker-build step needed).
-      - run: make conformance-install IMG=hermes-operator:dev
       - run: make conformance-gitops
 
   failure-injection:
     name: Failure injection
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-go@v6
         with: { go-version-file: go.mod }
-      - uses: helm/kind-action@v1
-        with:
-          cluster_name: hermes-conformance
-          config: hack/kind-config.yaml
-      - name: Export KUBECONFIG to environment
-        run: echo "KUBECONFIG=$HOME/.kube/config" >> "$GITHUB_ENV"
-      - uses: azure/setup-helm@v5
-      - name: Install cert-manager
-        run: |
-          helm repo add jetstack https://charts.jetstack.io
-          helm repo update
-          helm install cert-manager jetstack/cert-manager \
-            --namespace cert-manager --create-namespace \
-            --set crds.enabled=true \
-            --wait --timeout 5m
-      # conformance-install depends on docker-build, so the image is built here
-      # (no separate docker-build step needed).
-      - run: make conformance-install IMG=hermes-operator:dev
       - run: make conformance-failure
 
   # PR runs are advisory; nightly/release-tag runs gate releases.
