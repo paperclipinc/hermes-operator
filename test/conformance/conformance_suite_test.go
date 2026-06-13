@@ -2,6 +2,7 @@ package conformance
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -30,8 +31,20 @@ var _ = BeforeSuite(func() {
 	suiteCtx, suiteCancel = context.WithCancel(context.Background())
 	SetDefaultEventuallyTimeout(5 * time.Minute)
 	SetDefaultEventuallyPollingInterval(2 * time.Second)
-	if os.Getenv("KUBECONFIG") == "" {
-		Skip("KUBECONFIG not set: conformance suite requires a live kind cluster with the operator installed")
+	// The suite needs a live cluster. Resolve the kubeconfig the same way the
+	// rest of the suite does (clientcmdPath in helpers.go): prefer $KUBECONFIG,
+	// otherwise fall back to ~/.kube/config. Only skip when neither is present.
+	//
+	// Historically this checked os.Getenv("KUBECONFIG") != "" directly, which
+	// made the whole suite silently SKIP in CI because helm/kind-action writes
+	// the kubeconfig to ~/.kube/config but never exports KUBECONFIG (#64). CI
+	// now exports KUBECONFIG explicitly; this fallback is defense-in-depth so a
+	// reachable cluster is never silently ignored again.
+	kubeconfig := clientcmdPath()
+	if _, err := os.Stat(kubeconfig); err != nil {
+		Skip(fmt.Sprintf(
+			"no kubeconfig at %q (set KUBECONFIG): conformance suite requires a live kind cluster with the operator installed",
+			kubeconfig))
 	}
 })
 

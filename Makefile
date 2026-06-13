@@ -355,7 +355,7 @@ conformance: ## Run the full conformance suite. Requires KUBECONFIG to a cluster
 
 .PHONY: conformance-negative
 conformance-negative:
-	cd test/conformance && go test -v -timeout 10m -ginkgo.v -ginkgo.focus="negative" ./...
+	cd test/conformance && go test -v -timeout 10m -ginkgo.v -ginkgo.focus="webhook deny paths" ./...
 
 .PHONY: conformance-idempotency
 conformance-idempotency:

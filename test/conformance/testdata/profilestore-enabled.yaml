@@ -5,7 +5,7 @@ metadata:
 spec:
   image:
     repository: ghcr.io/paperclipinc/hermes-agent
-    tag: "v1.0.0"
+    tag: "v2026.5.29.2"
   storage:
     persistence:
       enabled: true

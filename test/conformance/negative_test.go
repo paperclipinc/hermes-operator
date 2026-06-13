@@ -549,10 +549,13 @@ var _ = Describe("webhook deny paths", Ordered, func() {
 				return
 			}
 
-			_, err := kubectlApply(addNamespace(tc.yaml, ns))
-			Expect(err).To(HaveOccurred(), "expected webhook denial but apply succeeded")
-			Expect(err.Error()).To(ContainSubstring(tc.wantErrSubstring),
-				"error message should mention %q", tc.wantErrSubstring)
+			out, err := kubectlApply(addNamespace(tc.yaml, ns))
+			Expect(err).To(HaveOccurred(), "expected webhook denial but apply succeeded: %s", out)
+			// kubectl writes the webhook denial message to stdout/stderr, which
+			// kubectlApply returns as `out`. The error itself is only the
+			// process exit status ("exit status 1"), so assert against `out`.
+			Expect(out).To(ContainSubstring(tc.wantErrSubstring),
+				"error message should mention %q; got: %s", tc.wantErrSubstring, out)
 		})
 	}
 })

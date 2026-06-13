@@ -25,6 +25,12 @@ jobs:
         with:
           cluster_name: hermes-conformance
           config: hack/kind-config.yaml
+      # helm/kind-action writes the kubeconfig to the default location
+      # ($HOME/.kube/config) but does NOT export KUBECONFIG. The conformance
+      # suite's BeforeSuite skips when KUBECONFIG is unset, so without this the
+      # whole suite silently SKIPs. Export it for all subsequent steps. See #64.
+      - name: Export KUBECONFIG to environment
+        run: echo "KUBECONFIG=$HOME/.kube/config" >> "$GITHUB_ENV"
       - uses: azure/setup-helm@v5
       - name: Install cert-manager
         run: |
@@ -50,6 +56,8 @@ jobs:
         with:
           cluster_name: hermes-conformance
           config: hack/kind-config.yaml
+      - name: Export KUBECONFIG to environment
+        run: echo "KUBECONFIG=$HOME/.kube/config" >> "$GITHUB_ENV"
       - uses: azure/setup-helm@v5
       - name: Install cert-manager
         run: |
@@ -88,6 +96,8 @@ jobs:
         with:
           cluster_name: hermes-conformance
           config: hack/kind-config.yaml
+      - name: Export KUBECONFIG to environment
+        run: echo "KUBECONFIG=$HOME/.kube/config" >> "$GITHUB_ENV"
       - uses: azure/setup-helm@v5
       - name: Install cert-manager
         run: |
@@ -113,6 +123,8 @@ jobs:
         with:
           cluster_name: hermes-conformance
           config: hack/kind-config.yaml
+      - name: Export KUBECONFIG to environment
+        run: echo "KUBECONFIG=$HOME/.kube/config" >> "$GITHUB_ENV"
       - uses: azure/setup-helm@v5
       - name: Install cert-manager
         run: |
