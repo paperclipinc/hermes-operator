@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.17](https://github.com/paperclipinc/hermes-operator/compare/v0.1.16...v0.1.17) (2026-06-16)
+
+
+### Bug Fixes
+
+* **operatorhub:** ship ci.yaml to redhat submission + add reviewers ([#82](https://github.com/paperclipinc/hermes-operator/issues/82)) ([9e9cafe](https://github.com/paperclipinc/hermes-operator/commit/9e9cafe13428bb8c3d41cc3e895f334d11a2d3e2))
+
 ## [0.1.16](https://github.com/paperclipinc/hermes-operator/compare/v0.1.15...v0.1.16) (2026-06-16)
 
 
