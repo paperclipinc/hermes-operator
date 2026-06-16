@@ -170,6 +170,8 @@ jobs:
           cp bundle/manifests/hermes.agent_hermesselfconfigs.yaml    "${BUNDLE_DIR}/manifests/"
           cp bundle/manifests/hermes.agent_hermesclusterdefaults.yaml "${BUNDLE_DIR}/manifests/"
           cp bundle/metadata/annotations.yaml "${BUNDLE_DIR}/metadata/"
+          # Per community-operators convention, copy ci.yaml alongside.
+          cp bundle/ci.yaml "submission/operators/hermes-operator/" || true
 
       - name: Fork and submit to redhat community-operators-prod
         env:
@@ -192,6 +194,10 @@ jobs:
           git checkout -B "${BRANCH}" origin/main
           mkdir -p operators/hermes-operator
           cp -r ../submission/operators/hermes-operator/${VERSION} operators/hermes-operator/${VERSION}
+          # Only seed ci.yaml when the catalog does not already have one. Overwriting
+          # it on every release is a privileged change that withholds the
+          # authorized-changes label and blocks auto-merge.
+          [ -f operators/hermes-operator/ci.yaml ] || cp ../submission/operators/hermes-operator/ci.yaml operators/hermes-operator/ci.yaml 2>/dev/null || true
           git add "operators/hermes-operator"
           git commit -m "operator hermes-operator (${VERSION})"
           git push --force origin "${BRANCH}"
