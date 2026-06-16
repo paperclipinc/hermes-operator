@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.16](https://github.com/paperclipinc/hermes-operator/compare/v0.1.15...v0.1.16) (2026-06-16)
+
+
+### Bug Fixes
+
+* **bundle:** declare com.redhat.openshift.versions for OpenShift cert ([#80](https://github.com/paperclipinc/hermes-operator/issues/80)) ([47d5ff4](https://github.com/paperclipinc/hermes-operator/commit/47d5ff4a5c1b547290acfe24e0628b357415062c))
+
 ## [0.1.15](https://github.com/paperclipinc/hermes-operator/compare/v0.1.14...v0.1.15) (2026-06-16)
 
 
