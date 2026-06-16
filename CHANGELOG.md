@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.15](https://github.com/paperclipinc/hermes-operator/compare/v0.1.14...v0.1.15) (2026-06-16)
+
+
+### Features
+
+* **chart:** world-class Artifact Hub metadata + cosign chart signing ([#78](https://github.com/paperclipinc/hermes-operator/issues/78)) ([4e38216](https://github.com/paperclipinc/hermes-operator/commit/4e382164d94142eb205b9ace554e36c66438f7a8))
+
+
+### Bug Fixes
+
+* **agent-image:** broken runtime venv + invalid smoke workflow YAML ([#66](https://github.com/paperclipinc/hermes-operator/issues/66)) ([ec6016c](https://github.com/paperclipinc/hermes-operator/commit/ec6016c141813a84f673d9c7cc77b824abbc180a))
+
 ## [0.1.14](https://github.com/paperclipinc/hermes-operator/compare/v0.1.13...v0.1.14) (2026-06-10)
 
 
