@@ -1,0 +1,6 @@
+# Artifact Hub repository metadata. After this chart repo is added under the
+# paperclipinc organization on artifacthub.io, paste the generated repositoryID
+# here (above owners) to claim verified ownership.
+owners:
+  - name: Jannes Stubbemann
+    email: jannes@paperclip.inc

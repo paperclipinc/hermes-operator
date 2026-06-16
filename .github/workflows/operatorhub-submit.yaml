@@ -80,10 +80,13 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          git fetch upstream main
-          git reset --hard upstream/main
-
-          git checkout -b "${BRANCH}"
+          FORK_OWNER=$(gh api user --jq '.login')
+          # Sync the fork's main with upstream SERVER-SIDE. gh repo sync is a
+          # fast-forward via the API; reset+push would carry upstream .github/workflows
+          # changes that a PAT without 'workflow' scope is refused.
+          gh repo sync "${FORK_OWNER}/community-operators" --branch main --force
+          git fetch origin main
+          git checkout -B "${BRANCH}" origin/main
 
           mkdir -p operators/hermes-operator
           cp -r ../submission/operators/hermes-operator/${VERSION} operators/hermes-operator/${VERSION}
@@ -180,9 +183,13 @@ jobs:
           cd community-operators-prod
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git fetch upstream main
-          git reset --hard upstream/main
-          git checkout -b "${BRANCH}"
+          FORK_OWNER=$(gh api user --jq '.login')
+          # Sync the fork's main with upstream SERVER-SIDE. gh repo sync is a
+          # fast-forward via the API; reset+push would carry upstream .github/workflows
+          # changes that a PAT without 'workflow' scope is refused.
+          gh repo sync "${FORK_OWNER}/community-operators-prod" --branch main --force
+          git fetch origin main
+          git checkout -B "${BRANCH}" origin/main
           mkdir -p operators/hermes-operator
           cp -r ../submission/operators/hermes-operator/${VERSION} operators/hermes-operator/${VERSION}
           git add "operators/hermes-operator"

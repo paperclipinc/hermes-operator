@@ -1,13 +1,77 @@
 apiVersion: v2
 name: hermes-operator
-description: Kubernetes operator for nousresearch/hermes-agent
+description: >-
+  A Kubernetes operator for deploying and managing Nous Research Hermes
+  AI agent instances
 type: application
 version: 0.1.14
 appVersion: 0.1.14
 kubeVersion: '>=1.28.0-0'
-home: https://github.com/paperclipinc/hermes-operator
+keywords:
+  - kubernetes
+  - operator
+  - hermes
+  - ai
+  - agent
+  - llm
+  - nous-research
+  - automation
+home: https://paperclip.inc
+icon: https://paperclip.inc/favicon.svg
 sources:
   - https://github.com/paperclipinc/hermes-operator
 maintainers:
   - name: paperclipinc
     email: jannes@paperclip.inc
+annotations:
+  artifacthub.io/category: ai-machine-learning
+  artifacthub.io/license: Apache-2.0
+  artifacthub.io/operator: 'true'
+  artifacthub.io/operatorCapabilities: Seamless Upgrades
+  artifacthub.io/prerelease: 'false'
+  artifacthub.io/links: |
+    - name: Website
+      url: https://paperclip.inc
+    - name: Documentation
+      url: https://paperclip.inc/docs/operators/hermes
+    - name: OperatorHub
+      url: https://artifacthub.io/packages/olm/community-operators/hermes-operator
+    - name: support
+      url: https://github.com/paperclipinc/hermes-operator/issues
+  artifacthub.io/crds: |
+    - kind: HermesInstance
+      version: v1
+      name: hermesinstances.hermes.agent
+      displayName: Hermes Instance
+      description: Represents a managed Nous Research Hermes AI agent instance
+    - kind: HermesSelfConfig
+      version: v1
+      name: hermesselfconfigs.hermes.agent
+      displayName: Hermes Self-Config
+      description: A request from an agent to modify its own HermesInstance spec
+    - kind: HermesClusterDefaults
+      version: v1
+      name: hermesclusterdefaults.hermes.agent
+      displayName: Hermes Cluster Defaults
+      description: Cluster-wide default settings applied to Hermes instances
+  artifacthub.io/crdsExamples: |
+    - apiVersion: hermes.agent/v1
+      kind: HermesInstance
+      metadata:
+        name: my-hermes
+      spec:
+        image:
+          repository: ghcr.io/paperclipinc/hermes-agent
+          tag: v2026.5.29.2
+        storage:
+          persistence:
+            enabled: true
+            size: 10Gi
+  artifacthub.io/images: |
+    - name: hermes-operator
+      image: ghcr.io/paperclipinc/hermes-operator:0.1.14 # x-release-please-version
+  artifacthub.io/changes: |
+    - kind: added
+      description: World-class Artifact Hub metadata (logo, keywords, CRDs, images)
+    - kind: added
+      description: Helm chart OCI artifact is now cosign-signed (keyless)

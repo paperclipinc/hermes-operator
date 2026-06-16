@@ -157,11 +157,18 @@ jobs:
         with:
           version: latest
 
-      - name: Package and push Helm chart
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3
+
+      - name: Package, push, and sign Helm chart
         run: |
           CHART_VERSION="${{ github.ref_name }}"
           CHART_VERSION="${CHART_VERSION#v}"
           helm package charts/hermes-operator \
             --version "${CHART_VERSION}" \
             --app-version "${{ github.ref_name }}"
-          helm push hermes-operator-${CHART_VERSION}.tgz oci://ghcr.io/paperclipinc/charts
+          PUSH_OUT=$(helm push "hermes-operator-${CHART_VERSION}.tgz" oci://ghcr.io/paperclipinc/charts 2>&1)
+          echo "${PUSH_OUT}"
+          DIGEST=$(echo "${PUSH_OUT}" | awk '/Digest:/ {print $2}')
+          if [ -z "${DIGEST}" ]; then echo "::error::could not parse chart digest"; exit 1; fi
+          cosign sign --yes "ghcr.io/paperclipinc/charts/hermes-operator@${DIGEST}"
