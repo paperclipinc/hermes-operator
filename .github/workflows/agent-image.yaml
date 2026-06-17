@@ -1,6 +1,6 @@
 1|# .github/workflows/agent-image.yaml
 2|#
-3|# Builds and publishes ghcr.io/${{ github.repository_owner }}/hermes-agent for every hermes-agent
+3|# Builds and publishes ghcr.io/aabichou/hermes-agent for every hermes-agent
 4|# release in the supported matrix. Triggered:
 5|#   - Manually via workflow_dispatch (engineer picks the HERMES_VERSION).
 6|#   - On every push of a tag matching `agent/vX.Y.Z`.
