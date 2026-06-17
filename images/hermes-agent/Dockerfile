@@ -72,8 +72,8 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 ARG HERMES_AGENT_FORK_REPO=https://github.com/aabichou/hermes-agent-src.git
 ARG HERMES_AGENT_FORK_REF=fix/packages-find-hermes-cli-subpackages
 FROM node:22-bookworm-slim AS web-builder
-ARG HERMES_AGENT_FORK_REPO
-ARG HERMES_AGENT_FORK_REF
+ARG HERMES_AGENT_FORK_REPO=https://github.com/aabichou/hermes-agent-src.git
+ARG HERMES_AGENT_FORK_REF=fix/packages-find-hermes-cli-subpackages
 RUN apt-get update \
     && apt-get install -y --no-install-recommends git ca-certificates \
     && rm -rf /var/lib/apt/lists/*
