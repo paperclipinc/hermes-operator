@@ -1,114 +1,115 @@
-# .github/workflows/agent-image.yaml
-#
-# Builds and publishes ghcr.io/paperclipinc/hermes-agent for every hermes-agent
-# release in the supported matrix. Triggered:
-#   - Manually via workflow_dispatch (engineer picks the HERMES_VERSION).
-#   - On every push of a tag matching `agent/vX.Y.Z`.
-#
-# Cosign-signed (keyless OIDC) and SBOM via Syft.
-name: agent-image
-
-on:
-  workflow_dispatch:
-    inputs:
-      hermes_version:
-        description: "Upstream hermes-agent release tag (e.g. v0.13.0)"
-        required: true
-        type: string
-  push:
-    tags:
-      - 'agent/v*'
-
-permissions:
-  contents: read
-  packages: write
-  id-token: write
-
-jobs:
-  build:
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Resolve HERMES_VERSION
-        id: ver
-        run: |
-          set -eux
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            v="${{ inputs.hermes_version }}"
-          else
-            v="${GITHUB_REF#refs/tags/agent/}"
-          fi
-          # Strip any leading "v" for the bare package version, keep the tag form too.
-          bare="${v#v}"
-          echo "tag=${v}" >> "$GITHUB_OUTPUT"
-          echo "bare=${bare}" >> "$GITHUB_OUTPUT"
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v4
-
-      - name: Set up Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to GHCR
-        uses: docker/login-action@v4
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Verify uv.lock pins the requested hermes-agent git tag
-        run: |
-          set -eux
-          # hermes-agent is a git dependency pinned by tag in the lock's source line:
-          #   source = { git = "https://github.com/NousResearch/hermes-agent?rev=<TAG>#<sha>" }
-          # Its package `version` is independent semver (upstream uses CalVer git tags),
-          # so validate the git rev, not the version field. Refuse a mismatched lock.
-          TAG="${{ steps.ver.outputs.tag }}"
-          if ! grep -qF "NousResearch/hermes-agent?rev=${TAG}#" images/hermes-agent/uv.lock; then
-            echo "uv.lock does not pin hermes-agent at git tag ${TAG}." >&2
-            echo "Run: make agent-image-relock HERMES_VERSION=${TAG} and commit." >&2
-            exit 1
-          fi
-
-      - name: Build and push
-        id: build
-        uses: docker/build-push-action@v5
-        with:
-          context: images/hermes-agent
-          file: images/hermes-agent/Dockerfile
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: |
-            ghcr.io/paperclipinc/hermes-agent:${{ steps.ver.outputs.tag }}
-            ghcr.io/paperclipinc/hermes-agent:latest
-          build-args: |
-            HERMES_VERSION=${{ steps.ver.outputs.tag }}
-          provenance: true
-          sbom: true
-
-      - name: Install Cosign
-        uses: sigstore/cosign-installer@v3
-
-      - name: Sign image (keyless OIDC)
-        env:
-          DIGEST: ${{ steps.build.outputs.digest }}
-        run: |
-          cosign sign --yes "ghcr.io/paperclipinc/hermes-agent@${DIGEST}"
-
-      - name: Install Syft
-        uses: anchore/sbom-action/download-syft@v0
-
-      - name: Generate SBOM
-        run: |
-          syft "ghcr.io/paperclipinc/hermes-agent:${{ steps.ver.outputs.tag }}" \
-            -o spdx-json=sbom.spdx.json
-
-      - name: Attach SBOM as Cosign attestation
-        env:
-          DIGEST: ${{ steps.build.outputs.digest }}
-        run: |
-          cosign attest --yes \
-            --predicate sbom.spdx.json \
-            --type spdxjson \
-            "ghcr.io/paperclipinc/hermes-agent@${DIGEST}"
+1|# .github/workflows/agent-image.yaml
+2|#
+3|# Builds and publishes ghcr.io/${{ github.repository_owner }}/hermes-agent for every hermes-agent
+4|# release in the supported matrix. Triggered:
+5|#   - Manually via workflow_dispatch (engineer picks the HERMES_VERSION).
+6|#   - On every push of a tag matching `agent/vX.Y.Z`.
+7|#
+8|# Cosign-signed (keyless OIDC) and SBOM via Syft.
+9|name: agent-image
+10|
+11|on:
+12|  workflow_dispatch:
+13|    inputs:
+14|      hermes_version:
+15|        description: "Upstream hermes-agent release tag (e.g. v0.13.0)"
+16|        required: true
+17|        type: string
+18|  push:
+19|    tags:
+20|      - 'agent/v*'
+21|
+22|permissions:
+23|  contents: read
+24|  packages: write
+25|  id-token: write
+26|
+27|jobs:
+28|  build:
+29|    runs-on: ubuntu-22.04
+30|    steps:
+31|      - uses: actions/checkout@v6
+32|
+33|      - name: Resolve HERMES_VERSION
+34|        id: ver
+35|        run: |
+36|          set -eux
+37|          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+38|            v="${{ inputs.hermes_version }}"
+39|          else
+40|            v="${GITHUB_REF#refs/tags/agent/}"
+41|          fi
+42|          # Strip any leading "v" for the bare package version, keep the tag form too.
+43|          bare="${v#v}"
+44|          echo "tag=${v}" >> "$GITHUB_OUTPUT"
+45|          echo "bare=${bare}" >> "$GITHUB_OUTPUT"
+46|
+47|      - name: Set up QEMU
+48|        uses: docker/setup-qemu-action@v4
+49|
+50|      - name: Set up Buildx
+51|        uses: docker/setup-buildx-action@v3
+52|
+53|      - name: Log in to GHCR
+54|        uses: docker/login-action@v4
+55|        with:
+56|          registry: ghcr.io
+57|          username: ${{ github.actor }}
+58|          password: ${{ secrets.GITHUB_TOKEN }}
+59|
+60|      - name: Verify uv.lock pins the requested hermes-agent git tag
+61|        run: |
+62|          set -eux
+63|          # hermes-agent is a git dependency pinned by tag in the lock's source line:
+64|          #   source = { git = "https://github.com/NousResearch/hermes-agent?rev=<TAG>#<sha>" }
+65|          # Its package `version` is independent semver (upstream uses CalVer git tags),
+66|          # so validate the git rev, not the version field. Refuse a mismatched lock.
+67|          TAG="${{ steps.ver.outputs.tag }}"
+68|          if ! grep -qF "NousResearch/hermes-agent?rev=${TAG}#" images/hermes-agent/uv.lock; then
+69|            echo "uv.lock does not pin hermes-agent at git tag ${TAG}." >&2
+70|            echo "Run: make agent-image-relock HERMES_VERSION=${TAG} and commit." >&2
+71|            exit 1
+72|          fi
+73|
+74|      - name: Build and push
+75|        id: build
+76|        uses: docker/build-push-action@v5
+77|        with:
+78|          context: images/hermes-agent
+79|          file: images/hermes-agent/Dockerfile
+80|          platforms: linux/amd64,linux/arm64
+81|          push: true
+82|          tags: |
+83|            ghcr.io/${{ github.repository_owner }}/hermes-agent:${{ steps.ver.outputs.tag }}
+84|            ghcr.io/${{ github.repository_owner }}/hermes-agent:latest
+85|          build-args: |
+86|            HERMES_VERSION=${{ steps.ver.outputs.tag }}
+87|          provenance: true
+88|          sbom: true
+89|
+90|      - name: Install Cosign
+91|        uses: sigstore/cosign-installer@v3
+92|
+93|      - name: Sign image (keyless OIDC)
+94|        env:
+95|          DIGEST: ${{ steps.build.outputs.digest }}
+96|        run: |
+97|          cosign sign --yes "ghcr.io/${{ github.repository_owner }}/hermes-agent@${DIGEST}"
+98|
+99|      - name: Install Syft
+100|        uses: anchore/sbom-action/download-syft@v0
+101|
+102|      - name: Generate SBOM
+103|        run: |
+104|          syft "ghcr.io/${{ github.repository_owner }}/hermes-agent:${{ steps.ver.outputs.tag }}" \
+105|            -o spdx-json=sbom.spdx.json
+106|
+107|      - name: Attach SBOM as Cosign attestation
+108|        env:
+109|          DIGEST: ${{ steps.build.outputs.digest }}
+110|        run: |
+111|          cosign attest --yes \
+112|            --predicate sbom.spdx.json \
+113|            --type spdxjson \
+114|            "ghcr.io/${{ github.repository_owner }}/hermes-agent@${DIGEST}"
+115|

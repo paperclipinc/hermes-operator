@@ -87,6 +87,12 @@ RUN groupadd --system --gid 1000 hermes \
 
 # Copy the resolved venv from the builder stage.
 COPY --from=builder --chown=hermes:hermes /opt/venv /opt/venv
+
+# Copy pyproject.toml + uv.lock to /opt/venv-template/ so the operator's
+# init-uv init container can run `uv sync --frozen` against them.
+# Fixes: https://github.com/paperclipinc/hermes-operator/issues/68
+RUN mkdir -p /opt/venv-template
+COPY --from=builder --chown=hermes:hermes /build/pyproject.toml /build/uv.lock /opt/venv-template/
 ENV PATH="/opt/venv/bin:${PATH}" \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
