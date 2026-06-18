@@ -78,11 +78,19 @@ jobs:
       - name: Install Cosign
         uses: sigstore/cosign-installer@v3
 
+      # cosign sign/attest upload to the public Rekor transparency log, which has
+      # intermittent outages. Retry to ride out transient rekor.sigstore.dev 5xx /
+      # timeouts instead of failing an otherwise-good publish.
       - name: Sign image (keyless OIDC)
         env:
           DIGEST: ${{ steps.build.outputs.digest }}
         run: |
-          cosign sign --yes "ghcr.io/paperclipinc/hermes-agent@${DIGEST}"
+          for attempt in 1 2 3 4 5; do
+            if cosign sign --yes "ghcr.io/paperclipinc/hermes-agent@${DIGEST}"; then exit 0; fi
+            echo "cosign sign attempt ${attempt} failed (likely transient rekor); retrying in $((attempt*20))s..." >&2
+            sleep $((attempt*20))
+          done
+          echo "cosign sign failed after retries" >&2; exit 1
 
       - name: Install Syft
         uses: anchore/sbom-action/download-syft@v0
@@ -96,7 +104,12 @@ jobs:
         env:
           DIGEST: ${{ steps.build.outputs.digest }}
         run: |
-          cosign attest --yes \
-            --predicate sbom.spdx.json \
-            --type spdxjson \
-            "ghcr.io/paperclipinc/hermes-agent@${DIGEST}"
+          for attempt in 1 2 3 4 5; do
+            if cosign attest --yes \
+              --predicate sbom.spdx.json \
+              --type spdxjson \
+              "ghcr.io/paperclipinc/hermes-agent@${DIGEST}"; then exit 0; fi
+            echo "cosign attest attempt ${attempt} failed (likely transient rekor); retrying in $((attempt*20))s..." >&2
+            sleep $((attempt*20))
+          done
+          echo "cosign attest failed after retries" >&2; exit 1
