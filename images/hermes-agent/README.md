@@ -1,30 +1,36 @@
 # hermes-agent image build context
 
-The operator owns `ghcr.io/paperclipinc/hermes-agent`. Upstream
-(`nousresearch/hermes-agent`) ships only a Python package, so this directory
-packages it into a multi-arch container that the operator can pull by default.
+The operator owns `ghcr.io/paperclipinc/hermes-agent`. It is the **upstream
+`nousresearch/hermes-agent` image** (an s6-overlay runtime that bundles the
+gateway, dashboard, OpenAI-compatible API server, a Playwright/Chromium browser,
+node, and every Python dependency) with operator metadata layered on top.
+
+We intentionally do **not** rebuild the Python environment ourselves. The agent
+is designed to run under s6 supervision (`/init` as PID 1, per-profile gateways,
+profile reconcile on boot, browser under `/opt/hermes/.playwright`); reproducing
+that from a bare `uv sync` is both fragile and incomplete (see #89). The operator
+orchestrates the upstream image declaratively — it runs `hermes gateway run` with
+the API server enabled and probes `/health` on the gateway port (see
+`internal/resources/statefulset.go` and `docs/runtime.md`).
 
 ## Layout
 
 | File | Purpose |
 |---|---|
-| `Dockerfile` | Multi-stage build (uv builder + slim runtime). |
-| `pyproject.toml` | uv project pinning `hermes-agent`. |
-| `uv.lock` | Committed lockfile: reproducible builds. |
-| `entrypoint.sh` | tini-wrapped startup; sources `~/.hermes/config.yaml`. |
+| `Dockerfile` | `FROM` the upstream image (pinned by multi-arch digest) + operator OCI/version labels. |
+| `README.md` | This file. |
 
-## Common workflows
+## Bumping the upstream version
 
-```bash
-# Bump the pinned upstream version and refresh the lockfile.
-make agent-image-relock HERMES_VERSION=1.4.3
+1. Resolve the new multi-arch manifest digest for the desired upstream release:
 
-# Build locally for the current platform.
-make agent-image-build HERMES_VERSION=1.4.3
+   ```bash
+   docker buildx imagetools inspect nousresearch/hermes-agent:<tag>
+   ```
 
-# Smoke-test the local build.
-make agent-image-smoke HERMES_VERSION=1.4.3
-```
+2. Update both the `FROM ...@sha256:<digest>` line and the `HERMES_VERSION` build
+   arg (the value surfaced as the `hermes.agent/version` label, which the
+   autoupdate controller compares against the registry tag) in `Dockerfile`.
 
-CI builds the matrix in `.github/workflows/agent-image.yaml`, signs each image
-with Cosign (keyless OIDC), and attaches an SBOM via Syft.
+3. The image is built, signed (Cosign keyless), SBOM-attested, and pushed by
+   `.github/workflows/agent-image.yaml`.
