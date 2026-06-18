@@ -30,7 +30,7 @@ jobs:
 
       - name: Set up Buildx
         if: steps.guard.outputs.skip != 'true'
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Read pinned HERMES_VERSION from uv.lock
         if: steps.guard.outputs.skip != 'true'
