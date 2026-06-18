@@ -96,9 +96,22 @@ COPY --from=builder --chown=hermes:hermes /opt/venv /opt/venv
 # no HermesInstance ever reaches Ready. See #68.
 COPY --from=builder --chown=hermes:hermes /build/pyproject.toml /build/uv.lock /opt/venv-template/
 
+# Ship the uv binary in the runtime image too. The operator's `init-uv` init
+# container runs `uv sync --frozen` (above) to materialise the env onto the
+# per-instance PVC, so uv must be on PATH at runtime — the resolved venv at
+# /opt/venv does not include uv. Without this, init-uv exits 127
+# ("uv: not found") and no HermesInstance reaches Ready. See #68.
+COPY --from=uv /uv /uvx /usr/local/bin/
+
+# UV_* defaults for the init-uv `uv sync` at pod start: pin a deterministic
+# interpreter and a PVC-safe link mode so uv never tries to download a Python or
+# hardlink across filesystems (image layer -> mounted PVC).
 ENV PATH="/opt/venv/bin:${PATH}" \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
+    UV_PYTHON_DOWNLOADS=never \
+    UV_PYTHON=/usr/local/bin/python \
+    UV_LINK_MODE=copy \
     HOME=/home/hermes
 
 # Image metadata. The HERMES_VERSION label is the one the operator's autoupdate
