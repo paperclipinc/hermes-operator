@@ -89,7 +89,36 @@ func waitForInstanceReady(ctx context.Context, c client.Client, ns, name string,
 		}
 		time.Sleep(2 * time.Second)
 	}
+	dumpInstanceDiagnostics(ns, name)
 	Fail(fmt.Sprintf("HermesInstance %s/%s did not become Ready within %s", ns, name, timeout))
+}
+
+// dumpInstanceDiagnostics best-effort prints cluster state for a HermesInstance
+// that failed to become Ready, so the CI log shows *where* it is stuck (init
+// container errors, image pull, crash loop, or simply still-progressing) instead
+// of a bare timeout. Shells out to kubectl against the suite's kubeconfig.
+func dumpInstanceDiagnostics(ns, name string) {
+	kc := clientcmdPath()
+	sel := "app.kubernetes.io/instance=" + name
+	steps := [][]string{
+		{"-n", ns, "get", "hermesinstance", name, "-o", "yaml"},
+		{"-n", ns, "get", "pods,sts", "-o", "wide"},
+		{"-n", ns, "describe", "pods", "-l", sel},
+		{"-n", ns, "get", "events", "--sort-by=.lastTimestamp"},
+	}
+	fmt.Fprintf(GinkgoWriter, "\n===== diagnostics for %s/%s (not Ready) =====\n", ns, name)
+	for _, s := range steps {
+		args := append([]string{"--kubeconfig", kc}, s...)
+		out, _ := run("kubectl", args...)
+		fmt.Fprintf(GinkgoWriter, "\n----- kubectl %s -----\n%s\n", strings.Join(s, " "), out)
+	}
+	// Init-container logs reveal the exact failure (e.g. init-uv cp / uv sync).
+	for _, ic := range []string{"init-apt", "init-uv", "init-pip"} {
+		out, _ := run("kubectl", "--kubeconfig", kc, "-n", ns, "logs",
+			"-l", sel, "-c", ic, "--tail", "50", "--prefix")
+		fmt.Fprintf(GinkgoWriter, "\n----- logs %s -----\n%s\n", ic, out)
+	}
+	fmt.Fprintf(GinkgoWriter, "===== end diagnostics =====\n")
 }
 
 func hasReadyTrue(inst *hermesv1.HermesInstance) bool {
