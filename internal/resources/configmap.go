@@ -40,6 +40,15 @@ func BuildConfigMap(inst *hermesv1.HermesInstance, resolvedBody string) *corev1.
 	if merged, err := mergeGatewayFragments(body, BuildGatewayConfigFragments(inst)); err == nil {
 		body = merged
 	}
+	// The upstream `gateway run` refuses to start without an LLM provider
+	// configured. Ensure one is present so the instance can reach Ready: a real
+	// deployment sets spec.config.raw with a `model:`/provider (and credentials
+	// via env-from-secret); when none is given we inject a non-routable placeholder
+	// so the gateway + API server come up (and serve /health) without making any
+	// live LLM calls. Inference then fails clearly until a real provider is set.
+	if withModel, err := ensureModelDefault(body); err == nil {
+		body = withModel
+	}
 	// On parse error we keep the original body: the validating webhook is
 	// responsible for rejecting malformed config; we don't want a pure builder
 	// to panic.
@@ -85,6 +94,31 @@ func mergeGatewayFragments(body string, frags map[string]any) (string, error) {
 	out, err := yaml.Marshal(root)
 	if err != nil {
 		return "", fmt.Errorf("marshal merged config: %w", err)
+	}
+	return string(out), nil
+}
+
+// ensureModelDefault guarantees the rendered config has a top-level `model` so
+// `hermes gateway run` can initialise. If the user already set one (directly or
+// via spec.config), it is left untouched. Otherwise a non-routable placeholder
+// provider is injected — enough for the gateway + API server to start and serve
+// /health, but with no reachable upstream, so it never makes a live LLM call.
+func ensureModelDefault(body string) (string, error) {
+	root := map[string]any{}
+	if body != "" {
+		if err := yaml.Unmarshal([]byte(body), &root); err != nil {
+			return "", fmt.Errorf("parse rendered config: %w", err)
+		}
+	}
+	if _, ok := root["model"]; ok {
+		return body, nil
+	}
+	root["model"] = "gpt-4o-mini"
+	root["base_url"] = "http://127.0.0.1:9/v1"
+	root["api_key"] = "placeholder-no-live-calls"
+	out, err := yaml.Marshal(root)
+	if err != nil {
+		return "", fmt.Errorf("marshal config with model default: %w", err)
 	}
 	return string(out), nil
 }

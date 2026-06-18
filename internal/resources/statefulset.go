@@ -26,12 +26,17 @@ func BuildStatefulSet(inst *hermesv1.HermesInstance, extraInits []corev1.Contain
 	}
 	image := imageRef(inst)
 
-	// Build PodSecurityContext with override support
+	// Build PodSecurityContext with override support.
+	//
+	// The upstream hermes-agent image runs under s6-overlay: PID 1 (/init) must
+	// start as root so the stage2 hook can remap the in-image `hermes` user to
+	// HERMES_UID/HERMES_GID and chown the /opt/data volume, after which every
+	// supervised service drops privileges via s6-setuidgid. We therefore cannot
+	// pin RunAsNonRoot/RunAsUser here; the in-container drop to uid 1000 is driven
+	// by the HERMES_UID/HERMES_GID env (see below). FSGroup still gives the PVC
+	// group ownership the dropped user needs.
 	podSecurityCtx := &corev1.PodSecurityContext{
-		RunAsNonRoot: Ptr(true),
-		RunAsUser:    Ptr(int64(1000)),
-		RunAsGroup:   Ptr(int64(1000)),
-		FSGroup:      Ptr(int64(1000)),
+		FSGroup: Ptr(int64(1000)),
 		SeccompProfile: &corev1.SeccompProfile{
 			Type: corev1.SeccompProfileTypeRuntimeDefault,
 		},
@@ -40,13 +45,14 @@ func BuildStatefulSet(inst *hermesv1.HermesInstance, extraInits []corev1.Contain
 		podSecurityCtx = inst.Spec.Security.PodSecurityContext.DeepCopy()
 	}
 
-	// Build ContainerSecurityContext with override support
+	// Build ContainerSecurityContext with override support.
+	//
+	// s6 stage2 needs CHOWN/SETUID/SETGID/DAC_OVERRIDE/FOWNER to remap the user
+	// and chown the volume, and a writable root filesystem (/run, /etc for the
+	// supervision tree), so we don't drop ALL caps or force a read-only rootfs the
+	// way the old hand-rolled image allowed. Privilege escalation stays disabled.
 	containerSecurityCtx := &corev1.SecurityContext{
 		AllowPrivilegeEscalation: Ptr(false),
-		ReadOnlyRootFilesystem:   Ptr(true),
-		Capabilities: &corev1.Capabilities{
-			Drop: []corev1.Capability{"ALL"},
-		},
 	}
 	if inst.Spec.Security.ContainerSecurityContext != nil {
 		containerSecurityCtx = inst.Spec.Security.ContainerSecurityContext.DeepCopy()
@@ -54,22 +60,27 @@ func BuildStatefulSet(inst *hermesv1.HermesInstance, extraInits []corev1.Contain
 
 	// Build container with override support
 	c := corev1.Container{
-		Name:                     "hermes",
-		Image:                    image,
-		ImagePullPolicy:          pullPolicy(inst),
+		Name:            "hermes",
+		Image:           image,
+		ImagePullPolicy: pullPolicy(inst),
+		// CMD args route through the image's main-wrapper to `hermes gateway run`
+		// — the foreground gateway daemon. With the API server enabled (env below)
+		// it serves the OpenAI-compatible endpoint + /health on the gateway port.
+		Args:                     []string{"gateway", "run"},
 		TerminationMessagePath:   "/dev/termination-log",
 		TerminationMessagePolicy: corev1.TerminationMessageReadFile,
 		Ports: []corev1.ContainerPort{{
-			Name:          "gateway",
-			ContainerPort: 8443,
+			Name:          GatewayPortName,
+			ContainerPort: GatewayPort,
 			Protocol:      corev1.ProtocolTCP,
 		}},
 		SecurityContext: containerSecurityCtx,
 		VolumeMounts: []corev1.VolumeMount{
-			{Name: "data", MountPath: "/home/hermes/.hermes"},
+			// HERMES_HOME on the upstream image is /opt/data (the persistent volume).
+			{Name: "data", MountPath: "/opt/data"},
 			{
 				Name:      "config",
-				MountPath: "/home/hermes/.hermes/config.yaml",
+				MountPath: "/opt/data/config.yaml",
 				SubPath:   "config.yaml",
 				ReadOnly:  true,
 			},
@@ -77,13 +88,29 @@ func BuildStatefulSet(inst *hermesv1.HermesInstance, extraInits []corev1.Contain
 		},
 		ReadinessProbe: &corev1.Probe{
 			ProbeHandler: corev1.ProbeHandler{
-				TCPSocket: &corev1.TCPSocketAction{Port: intstr.FromString("gateway")},
+				HTTPGet: &corev1.HTTPGetAction{
+					Path: "/health",
+					Port: intstr.FromString(GatewayPortName),
+				},
 			},
 			InitialDelaySeconds: 5,
 			PeriodSeconds:       10,
-			TimeoutSeconds:      1,
-			FailureThreshold:    3,
+			TimeoutSeconds:      2,
+			FailureThreshold:    6,
 			SuccessThreshold:    1, // explicit k8s default
+		},
+		LivenessProbe: &corev1.Probe{
+			ProbeHandler: corev1.ProbeHandler{
+				HTTPGet: &corev1.HTTPGetAction{
+					Path: "/health",
+					Port: intstr.FromString(GatewayPortName),
+				},
+			},
+			InitialDelaySeconds: 30,
+			PeriodSeconds:       15,
+			TimeoutSeconds:      2,
+			FailureThreshold:    3,
+			SuccessThreshold:    1,
 		},
 	}
 
@@ -146,11 +173,17 @@ func BuildStatefulSet(inst *hermesv1.HermesInstance, extraInits []corev1.Contain
 		})
 	}
 
+	// --- Agent runtime env (upstream s6 image contract) ---
+	// HERMES_HOME points the agent at the persistent volume; HERMES_UID/GID drive
+	// the s6 stage2 privilege drop to a non-root user. API_SERVER_* enables the
+	// OpenAI-compatible gateway API + /health on the gateway port — the readiness
+	// surface. The key authenticates /v1; /health is unauthenticated.
+	c.Env = append(c.Env, BuildAgentRuntimeEnv(inst)...)
+
 	// --- Plan 3: runtime/gateways/honcho wiring (operator-managed env) ---
 	c.Env = append(c.Env, BuildGatewayEnv(inst)...)
 	c.Env = append(c.Env, BuildHonchoConsumerEnv(inst)...)
 	c.EnvFrom = append(c.EnvFrom, BuildGatewayEnvFrom(inst)...)
-	c.VolumeMounts = append(c.VolumeMounts, BuildRuntimeVolumeMounts(inst)...)
 	// --- end Plan 3 operator env ---
 
 	// Extend container with extra volume mounts, env, and envFrom
@@ -285,36 +318,30 @@ func BuildStatefulSet(inst *hermesv1.HermesInstance, extraInits []corev1.Contain
 		},
 	}
 
-	// Assemble init containers: extraInits (restore/migration) → operator-managed
-	// (runtime-init) → user-supplied. Order matters: restore must populate the PVC
-	// before runtime-init starts writing to it.
+	// Assemble init containers: extraInits (restore/migration) → user-supplied.
+	// The upstream s6 image is self-contained (its own Python env, browser, node,
+	// deps), so the old runtime-init chain (init-apt/init-uv/init-pip that uv-sync'd
+	// the env onto the PVC) is gone — the agent's runtime lives in the image, only
+	// mutable state lives on /opt/data.
 	inits := append([]corev1.Container{}, extraInits...)
-	inits = append(inits, BuildRuntimeInitContainers(inst)...)
 	inits = append(inits, inst.Spec.InitContainers...)
 	sts.Spec.Template.Spec.InitContainers = inits
-
-	// --- Plan 3: runtime volumes ---
-	sts.Spec.Template.Spec.Volumes = append(
-		sts.Spec.Template.Spec.Volumes,
-		BuildRuntimeVolumes(inst)...,
-	)
-	// --- end Plan 3 ---
 
 	return sts
 }
 
 // shareProcessNamespace returns the effective ShareProcessNamespace value,
-// defaulting to true. The kubebuilder default would otherwise populate this at
-// the API server, but explicit handling lets instances stored before the field
-// was added still get the zombie-reaping behavior on the next reconcile. With
-// PID namespace sharing the infrastructure (pause) container becomes PID 1 and
-// reaps defunct helper processes (git, plugins, shells) spawned under the agent
-// process, which otherwise accumulate when the entrypoint does not waitpid().
+// defaulting to false. The upstream hermes-agent image runs s6-overlay, whose
+// /init MUST be PID 1 (s6-overlay-suexec aborts otherwise). Sharing the process
+// namespace inserts the infrastructure (pause) container as PID 1, so it is
+// incompatible with s6 — and unnecessary, because s6 reaps zombies itself
+// (non-blocking on SIGCHLD), which is exactly why the upstream image replaced
+// tini with s6. An explicit opt-in via spec is still honored.
 func shareProcessNamespace(inst *hermesv1.HermesInstance) *bool {
 	if inst.Spec.ShareProcessNamespace != nil {
 		return inst.Spec.ShareProcessNamespace
 	}
-	return Ptr(true)
+	return Ptr(false)
 }
 
 func imageRef(inst *hermesv1.HermesInstance) string {

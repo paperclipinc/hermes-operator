@@ -1,0 +1,14 @@
+apiVersion: hermes.agent/v1
+kind: HermesInstance
+metadata:
+  name: dev
+  namespace: hermes-dev
+spec:
+  image:
+    repository: nousresearch/hermes-agent
+    tag: "0.16.0"
+    pullPolicy: IfNotPresent
+  storage:
+    persistence:
+      enabled: true
+      size: 1Gi

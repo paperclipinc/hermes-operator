@@ -1,0 +1,120 @@
+# Raw k8s validation of the upstream-image runtime recipe (no operator).
+# Proves a hermes-agent reaches Ready via: gateway run + API server on :8443
+# + /health probe, on the upstream s6 image. Mirrors what the operator must
+# generate. Apply to a kind cluster with the image preloaded.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: hermes-validate
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: hermes-apiserver
+  namespace: hermes-validate
+stringData:
+  key: conformance-test-key
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hermes-config
+  namespace: hermes-validate
+data:
+  config.yaml: |
+    model: gpt-4o-mini
+    base_url: http://127.0.0.1:9999/v1
+    api_key: sk-dummy-conformance
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hermes-validate
+  namespace: hermes-validate
+spec:
+  selector:
+    app: hermes-validate
+  ports:
+    - name: gateway
+      port: 8443
+      targetPort: gateway
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: hermes-validate
+  namespace: hermes-validate
+spec:
+  serviceName: hermes-validate
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hermes-validate
+  template:
+    metadata:
+      labels:
+        app: hermes-validate
+    spec:
+      # The upstream s6 image starts as root (/init remaps to HERMES_UID/GID and
+      # chowns the data volume), so we do NOT force runAsNonRoot here.
+      securityContext:
+        fsGroup: 1000
+      containers:
+        - name: hermes
+          image: nousresearch/hermes-agent:latest
+          imagePullPolicy: IfNotPresent
+          args: ["gateway", "run"]
+          ports:
+            - name: gateway
+              containerPort: 8443
+          env:
+            - name: HERMES_HOME
+              value: /opt/data
+            - name: HERMES_UID
+              value: "1000"
+            - name: HERMES_GID
+              value: "1000"
+            - name: API_SERVER_ENABLED
+              value: "true"
+            - name: API_SERVER_HOST
+              value: 0.0.0.0
+            - name: API_SERVER_PORT
+              value: "8443"
+            - name: API_SERVER_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-apiserver
+                  key: key
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: gateway
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 6
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: gateway
+            initialDelaySeconds: 20
+            periodSeconds: 15
+            failureThreshold: 3
+          volumeMounts:
+            - name: data
+              mountPath: /opt/data
+            - name: config
+              mountPath: /opt/data/config.yaml
+              subPath: config.yaml
+              readOnly: true
+      volumes:
+        - name: config
+          configMap:
+            name: hermes-config
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi
