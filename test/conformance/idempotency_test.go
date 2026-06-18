@@ -147,7 +147,10 @@ var _ = Describe("idempotency canary", Ordered, func() {
 				Expect(instName).ToNot(BeEmpty(), "could not extract name from fixture %s", entry.fixture)
 
 				DeferCleanup(func() {
-					_, _ = kubectlDelete(namespaced)
+					// Non-blocking: a fixture's on-delete finalizer (e.g.
+					// backup-enabled's snapshot Job on placeholder creds) must not
+					// stall the rest of the corpus. The namespace is torn down at end.
+					_, _ = kubectlDeleteNoWait(namespaced)
 				})
 			})
 

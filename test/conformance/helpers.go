@@ -52,6 +52,16 @@ func kubectlDelete(yaml string) (string, error) {
 	return runStdin("kubectl", []string{"delete", "--ignore-not-found", "-f", "-"}, yaml)
 }
 
+// kubectlDeleteNoWait deletes without blocking on finalizers. Used for per-entry
+// cleanup in the idempotency corpus: some fixtures (e.g. backup-enabled) install
+// an on-delete finalizer whose snapshot Job cannot complete with placeholder
+// credentials, so a default `kubectl delete` (which waits for the finalizer)
+// would hang and starve the remaining corpus entries. The ephemeral cluster is
+// torn down at the end, so leaving a terminating instance behind is harmless.
+func kubectlDeleteNoWait(yaml string) (string, error) {
+	return runStdin("kubectl", []string{"delete", "--ignore-not-found", "--wait=false", "-f", "-"}, yaml)
+}
+
 func clientcmdPath() string {
 	if p := os.Getenv("KUBECONFIG"); p != "" {
 		return p
