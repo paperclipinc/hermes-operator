@@ -87,6 +87,15 @@ RUN groupadd --system --gid 1000 hermes \
 
 # Copy the resolved venv from the builder stage.
 COPY --from=builder --chown=hermes:hermes /opt/venv /opt/venv
+
+# Ship the lockfile + project metadata at /opt/venv-template/ as well. The
+# operator's `init-uv` init container (internal/resources/runtime_init.go) does
+#   cd /home/hermes/.hermes; cp /opt/venv-template/pyproject.toml /opt/venv-template/uv.lock .; uv sync --frozen
+# to materialise the env into the per-instance PVC. Without these files the init
+# container exits 1 ("cp: cannot stat '/opt/venv-template/pyproject.toml'") and
+# no HermesInstance ever reaches Ready. See #68.
+COPY --from=builder --chown=hermes:hermes /build/pyproject.toml /build/uv.lock /opt/venv-template/
+
 ENV PATH="/opt/venv/bin:${PATH}" \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
