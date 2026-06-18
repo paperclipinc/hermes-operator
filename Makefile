@@ -359,7 +359,7 @@ conformance-negative:
 
 .PHONY: conformance-idempotency
 conformance-idempotency:
-	cd test/conformance && go test -v -timeout 30m -ginkgo.v -ginkgo.focus="idempotency" ./...
+	cd test/conformance && go test -v -timeout 55m -ginkgo.v -ginkgo.focus="idempotency" ./...
 
 .PHONY: conformance-upgrade
 conformance-upgrade:

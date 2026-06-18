@@ -7,7 +7,7 @@ metadata:
 spec:
   image:
     repository: ghcr.io/paperclipinc/hermes-agent
-    tag: "v2026.5.29.2"
+    tag: "v0.16.0"
     pullPolicy: IfNotPresent
   storage:
     persistence:
@@ -72,13 +72,13 @@ spec:
   probes:
     liveness:
       httpGet:
-        path: /healthz
+        path: /health
         port: 8443
       initialDelaySeconds: 30
       periodSeconds: 10
     readiness:
       httpGet:
-        path: /readyz
+        path: /health
         port: 8443
       initialDelaySeconds: 10
       periodSeconds: 5
