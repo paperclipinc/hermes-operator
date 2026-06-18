@@ -49,17 +49,18 @@ func TestBuildStatefulSet_ContainerImageDigest(t *testing.T) {
 func TestBuildStatefulSet_ShareProcessNamespace(t *testing.T) {
 	t.Parallel()
 
-	// Default: zombie reaping on (PID namespace shared).
+	// Default: process namespace NOT shared. The upstream s6 image requires
+	// /init to be PID 1, which sharing the PID namespace would break.
 	sts := BuildStatefulSet(minimalInstance(), nil)
 	require.NotNil(t, sts.Spec.Template.Spec.ShareProcessNamespace)
-	assert.True(t, *sts.Spec.Template.Spec.ShareProcessNamespace, "defaults to true for zombie reaping")
+	assert.False(t, *sts.Spec.Template.Spec.ShareProcessNamespace, "defaults to false for s6 (PID 1 must be /init)")
 
-	// Explicit opt-out.
+	// Explicit opt-in still honored.
 	inst := minimalInstance()
-	inst.Spec.ShareProcessNamespace = Ptr(false)
+	inst.Spec.ShareProcessNamespace = Ptr(true)
 	sts = BuildStatefulSet(inst, nil)
 	require.NotNil(t, sts.Spec.Template.Spec.ShareProcessNamespace)
-	assert.False(t, *sts.Spec.Template.Spec.ShareProcessNamespace, "honors explicit opt-out")
+	assert.True(t, *sts.Spec.Template.Spec.ShareProcessNamespace, "honors explicit opt-in")
 }
 
 func TestBuildStatefulSet_ExplicitK8sDefaults(t *testing.T) {
@@ -82,14 +83,26 @@ func TestBuildStatefulSet_ExplicitK8sDefaults(t *testing.T) {
 func TestBuildStatefulSet_HardenedPodSecurity(t *testing.T) {
 	sts := BuildStatefulSet(minimalInstance(), nil)
 	pc := sts.Spec.Template.Spec.SecurityContext
-	require := sts.Spec.Template.Spec.Containers[0].SecurityContext
-	assert.NotNil(t, pc.RunAsNonRoot)
-	assert.True(t, *pc.RunAsNonRoot)
-	assert.NotNil(t, require.AllowPrivilegeEscalation)
-	assert.False(t, *require.AllowPrivilegeEscalation)
-	assert.NotNil(t, require.ReadOnlyRootFilesystem)
-	assert.True(t, *require.ReadOnlyRootFilesystem)
-	assert.Equal(t, []corev1.Capability{"ALL"}, require.Capabilities.Drop)
+	cc := sts.Spec.Template.Spec.Containers[0].SecurityContext
+
+	// Pod-level: the upstream s6 image must start as root (PID 1 /init remaps the
+	// in-image user + chowns /opt/data), so RunAsNonRoot/RunAsUser/RunAsGroup are
+	// NO LONGER pinned. FSGroup + RuntimeDefault seccomp remain.
+	assert.Nil(t, pc.RunAsNonRoot, "no longer forced non-root (s6 needs root PID 1)")
+	assert.Nil(t, pc.RunAsUser)
+	assert.Nil(t, pc.RunAsGroup)
+	assert.NotNil(t, pc.FSGroup)
+	assert.Equal(t, int64(1000), *pc.FSGroup)
+	assert.NotNil(t, pc.SeccompProfile)
+	assert.Equal(t, corev1.SeccompProfileTypeRuntimeDefault, pc.SeccompProfile.Type)
+
+	// Container-level: only privilege escalation stays disabled. s6 stage2 needs a
+	// writable rootfs and CHOWN/SETUID/SETGID caps, so ReadOnlyRootFilesystem and
+	// Capabilities.Drop=[ALL] are NO LONGER set.
+	assert.NotNil(t, cc.AllowPrivilegeEscalation)
+	assert.False(t, *cc.AllowPrivilegeEscalation)
+	assert.Nil(t, cc.ReadOnlyRootFilesystem, "writable rootfs required by s6")
+	assert.Nil(t, cc.Capabilities, "no longer drops ALL caps (s6 stage2 needs CHOWN/SETUID/SETGID)")
 }
 
 func TestBuildStatefulSet_VolumesAndMounts(t *testing.T) {
@@ -100,9 +113,9 @@ func TestBuildStatefulSet_VolumesAndMounts(t *testing.T) {
 	for _, m := range c.VolumeMounts {
 		mountNames[m.Name] = m.MountPath
 	}
-	assert.Equal(t, "/home/hermes/.hermes", mountNames["data"], "PVC mounted at hermes home")
-	assert.Equal(t, "/home/hermes/.hermes/config.yaml", mountNames["config"], "configmap subPath at config.yaml")
-	assert.Equal(t, "/tmp", mountNames["tmp"], "writable /tmp for read-only rootfs")
+	assert.Equal(t, "/opt/data", mountNames["data"], "PVC mounted at HERMES_HOME (/opt/data)")
+	assert.Equal(t, "/opt/data/config.yaml", mountNames["config"], "configmap subPath at config.yaml")
+	assert.Equal(t, "/tmp", mountNames["tmp"], "writable /tmp")
 }
 
 func minimalInstance() *hermesv1.HermesInstance {
@@ -324,8 +337,12 @@ func TestBuildStatefulSet_NotSuspendedDefaultReplica(t *testing.T) {
 	assert.Equal(t, int32(1), *sts.Spec.Replicas)
 }
 
-func TestBuildStatefulSet_RuntimeInitContainersAppended(t *testing.T) {
+func TestBuildStatefulSet_RuntimeInitContainersNotAppended(t *testing.T) {
 	t.Parallel()
+	// The upstream s6 image is self-contained, so the operator-managed runtime-init
+	// chain (init-apt/init-uv/init-pip) is NO LONGER added to the StatefulSet even
+	// when runtime spec fields are set. The Build* helpers still exist and are
+	// covered directly in runtime_init_test.go.
 	inst := minimalInstance()
 	inst.Spec.Runtime = hermesv1.RuntimeSpec{
 		UV:               hermesv1.UVSpec{Enabled: Ptr(true)},
@@ -336,8 +353,9 @@ func TestBuildStatefulSet_RuntimeInitContainersAppended(t *testing.T) {
 	for _, c := range sts.Spec.Template.Spec.InitContainers {
 		names = append(names, c.Name)
 	}
-	assert.Contains(t, names, "init-uv")
-	assert.Contains(t, names, "init-pip")
+	assert.NotContains(t, names, "init-apt")
+	assert.NotContains(t, names, "init-uv")
+	assert.NotContains(t, names, "init-pip")
 }
 
 func TestBuildStatefulSet_GatewayEnvWired(t *testing.T) {
@@ -385,26 +403,20 @@ func TestBuildStatefulSet_HonchoEnvWired(t *testing.T) {
 	assert.NotNil(t, byName["HONCHO_API_KEY"].ValueFrom)
 }
 
-func TestBuildStatefulSet_UVCacheVolume(t *testing.T) {
+func TestBuildStatefulSet_NoUVCacheVolume(t *testing.T) {
 	t.Parallel()
+	// The runtime-init chain is gone, so there is no longer a uv-cache volume or
+	// mount on the StatefulSet even when UV is enabled — the agent's runtime lives
+	// in the upstream image.
 	inst := minimalInstance()
 	inst.Spec.Runtime = hermesv1.RuntimeSpec{UV: hermesv1.UVSpec{Enabled: Ptr(true)}}
 	sts := BuildStatefulSet(inst, nil)
-	found := false
 	for _, v := range sts.Spec.Template.Spec.Volumes {
-		if v.Name == "uv-cache" {
-			found = true
-		}
+		assert.NotEqual(t, "uv-cache", v.Name, "uv-cache volume no longer present")
 	}
-	assert.True(t, found, "uv-cache volume present")
-
-	foundMount := false
 	for _, m := range sts.Spec.Template.Spec.Containers[0].VolumeMounts {
-		if m.Name == "uv-cache" && m.MountPath == "/home/hermes/.cache/uv" {
-			foundMount = true
-		}
+		assert.NotEqual(t, "uv-cache", m.Name, "uv-cache mount no longer present")
 	}
-	assert.True(t, foundMount, "uv-cache mounted at /home/hermes/.cache/uv")
 }
 
 func TestBuildStatefulSet_IdempotentWithRuntimeGatewaysHoncho(t *testing.T) {
@@ -435,8 +447,8 @@ func TestBuildStatefulSet_AcceptsInitContainers(t *testing.T) {
 	initC := corev1.Container{Name: "init-restore", Image: "restic/restic:0.16.4"}
 	sts := BuildStatefulSet(inst, []corev1.Container{initC})
 	require.NotNil(t, sts)
-	// extraInits must come BEFORE operator-managed inits: restore writes to PVC
-	// before runtime-init starts touching it.
+	// extraInits (restore/migration) come first, before any user-supplied
+	// spec.InitContainers: restore writes to the PVC before anything else touches it.
 	require.NotEmpty(t, sts.Spec.Template.Spec.InitContainers)
 	assert.Equal(t, "init-restore", sts.Spec.Template.Spec.InitContainers[0].Name)
 }

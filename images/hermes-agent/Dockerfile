@@ -1,136 +1,44 @@
 # images/hermes-agent/Dockerfile
 #
-# Two-stage multi-arch build for ghcr.io/paperclipinc/hermes-agent.
-# Stage 1 (`builder`) uses the official uv image to resolve and install the pinned
-# Python environment into a self-contained venv at /opt/venv. Stage 2 (`runtime`)
-# copies only the venv + minimal apt deps and runs as the non-root `hermes` user.
+# ghcr.io/paperclipinc/hermes-agent is the operator's published agent image. It
+# IS the upstream NousResearch/hermes-agent image — an s6-overlay runtime that
+# bundles the gateway, the dashboard, the OpenAI-compatible API server, a
+# Playwright/Chromium browser, node, and every Python dependency — with operator
+# metadata layered on top.
 #
-# Build args:
-#   HERMES_VERSION  : the exact hermes-agent release to package (e.g. "1.4.3").
-#                     Required. The CI workflow at .github/workflows/agent-image.yaml
-#                     drives this from a matrix.
-#   PYTHON_VERSION  : Python interpreter version. Default 3.11.
-#   UV_VERSION      : uv tool version. Default 0.11.7 (pinned for reproducibility; keep in lockstep with the relock workflow).
-#   TINI_VERSION    : tini release tag (lesson openclaw #471: tini as PID 1).
+# Why FROM-upstream instead of building the venv ourselves: the agent is designed
+# to run under s6 supervision (/init as PID 1, per-profile gateways, profile
+# reconcile on boot, browser at /opt/hermes/.playwright). The previous hand-rolled
+# `uv sync` image reproduced none of that, so no HermesInstance could reach Ready
+# (see #89). The operator now orchestrates the upstream image declaratively: it
+# runs `hermes gateway run` with the API server enabled and probes /health on the
+# gateway port (internal/resources/statefulset.go).
 #
-# Output: a runtime image that, with no further configuration, runs
-#         `hermes-agent --config ~/.hermes/config.yaml` as UID 1000.
+# Pinned by digest for reproducibility + supply chain. To bump, resolve a new
+# digest for the desired upstream release and update both the digest and
+# HERMES_VERSION:
+#   docker buildx imagetools inspect nousresearch/hermes-agent:<tag>
+#
+# Build arg:
+#   HERMES_VERSION : the upstream release this digest corresponds to. Surfaced as
+#                    the hermes.agent/version label the autoupdate controller reads.
+ARG HERMES_VERSION=v0.16.0
 
-ARG PYTHON_VERSION=3.11
-ARG UV_VERSION=0.11.7
-ARG TINI_VERSION=v0.19.0
+# Multi-arch (linux/amd64 + linux/arm64) manifest-list digest of
+# nousresearch/hermes-agent:latest (v0.16.0). buildx selects the per-platform
+# image from the list at build time.
+FROM nousresearch/hermes-agent@sha256:be6912a818cb4a479fa384024a599fee6796d56d1e6a5ca56834deec328d9981
+
 ARG HERMES_VERSION
 
-# ---------- Stage 1: builder ----------
-FROM ghcr.io/astral-sh/uv:${UV_VERSION} AS uv
-
-FROM python:${PYTHON_VERSION}-slim-bookworm AS builder
-ARG HERMES_VERSION
-
-# uv binary from the dedicated stage above.
-COPY --from=uv /uv /uvx /usr/local/bin/
-
-ENV UV_LINK_MODE=copy \
-    UV_COMPILE_BYTECODE=1 \
-    UV_PYTHON_DOWNLOADS=never \
-    VIRTUAL_ENV=/opt/venv \
-    UV_PROJECT_ENVIRONMENT=/opt/venv
-
-WORKDIR /build
-
-# git + ca-certificates are needed at lock-resolve time because the lockfile
-# pins hermes-agent by git ref (upstream is not on PyPI).
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends git ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copy lockfile + project metadata first for layer caching.
-COPY pyproject.toml uv.lock ./
-
-# Sync the frozen lockfile. `make agent-image-relock HERMES_VERSION=vX.Y.Z`
-# rewrites the @ ref in pyproject.toml and regenerates uv.lock; at build time
-# we simply trust the lock. HERMES_VERSION is informational for the labels stage.
-RUN --mount=type=cache,target=/root/.cache/uv \
-    set -eux; \
-    if [ -z "${HERMES_VERSION}" ]; then \
-        echo "ERROR: HERMES_VERSION build-arg is required" >&2; exit 1; \
-    fi; \
-    uv venv /opt/venv; \
-    uv sync --frozen --no-dev
-
-# ---------- Stage 2: runtime ----------
-FROM python:${PYTHON_VERSION}-slim-bookworm AS runtime
-ARG TINI_VERSION
-ARG HERMES_VERSION
-ARG TARGETARCH
-
-# Runtime apt packages:
-#   - ffmpeg, ripgrep: hard dependencies of hermes-agent (audio + search)
-#   - git, openssh-client: hermes-agent skill installs are git-based
-#   - ca-certificates: TLS to platform gateways
-#   - tini: PID 1 reaper (lesson openclaw-operator #471)
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-        ffmpeg \
-        ripgrep \
-        git \
-        openssh-client \
-        ca-certificates \
-        tini \
-    && rm -rf /var/lib/apt/lists/*
-
-# Non-root user matching the StatefulSet's runAsUser=1000 (Plan 1).
-RUN groupadd --system --gid 1000 hermes \
-    && useradd --system --uid 1000 --gid 1000 --create-home --shell /usr/sbin/nologin hermes \
-    && mkdir -p /home/hermes/.hermes \
-    && chown -R hermes:hermes /home/hermes
-
-# Copy the resolved venv from the builder stage.
-COPY --from=builder --chown=hermes:hermes /opt/venv /opt/venv
-
-# Ship the lockfile + project metadata at /opt/venv-template/ as well. The
-# operator's `init-uv` init container (internal/resources/runtime_init.go) does
-#   cd /home/hermes/.hermes; cp /opt/venv-template/pyproject.toml /opt/venv-template/uv.lock .; uv sync --frozen
-# to materialise the env into the per-instance PVC. Without these files the init
-# container exits 1 ("cp: cannot stat '/opt/venv-template/pyproject.toml'") and
-# no HermesInstance ever reaches Ready. See #68.
-COPY --from=builder --chown=hermes:hermes /build/pyproject.toml /build/uv.lock /opt/venv-template/
-
-# Ship the uv binary in the runtime image too. The operator's `init-uv` init
-# container runs `uv sync --frozen` (above) to materialise the env onto the
-# per-instance PVC, so uv must be on PATH at runtime — the resolved venv at
-# /opt/venv does not include uv. Without this, init-uv exits 127
-# ("uv: not found") and no HermesInstance reaches Ready. See #68.
-COPY --from=uv /uv /uvx /usr/local/bin/
-
-# UV_* defaults for the init-uv `uv sync` at pod start: pin a deterministic
-# interpreter and a PVC-safe link mode so uv never tries to download a Python or
-# hardlink across filesystems (image layer -> mounted PVC).
-ENV PATH="/opt/venv/bin:${PATH}" \
-    PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    UV_PYTHON_DOWNLOADS=never \
-    UV_PYTHON=/usr/local/bin/python \
-    UV_LINK_MODE=copy \
-    HOME=/home/hermes
-
-# Image metadata. The HERMES_VERSION label is the one the operator's autoupdate
-# controller (Plan 5) compares against the registry tag.
+# Operator metadata. hermes.agent/version is what the autoupdate controller
+# (Plan 5) compares against the registry tag. The image's upstream ENTRYPOINT
+# (/init → main-wrapper) and env (HERMES_HOME=/opt/data, ...) are inherited.
 LABEL org.opencontainers.image.title="hermes-agent" \
       org.opencontainers.image.source="https://github.com/paperclipinc/hermes-operator" \
       org.opencontainers.image.documentation="https://github.com/paperclipinc/hermes-operator/blob/main/images/hermes-agent/README.md" \
+      org.opencontainers.image.description="Operator-published NousResearch/hermes-agent (s6 runtime: gateway + API server + dashboard + browser) for hermes-operator" \
       org.opencontainers.image.licenses="MIT" \
       org.opencontainers.image.vendor="paperclipinc" \
+      org.opencontainers.image.base.name="docker.io/nousresearch/hermes-agent" \
       hermes.agent/version="${HERMES_VERSION}"
-
-USER hermes
-WORKDIR /home/hermes
-
-COPY --chown=hermes:hermes entrypoint.sh /usr/local/bin/hermes-entrypoint
-RUN chmod +x /usr/local/bin/hermes-entrypoint
-
-# tini as PID 1 to reap any subprocess hermes-agent forks (audio transcoders,
-# git operations, skill executors). `--` separates tini's flags from the wrapped
-# entrypoint script.
-ENTRYPOINT ["/usr/bin/tini", "--", "/usr/local/bin/hermes-entrypoint"]
-CMD ["serve"]

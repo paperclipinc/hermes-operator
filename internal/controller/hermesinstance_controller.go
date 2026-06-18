@@ -193,7 +193,16 @@ func (r *HermesInstanceReconciler) reconcileSecret(ctx context.Context, inst *he
 		obj.Annotations = resources.MergePreservingForeign(obj.Annotations, desired.Annotations, operatorLabelPrefix)
 		obj.Type = desired.Type
 		if obj.Data == nil {
-			obj.Data = desired.Data
+			obj.Data = map[string][]byte{}
+		}
+		// Generate the API server key once, then preserve it across reconciles
+		// (and backfill it for Secrets created by an older operator version).
+		if len(obj.Data[resources.APIServerKeySecretKey]) == 0 {
+			key, kerr := resources.GenerateAPIServerKey()
+			if kerr != nil {
+				return kerr
+			}
+			obj.Data[resources.APIServerKeySecretKey] = []byte(key)
 		}
 		return controllerutil.SetControllerReference(inst, obj, r.Scheme)
 	})

@@ -17,7 +17,13 @@ func TestBuildConfigMap_EmptyConfig(t *testing.T) {
 	}
 	cm := BuildConfigMap(inst, "")
 	assert.Equal(t, "demo-config", cm.Name)
-	assert.Equal(t, "{}\n", cm.Data["config.yaml"])
+	// With no top-level `model`, the builder injects a non-routable placeholder
+	// provider so `gateway run` can start and serve /health without live LLM calls.
+	body := cm.Data["config.yaml"]
+	assert.Contains(t, body, "model: gpt-4o-mini")
+	assert.Contains(t, body, "base_url: http://127.0.0.1:9/v1")
+	assert.Contains(t, body, "api_key: placeholder-no-live-calls")
+	assert.NotContains(t, body, "gateways:")
 }
 
 func TestBuildConfigMap_RawBody(t *testing.T) {
@@ -43,7 +49,14 @@ func TestBuildConfigMap_RefOnly_PassesResolvedBody(t *testing.T) {
 	}
 	resolved := "discord:\n  enabled: true\n"
 	cm := BuildConfigMap(inst, resolved)
-	assert.Equal(t, resolved, cm.Data["config.yaml"])
+	body := cm.Data["config.yaml"]
+	// The resolved body is preserved verbatim except that, since it has no
+	// top-level `model`, the placeholder provider is injected on top.
+	assert.Contains(t, body, "discord:")
+	assert.Contains(t, body, "enabled: true")
+	assert.Contains(t, body, "model: gpt-4o-mini")
+	assert.Contains(t, body, "base_url: http://127.0.0.1:9/v1")
+	assert.Contains(t, body, "api_key: placeholder-no-live-calls")
 }
 
 func TestBuildConfigMap_MergeMode(t *testing.T) {
@@ -91,6 +104,24 @@ func TestBuildConfigMap_MergesGatewayFragments(t *testing.T) {
 	assert.Contains(t, body, "gateways:")
 	assert.Contains(t, body, "telegram:")
 	assert.Contains(t, body, "webhookURL: https://x/tg")
+}
+
+func TestBuildConfigMap_UserModelNotOverridden(t *testing.T) {
+	t.Parallel()
+	inst := &hermesv1.HermesInstance{
+		ObjectMeta: metav1.ObjectMeta{Name: "demo", Namespace: "agents"},
+		Spec: hermesv1.HermesInstanceSpec{
+			Config: hermesv1.ConfigSpec{
+				Raw: &hermesv1.RawConfig{RawExtension: runtime.RawExtension{Raw: []byte(`{"model":"gpt-5"}`)}},
+			},
+		},
+	}
+	cm := BuildConfigMap(inst, "")
+	body := cm.Data["config.yaml"]
+	// A user-supplied top-level `model` suppresses the placeholder entirely.
+	assert.Contains(t, body, "model: gpt-5")
+	assert.NotContains(t, body, "gpt-4o-mini")
+	assert.NotContains(t, body, "placeholder-no-live-calls")
 }
 
 func TestBuildConfigMap_NoGatewaysWhenAllDisabled(t *testing.T) {
