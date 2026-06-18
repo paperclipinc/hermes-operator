@@ -59,6 +59,52 @@ const (
 	idempotencyPokeWait   = 15 * time.Second
 )
 
+// seedConformanceSecrets creates the dummy Secrets the feature-rich corpus
+// fixtures reference (gateway tokens, Honcho API key, maximal's extra-env). The
+// operator wires these into the agent container via non-optional secretKeyRefs,
+// so they must exist or the pod fails with CreateContainerConfigError. Values are
+// placeholders — Ready only needs the env to resolve, not the upstream to accept.
+func seedConformanceSecrets(ns string) {
+	manifest := fmt.Sprintf(`
+apiVersion: v1
+kind: Secret
+metadata: {name: tg-token, namespace: %[1]s}
+stringData: {token: dummy}
+---
+apiVersion: v1
+kind: Secret
+metadata: {name: discord-token, namespace: %[1]s}
+stringData: {token: dummy}
+---
+apiVersion: v1
+kind: Secret
+metadata: {name: slack-token, namespace: %[1]s}
+stringData: {bot-token: dummy, app-token: dummy, signing-secret: dummy}
+---
+apiVersion: v1
+kind: Secret
+metadata: {name: wa-token, namespace: %[1]s}
+stringData: {token: dummy}
+---
+apiVersion: v1
+kind: Secret
+metadata: {name: sig-token, namespace: %[1]s}
+stringData: {phone-number: "+10000000000", auth-token: dummy}
+---
+apiVersion: v1
+kind: Secret
+metadata: {name: api-keys, namespace: %[1]s}
+stringData: {honcho-api-key: dummy}
+---
+apiVersion: v1
+kind: Secret
+metadata: {name: hermes-maximal-extra-env, namespace: %[1]s}
+stringData: {HERMES_EXTRA: "1"}
+`, ns)
+	out, err := kubectlApply(manifest)
+	Expect(err).ToNot(HaveOccurred(), "seed conformance secrets: %s", out)
+}
+
 var _ = Describe("idempotency canary", Ordered, func() {
 	var (
 		ns string
@@ -70,6 +116,11 @@ var _ = Describe("idempotency canary", Ordered, func() {
 		DeferCleanup(func() {
 			deleteNamespace(ns)
 		})
+		// Seed the dummy Secrets the feature-rich fixtures reference (gateway
+		// tokens, Honcho key, maximal's extra-env). A real deployment ships these
+		// alongside the instance; the operator injects them into the agent via
+		// non-optional secretKeyRefs, so they must exist for the pod to start.
+		seedConformanceSecrets(ns)
 	})
 
 	for _, entry := range idempotencyCorpus {

@@ -72,13 +72,13 @@ spec:
   probes:
     liveness:
       httpGet:
-        path: /healthz
+        path: /health
         port: 8443
       initialDelaySeconds: 30
       periodSeconds: 10
     readiness:
       httpGet:
-        path: /readyz
+        path: /health
         port: 8443
       initialDelaySeconds: 10
       periodSeconds: 5
