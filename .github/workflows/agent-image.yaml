@@ -1,8 +1,10 @@
 # .github/workflows/agent-image.yaml
 #
-# Builds and publishes ghcr.io/paperclipinc/hermes-agent for every hermes-agent
-# release in the supported matrix. Triggered:
-#   - Manually via workflow_dispatch (engineer picks the HERMES_VERSION).
+# Builds and publishes ghcr.io/paperclipinc/hermes-agent. The image is
+# `FROM nousresearch/hermes-agent` (pinned by digest in the Dockerfile) plus
+# operator metadata, so this workflow re-tags + re-labels + signs the upstream
+# runtime — it does not rebuild a Python env. Triggered:
+#   - Manually via workflow_dispatch (engineer picks the published tag).
 #   - On every push of a tag matching `agent/vX.Y.Z`.
 #
 # Cosign-signed (keyless OIDC) and SBOM via Syft.
@@ -12,7 +14,7 @@ on:
   workflow_dispatch:
     inputs:
       hermes_version:
-        description: "Upstream hermes-agent release tag (e.g. v0.13.0)"
+        description: "Published image tag (e.g. v0.16.0). Bump the FROM digest + HERMES_VERSION default in images/hermes-agent/Dockerfile to change the underlying upstream release."
         required: true
         type: string
   push:
@@ -56,20 +58,6 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Verify uv.lock pins the requested hermes-agent git tag
-        run: |
-          set -eux
-          # hermes-agent is a git dependency pinned by tag in the lock's source line:
-          #   source = { git = "https://github.com/NousResearch/hermes-agent?rev=<TAG>#<sha>" }
-          # Its package `version` is independent semver (upstream uses CalVer git tags),
-          # so validate the git rev, not the version field. Refuse a mismatched lock.
-          TAG="${{ steps.ver.outputs.tag }}"
-          if ! grep -qF "NousResearch/hermes-agent?rev=${TAG}#" images/hermes-agent/uv.lock; then
-            echo "uv.lock does not pin hermes-agent at git tag ${TAG}." >&2
-            echo "Run: make agent-image-relock HERMES_VERSION=${TAG} and commit." >&2
-            exit 1
-          fi
 
       - name: Build and push
         id: build
