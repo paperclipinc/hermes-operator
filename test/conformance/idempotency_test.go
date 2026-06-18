@@ -14,44 +14,31 @@ import (
 // more times. After each requeue we assert the resourceFingerprint is unchanged
 // (generation + resourceVersion must not move). This catches lesson #437
 // regressions: a reconciler that always re-writes owned objects will fail here.
-// The Ready-gated corpus stays skipped only until the agent image is republished.
-//
-// The runtime blockers that previously made Ready unreachable are FIXED in the
-// operator code (PR #90, issue #89): the operator now runs the upstream s6
-// hermes-agent image with `gateway run` + the OpenAI API server, probes
-// HTTPGet /health, and injects a placeholder LLM provider so the gateway comes
-// up without live calls (validated end-to-end on kind — an instance reaches
-// Ready=True). The old failure modes are gone: no one-shot `hermes-agent run`,
-// no TCPSocket :8443 with nothing listening, no LLM-credential requirement just
-// to start, no missing modules (the upstream image ships everything incl. a
-// browser).
-//
-// The one thing the conformance suite still needs is the *published* image to BE
-// that upstream-based runtime: these fixtures pin
-// `ghcr.io/paperclipinc/hermes-agent:v2026.5.29.2`, which only ships the new
-// runtime after the FROM-upstream Dockerfile (PR #90) is merged and that tag is
-// republished. Un-skip in the follow-up once the image is republished.
-// (waitForInstanceReady dumps pod diagnostics on timeout if anything regresses.)
-const idempotencyReadyBlockedSkip = "runtime fixed in #90 (upstream s6 image + gateway run + /health, validated on kind); un-skip once ghcr.io/paperclipinc/hermes-agent:v2026.5.29.2 is republished FROM upstream"
+// The Ready-gated corpus now runs. The runtime blockers (#68 → #89) are fixed in
+// #90: the operator runs the upstream s6 hermes-agent image with `gateway run` +
+// the OpenAI API server, probes HTTPGet /health, and injects a placeholder LLM
+// provider so the gateway comes up without live calls. The fixtures pin
+// `ghcr.io/paperclipinc/hermes-agent:v0.16.0`, which is the upstream-based
+// runtime. Validated end-to-end on kind (an instance reaches Ready=True).
+// waitForInstanceReady dumps pod diagnostics on timeout if anything regresses.
 
 var idempotencyCorpus = []struct {
 	label   string
 	fixture string
 	// skip, when non-empty, skips this corpus entry with the given reason.
 	// Used for fixtures that cannot reach Ready in CI for reasons unrelated to
-	// operator idempotency (e.g. they require live external credentials, or are
-	// blocked by an out-of-scope operator bug).
+	// operator idempotency (e.g. they require live external credentials).
 	skip string
 }{
-	{label: "minimal", fixture: "minimal.yaml", skip: idempotencyReadyBlockedSkip},
-	{label: "maximal", fixture: "maximal.yaml", skip: idempotencyReadyBlockedSkip},
-	{label: "gateways-all", fixture: "gateways-all.yaml", skip: idempotencyReadyBlockedSkip},
-	{label: "selfconfig-enabled", fixture: "selfconfig-enabled.yaml", skip: idempotencyReadyBlockedSkip},
-	{label: "profilestore-enabled", fixture: "profilestore-enabled.yaml", skip: idempotencyReadyBlockedSkip},
-	{label: "autoupdate-enabled", fixture: "autoupdate-enabled.yaml", skip: idempotencyReadyBlockedSkip},
-	{label: "backup-enabled", fixture: "backup-enabled.yaml", skip: idempotencyReadyBlockedSkip},
-	{label: "networking-ingress", fixture: "networking-ingress.yaml", skip: idempotencyReadyBlockedSkip},
-	{label: "observability-full", fixture: "observability-full.yaml", skip: idempotencyReadyBlockedSkip},
+	{label: "minimal", fixture: "minimal.yaml"},
+	{label: "maximal", fixture: "maximal.yaml"},
+	{label: "gateways-all", fixture: "gateways-all.yaml"},
+	{label: "selfconfig-enabled", fixture: "selfconfig-enabled.yaml"},
+	{label: "profilestore-enabled", fixture: "profilestore-enabled.yaml"},
+	{label: "autoupdate-enabled", fixture: "autoupdate-enabled.yaml"},
+	{label: "backup-enabled", fixture: "backup-enabled.yaml"},
+	{label: "networking-ingress", fixture: "networking-ingress.yaml"},
+	{label: "observability-full", fixture: "observability-full.yaml"},
 	{
 		label:   "ollama-webterminal-tailscale",
 		fixture: "ollama-webterminal-tailscale.yaml",
