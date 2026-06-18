@@ -89,6 +89,7 @@ nav:
       - Generated API Reference: api-reference-generated.md
       - Conditions: conditions.md
   - Operations:
+      - Agent Runtime: runtime.md
       - Backup and Restore: backup-restore.md
       - Backup Format: backup-format.md
       - Auto-Update: autoupdate.md

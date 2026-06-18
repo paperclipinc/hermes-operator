@@ -12,6 +12,7 @@ This site is the rendered documentation for the operator. The source of truth fo
 
 ## Operations
 
+- [Agent runtime](runtime.md) explains the upstream s6 image, how the operator runs it, the `/opt/data` state path, the security/SCC tradeoff, and LLM provider configuration.
 - [Conditions](conditions.md) documents the status conditions the operator sets.
 - [Backup and restore](backup-restore.md) and the [backup format](backup-format.md) cover data protection.
 - [Auto-update](autoupdate.md) describes registry polling and rollback.

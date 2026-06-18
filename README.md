@@ -35,7 +35,8 @@ helm install hermes-operator \
   oci://ghcr.io/paperclipinc/charts/hermes-operator \
   -n hermes-operator --create-namespace
 
-# 2. Apply a minimal instance.
+# 2. Apply a minimal instance. The agent runs the upstream NousResearch/hermes-agent
+#    s6 image (gateway + OpenAI-compatible API server), with /health on port 8443.
 kubectl apply -n agents -f - <<'YAML'
 apiVersion: hermes.agent/v1
 kind: HermesInstance
@@ -44,7 +45,18 @@ metadata:
 spec:
   image:
     repository: ghcr.io/paperclipinc/hermes-agent
-    tag: "v2026.5.29.2"
+    tag: "v0.16.0"
+  # Point the gateway at an LLM provider and inject the key via spec.env.
+  config:
+    raw:
+      model: gpt-4o-mini
+      base_url: https://api.openai.com/v1
+  env:
+    - name: OPENAI_API_KEY
+      valueFrom:
+        secretKeyRef:
+          name: hermes-llm
+          key: apiKey
   storage:
     persistence:
       enabled: true
@@ -54,8 +66,15 @@ YAML
 # 3. Watch it converge.
 kubectl get hi -n agents -w
 # NAME        READY   PHASE   IMAGE                                AGE
-# my-hermes   True    Ready   ghcr.io/paperclipinc/hermes-agent:v2026.5.29.2    30s
+# my-hermes   True    Ready   ghcr.io/paperclipinc/hermes-agent:v0.16.0    30s
 ```
+
+If you omit `spec.config.raw.model`, the operator injects a non-routable placeholder
+so the gateway and API server still come up (and `/health` passes) without making
+live LLM calls; inference then fails clearly until a real provider is set. Each
+instance also gets an operator-managed random `api_server_key` (in its
+`<name>-gateway-tokens` Secret) that authenticates the OpenAI-compatible
+`/v1/...` API; `/health` is unauthenticated. See [Agent runtime](docs/runtime.md).
 
 For more involved scenarios, see [`examples/`](examples/).
 
@@ -87,7 +106,7 @@ flowchart LR
     STS[StatefulSet]
     Svc[Service]
     NetPol[NetworkPolicy default-deny]
-    PVC[PVC ~/.hermes]
+    PVC[PVC /opt/data]
     Honcho[Honcho Deploy<br/>profile store]
     CronJob[Backup CronJob]
   end
@@ -132,7 +151,7 @@ fields only: explicit values on the instance always win.
 | **Adaptive** | `HermesSelfConfig` for audited agent-initiated mutations | SSA under field manager `hermes.agent/selfconfig`. Policy-gated by `spec.selfConfigure.protectedKeys`. |
 | **Adaptive** | OCI-registry-driven auto-update | Channel-pinned polling, pre-update backup, probe-failure rollback. |
 | **Secure** | Default-deny NetworkPolicy + per-gateway allow rules | Derived from `spec.gateways` and `spec.networking.egress`. |
-| **Secure** | Read-only root filesystem | Writable `emptyDir`s for `/tmp` and `~/.config` subPaths. |
+| **Secure** | Hardened container security context | The upstream s6 runtime starts as root so `/init` (PID 1) can remap the in-image user to uid/gid 1000 and chown `/opt/data`, then every service drops to uid 1000 via `s6-setuidgid`. `allowPrivilegeEscalation=false`, `fsGroup=1000`, and seccomp `RuntimeDefault` remain; `runAsNonRoot`/read-only rootfs/drop-ALL-caps are not set (s6 needs `CHOWN`/`SETUID`/`SETGID`/`DAC_OVERRIDE`/`FOWNER` and a writable `/run`). Requires an SCC that permits a root-start container (e.g. `anyuid`); incompatible with OpenShift `restricted`/`restricted-v2`. See [Agent runtime](docs/runtime.md). |
 | **Secure** | Optional Tailscale Serve sidecar | Per-instance MagicDNS hostname + Tailscale TLS cert, no LoadBalancer/Ingress. See [Tailscale Serve](#tailscale-serve). |
 | **Secure** | Per-CRD validating + defaulting webhooks | Plus warnings on unknown config keys and unresolvable gateway tokens. |
 | **Secure** | RBAC aggregation labels | `kubectl auth can-i create hermesinstances --as=jane` works out of the box. |
@@ -141,13 +160,13 @@ fields only: explicit values on the instance always win.
 | **Observable** | [Grafana dashboard](docs/grafana/) | Ships as JSON. Variables: `namespace`, `instance`. |
 | **Observable** | Exhaustive [condition catalogue](docs/conditions.md) | Every condition × every reason code, documented and stable. |
 | **Multi-platform** | Telegram / Discord / Slack / WhatsApp / Signal gateways | First-class `spec.gateways.*` sections, secret-rotation-friendly. |
-| **Python runtime** | `uv`-installable agent runtime | Init container runs `uv sync` against a lockfile bundled in the agent image. |
-| **Python runtime** | FFmpeg + ripgrep available out of the box | Hard dependencies of hermes-agent. |
+| **Upstream runtime** | Ships the supported NousResearch/hermes-agent s6 image | The published `ghcr.io/paperclipinc/hermes-agent` is built `FROM` the upstream image (pinned by digest). It bundles the gateway, dashboard, OpenAI-compatible API server, a Playwright/Chromium browser, node, ffmpeg, and all Python deps. No init-container venv build — the old `uv sync` / `init-apt`/`init-uv`/`init-pip` chain is gone. See [Agent runtime](docs/runtime.md). |
+| **Upstream runtime** | FFmpeg, ripgrep, browser, node available out of the box | Bundled in the upstream hermes-agent image. |
 | **Scalable** | Optional HPA via `spec.availability.hpa` | StatefulSet retained for identity through restarts. |
 | **Scalable** | Optional `topologySpreadConstraints` | Sane defaults plus `spec.availability.topologySpreadConstraints` override. |
 | **Resilient** | PodDisruptionBudget auto-managed when `replicas > 1` | |
 | **Resilient** | Finalizer-driven backup-on-delete | `r.Patch` (JSON patch) for finalizer mutations, never `r.Update`. |
-| **Resilient** | Zombie-process reaper | `tini` as PID 1; `shareProcessNamespace: false` by default. |
+| **Resilient** | Zombie-process reaper | s6-overlay `/init` as PID 1 reaps zombies; `shareProcessNamespace: false` by default (its `/init` must be PID 1). |
 | **Backup / Restore** | S3-compatible backups | Scheduled, on-delete, pre-update. `tar.zst` snapshots + `meta.json`. |
 | **Backup / Restore** | Declarative one-shot restore | `spec.restoreFrom` is immutable once applied. |
 | **Migration** | One-shot OpenClaw → Hermes migration | From sibling `OpenClawInstance` or S3 backup. Uses hermes-agent's importer. |
