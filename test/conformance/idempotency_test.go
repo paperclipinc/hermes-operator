@@ -14,29 +14,25 @@ import (
 // more times. After each requeue we assert the resourceFingerprint is unchanged
 // (generation + resourceVersion must not move). This catches lesson #437
 // regressions: a reconciler that always re-writes owned objects will fail here.
-// The Ready-gated corpus stays skipped, but the reason has moved on from #68.
+// The Ready-gated corpus stays skipped only until the agent image is republished.
 //
-// #68 (the init-uv contract: lockfiles missing at /opt/venv-template/) is fixed
-// — #85 ships the lockfiles, #88 ships the uv binary, and v2026.5.29.2 was
-// republished. With that, init-uv now succeeds (verified) and the pod reaches
-// its main `hermes` container. But the instance still cannot become Ready in CI:
+// The runtime blockers that previously made Ready unreachable are FIXED in the
+// operator code (PR #90, issue #89): the operator now runs the upstream s6
+// hermes-agent image with `gateway run` + the OpenAI API server, probes
+// HTTPGet /health, and injects a placeholder LLM provider so the gateway comes
+// up without live calls (validated end-to-end on kind — an instance reaches
+// Ready=True). The old failure modes are gone: no one-shot `hermes-agent run`,
+// no TCPSocket :8443 with nothing listening, no LLM-credential requirement just
+// to start, no missing modules (the upstream image ships everything incl. a
+// browser).
 //
-//  1. The published hermes-agent exits immediately unless an LLM provider +
-//     credentials are configured ("Failed to initialize agent: No LLM provider
-//     configured"). The CI fixtures carry none, so the container exits 0 and
-//     CrashLoopBackOffs.
-//  2. The agent's long-lived form is `hermes gateway run` (a chat-platform
-//     daemon), not the one-shot `hermes-agent run` the image entrypoint invokes
-//     — and it binds no :8443 server, so the operator's TCPSocket :8443
-//     readiness probe cannot pass as-is.
-//  3. The published image is missing modules (websockets, hermes_cli.dashboard_auth).
-//
-// Reaching Ready in CI therefore needs design-level decisions (inject LLM
-// credentials, rework the entrypoint/readiness/port model, fix image deps), not
-// just the #68 image fix. Tracked under #64. waitForInstanceReady now dumps pod
-// diagnostics on timeout so the blocker is visible in the CI log. Unskip these
-// once an instance can actually reach Ready in CI.
-const idempotencyReadyBlockedSkip = "cannot reach Ready in CI: hermes-agent needs an LLM provider+credentials to start and the operator's :8443 gateway-readiness model does not match the chat-gateway agent (see #64); the #68 init-uv contract itself is fixed (#85, #88)"
+// The one thing the conformance suite still needs is the *published* image to BE
+// that upstream-based runtime: these fixtures pin
+// `ghcr.io/paperclipinc/hermes-agent:v2026.5.29.2`, which only ships the new
+// runtime after the FROM-upstream Dockerfile (PR #90) is merged and that tag is
+// republished. Un-skip in the follow-up once the image is republished.
+// (waitForInstanceReady dumps pod diagnostics on timeout if anything regresses.)
+const idempotencyReadyBlockedSkip = "runtime fixed in #90 (upstream s6 image + gateway run + /health, validated on kind); un-skip once ghcr.io/paperclipinc/hermes-agent:v2026.5.29.2 is republished FROM upstream"
 
 var idempotencyCorpus = []struct {
 	label   string
