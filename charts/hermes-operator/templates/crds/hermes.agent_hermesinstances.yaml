@@ -5605,7 +5605,7 @@ spec:
                   image is the upstream NousResearch/hermes-agent s6 runtime, which is
                   self-contained (see docs/runtime.md). Setting this has no effect.
 
-                  Deprecated: ignored since the upstream-image runtime (v0.1.18); scheduled
+                  Deprecated: ignored since the upstream-image runtime (v0.1.19); scheduled
                   for removal no earlier than v0.3.0 and 2027-01-01. See docs/deprecations.md.
                 properties:
                   extraAptPackages:
