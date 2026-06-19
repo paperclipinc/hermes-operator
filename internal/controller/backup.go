@@ -32,6 +32,15 @@ type BackupReconciler struct {
 	Recorder record.EventRecorder
 }
 
+// finalBackupDeadline bounds how long deletion may block on the on-delete final
+// backup. A failed or stuck snapshot must not make a HermesInstance permanently
+// undeletable (#93): once this grace window from .metadata.deletionTimestamp
+// elapses, HandleDeletion gives up — it records the failure, emits a loud
+// warning, and releases the finalizer so deletion proceeds. The
+// skip-final-backup annotation remains the explicit, immediate escape hatch.
+// A var (not const) so tests can shrink it.
+var finalBackupDeadline = 30 * time.Minute
+
 // EnsureFinalizer adds the backup-on-delete finalizer when spec.backup.onDelete is true.
 //
 // CRITICAL: lesson #437: finalizer mutation uses r.Patch(ctx, inst, client.MergeFrom(original)),
@@ -146,6 +155,24 @@ func (b *BackupReconciler) HandleDeletion(ctx context.Context, inst *hermesv1.He
 	if inst.Spec.Backup.S3 == nil {
 		b.Recorder.Eventf(inst, corev1.EventTypeWarning, "FinalBackupSkipped",
 			"spec.backup.s3 is unset; cannot run final backup")
+		if err := b.RemoveFinalizer(ctx, inst); err != nil {
+			return ctrl.Result{}, true, err
+		}
+		return ctrl.Result{}, false, nil
+	}
+
+	// Bound the deletion block (#93): if the final backup hasn't succeeded within
+	// finalBackupDeadline of the deletion request, give up so the instance can be
+	// deleted instead of hanging forever on a failing/stuck snapshot Job.
+	if dt := inst.DeletionTimestamp; dt != nil && time.Since(dt.Time) > finalBackupDeadline {
+		b.Recorder.Eventf(inst, corev1.EventTypeWarning, "FinalBackupAbandoned",
+			"Final backup did not complete within %s of deletion; releasing the finalizer so the instance can be deleted. The final snapshot was NOT taken and PVC data may be lost. Inspect Job %q, or set annotation %q=true to skip explicitly next time.",
+			finalBackupDeadline, FinalBackupJobName(inst), hermesv1.AnnotationSkipFinalBackup)
+		now := metav1.Now()
+		inst.Status.Backup.LastFailureTime = &now
+		inst.Status.Backup.LastFailureReason = "FinalBackupDeadlineExceeded"
+		// Best-effort status; deletion must proceed even if this write races the GC.
+		_ = b.Status().Update(ctx, inst)
 		if err := b.RemoveFinalizer(ctx, inst); err != nil {
 			return ctrl.Result{}, true, err
 		}

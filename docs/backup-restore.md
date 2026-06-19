@@ -80,9 +80,13 @@ When `spec.backup.onDelete = true`, the operator adds the `hermes.agent/backup-o
 3. When the Job succeeds, the finalizer is removed via **`r.Patch`** (`client.MergeFrom`), not `r.Update`. This is critical: `r.Update` bumps `metadata.generation` and replaces the pod on the next reconcile. Lesson #437 from openclaw-operator.
 4. Kubernetes GC'es the CR + cascades to owned resources.
 
+### Bounded grace window
+
+A failing or stuck final backup must not make the instance **permanently undeletable** (#93). The operator blocks deletion for at most a grace window (`finalBackupDeadline`, **30 minutes** from `deletionTimestamp`); after that it gives up — records `status.backup.lastFailureReason = FinalBackupDeadlineExceeded`, emits a `Warning FinalBackupAbandoned` event, and **releases the finalizer so deletion proceeds**. The final snapshot will not have been taken, so PVC data may be lost — the event makes this visible for post-mortems.
+
 ### Skipping the final backup
 
-If the final backup is hanging or the bucket is unreachable:
+To delete immediately (without waiting out the grace window) when the final backup is hanging or the bucket is unreachable:
 
 ```bash
 kubectl annotate hermesinstance/<name> hermes.agent/skip-final-backup=true --overwrite
@@ -100,7 +104,7 @@ A second CronJob (`<name>-backup-prune`) runs daily at 04:17 UTC and runs `resti
 |---|---|---|
 | Final backup Job fails with `S3 credentials secret missing key`. | Secret missing `S3_ACCESS_KEY_ID` or `S3_SECRET_ACCESS_KEY`. | Patch the Secret. The CR stays in deletion until the next reconcile picks up the new Secret. |
 | Scheduled CronJob runs but no snapshot appears. | Likely a network policy blocking egress to S3 endpoint. | Add an egress rule under `spec.networking.egress`. |
-| `kubectl delete` hangs forever. | Final backup Job failing repeatedly. | `kubectl describe job <name>-backup-final` for logs; either fix or use the skip annotation. |
+| `kubectl delete` blocks (up to the 30-minute grace window, then auto-releases). | Final backup Job failing repeatedly. | `kubectl describe job <name>-backup-final` for logs; fix the cause, or use the skip annotation to release immediately. After the grace window the finalizer auto-releases (`FinalBackupAbandoned` event) and deletion proceeds without a final snapshot. |
 | `status.restoredFrom` stays empty after `init-restore` exited 0. | Pod restarted before the operator observed the terminated state. | Force reconcile: `kubectl annotate hermesinstance <name> poke=$(date +%s) --overwrite`. |
 
 ## API stability
