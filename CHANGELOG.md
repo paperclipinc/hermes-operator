@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.18](https://github.com/paperclipinc/hermes-operator/compare/v0.1.17...v0.1.18) (2026-06-19)
+
+
+### Features
+
+* **runtime:** run agents on the upstream s6 image — instance reaches Ready (gateway API + /health) ([#90](https://github.com/paperclipinc/hermes-operator/issues/90)) ([12dccb4](https://github.com/paperclipinc/hermes-operator/commit/12dccb40a00f66a34b80267932cda2e3c3898220))
+
+
+### Bug Fixes
+
+* **agent-image:** ship pyproject.toml + uv.lock at /opt/venv-template/ ([#68](https://github.com/paperclipinc/hermes-operator/issues/68)) ([#85](https://github.com/paperclipinc/hermes-operator/issues/85)) ([39ef52c](https://github.com/paperclipinc/hermes-operator/commit/39ef52c09efa10becf02a2238f8637be1c6bfc0a))
+* **agent-image:** ship the uv binary in the runtime stage ([#68](https://github.com/paperclipinc/hermes-operator/issues/68)) ([#88](https://github.com/paperclipinc/hermes-operator/issues/88)) ([13fb1e5](https://github.com/paperclipinc/hermes-operator/commit/13fb1e512cfea258359aa9744750e51299baf25e))
+* **backup:** bound the on-delete finalizer so a failing snapshot can't make an instance undeletable ([#94](https://github.com/paperclipinc/hermes-operator/issues/94)) ([40d6099](https://github.com/paperclipinc/hermes-operator/commit/40d609947b0659dfb747e8cc57686584ae9d94cb))
+
 ## [0.1.17](https://github.com/paperclipinc/hermes-operator/compare/v0.1.16...v0.1.17) (2026-06-16)
 
 

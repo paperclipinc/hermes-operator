@@ -206,7 +206,7 @@ spec:
 
     - Kubernetes 1.28+
   maturity: alpha
-  version: 0.1.17
+  version: 0.1.18
   minKubeVersion: 1.28.0
   keywords:
     - ai
