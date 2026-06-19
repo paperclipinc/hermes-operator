@@ -421,7 +421,7 @@ _Appears in:_
 | `restoreFrom` _string_ | RestoreFrom names a backup snapshot to restore from on next boot. |  | Optional: \{\} <br /> |
 | `autoUpdate` _[AutoUpdateSpec](#autoupdatespec)_ | AutoUpdate controls opt-in OCI-registry polling for newer agent images. |  | Optional: \{\} <br /> |
 | `migration` _[MigrationSpec](#migrationspec)_ | Migration is a one-shot migration source (set on initial create only). |  | Optional: \{\} <br /> |
-| `runtime` _[RuntimeSpec](#runtimespec)_ | Runtime configured the agent's Python toolchain and OS-level dependencies<br />for the old hand-rolled agent image. It is now IGNORED: the published agent<br />image is the upstream NousResearch/hermes-agent s6 runtime, which ships its<br />own Python env, browser, node, and dependencies (see docs/runtime.md), so<br />the operator no longer builds a runtime via init containers. Setting this<br />has no effect.<br />Deprecated: ignored since the upstream-image runtime (v0.1.18); scheduled<br />for removal no earlier than v0.3.0 and 2027-01-01. See docs/deprecations.md. |  | Optional: \{\} <br /> |
+| `runtime` _[RuntimeSpec](#runtimespec)_ | Runtime configured the agent's Python toolchain and OS-level dependencies<br />for the old hand-rolled agent image. It is now IGNORED: the published agent<br />image is the upstream NousResearch/hermes-agent s6 runtime, which ships its<br />own Python env, browser, node, and dependencies (see docs/runtime.md), so<br />the operator no longer builds a runtime via init containers. Setting this<br />has no effect.<br />Deprecated: ignored since the upstream-image runtime (v0.1.19); scheduled<br />for removal no earlier than v0.3.0 and 2027-01-01. See docs/deprecations.md. |  | Optional: \{\} <br /> |
 | `gateways` _[GatewaysSpec](#gatewaysspec)_ | Gateways configures the platform-side messaging bindings (Telegram, Discord,<br />Slack, WhatsApp, Signal). Each gateway is opt-in and references its own<br />Secret(s) so tokens are rotatable independently. |  | Optional: \{\} <br /> |
 | `profileStore` _[ProfileStoreSpec](#profilestorespec)_ | ProfileStore configures the optional Honcho profile-store companion. |  | Optional: \{\} <br /> |
 | `tailscale` _[TailscaleSpec](#tailscalespec)_ | Tailscale exposes the gateway over a Tailscale tailnet. |  | Optional: \{\} <br /> |
@@ -1114,7 +1114,7 @@ _Appears in:_
 RuntimeSpec controlled Python/uv runtime concerns for the old hand-rolled agent
 image's init-container build.
 
-Deprecated: ignored since the upstream-image runtime (v0.1.18); the upstream
+Deprecated: ignored since the upstream-image runtime (v0.1.19); the upstream
 agent image is self-contained. Scheduled for removal no earlier than v0.3.0 and
 2027-01-01. See docs/deprecations.md.
 

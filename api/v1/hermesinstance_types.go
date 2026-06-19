@@ -162,8 +162,9 @@ type HermesInstanceSpec struct {
 	// the operator no longer builds a runtime via init containers. Setting this
 	// has no effect.
 	//
-	// Deprecated: ignored since the upstream-image runtime (v0.1.18); scheduled
+	// Deprecated: ignored since the upstream-image runtime (v0.1.19); scheduled
 	// for removal no earlier than v0.3.0 and 2027-01-01. See docs/deprecations.md.
+	// +kubebuilder:validation:Description="DEPRECATED: ignored - the agent image is the self-contained upstream NousResearch/hermes-agent runtime (no init-container build). Removal no earlier than v0.3.0 / 2027-01-01. See docs/deprecations.md."
 	// +optional
 	Runtime RuntimeSpec `json:"runtime,omitempty"`
 
@@ -1179,7 +1180,7 @@ type HermesInstanceList struct {
 // RuntimeSpec controlled Python/uv runtime concerns for the old hand-rolled agent
 // image's init-container build.
 //
-// Deprecated: ignored since the upstream-image runtime (v0.1.18); the upstream
+// Deprecated: ignored since the upstream-image runtime (v0.1.19); the upstream
 // agent image is self-contained. Scheduled for removal no earlier than v0.3.0 and
 // 2027-01-01. See docs/deprecations.md.
 type RuntimeSpec struct {
