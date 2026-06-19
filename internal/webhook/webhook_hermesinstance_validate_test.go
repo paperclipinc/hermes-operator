@@ -2,6 +2,7 @@ package webhook
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -25,6 +26,46 @@ func TestValidator_DenyEmptyImageRepository(t *testing.T) {
 	}
 	_, err := v.ValidateCreate(context.Background(), inst)
 	assert.Error(t, err, "image.repository is required")
+}
+
+func TestValidator_RuntimeSetWarnsDeprecated(t *testing.T) {
+	t.Parallel()
+	v := &HermesInstanceValidator{}
+	inst := &hermesv1.HermesInstance{
+		ObjectMeta: metav1.ObjectMeta{Name: "demo"},
+		Spec: hermesv1.HermesInstanceSpec{
+			Image:   hermesv1.ImageSpec{Repository: "x"},
+			Storage: hermesv1.StorageSpec{Persistence: hermesv1.PersistenceSpec{Size: "1Gi"}},
+			Runtime: hermesv1.RuntimeSpec{Python: "3.11"}, // any non-zero value
+		},
+	}
+	warns, err := v.ValidateCreate(context.Background(), inst)
+	assert.NoError(t, err)
+	found := false
+	for _, w := range warns {
+		if strings.Contains(w, "spec.runtime is deprecated") {
+			found = true
+		}
+	}
+	assert.True(t, found, "expected a spec.runtime deprecation warning, got: %v", warns)
+}
+
+func TestValidator_NoRuntimeNoDeprecationWarning(t *testing.T) {
+	t.Parallel()
+	v := &HermesInstanceValidator{}
+	inst := &hermesv1.HermesInstance{
+		ObjectMeta: metav1.ObjectMeta{Name: "demo"},
+		Spec: hermesv1.HermesInstanceSpec{
+			Image:   hermesv1.ImageSpec{Repository: "x"},
+			Storage: hermesv1.StorageSpec{Persistence: hermesv1.PersistenceSpec{Size: "1Gi"}},
+		},
+	}
+	warns, err := v.ValidateCreate(context.Background(), inst)
+	assert.NoError(t, err)
+	for _, w := range warns {
+		assert.NotContains(t, w, "spec.runtime is deprecated",
+			"unset spec.runtime must not warn")
+	}
 }
 
 func TestValidator_DenyConfigRawAndConfigMapRefWithoutMergeMode(t *testing.T) {

@@ -5600,9 +5600,13 @@ spec:
                 type: string
               runtime:
                 description: |-
-                  Runtime controls the agent's Python toolchain and OS-level dependencies.
-                  All fields default to the values that match the operator's published
-                  ghcr.io/paperclipinc/hermes-agent image.
+                  Runtime configured the agent's Python toolchain and OS-level dependencies
+                  for the old hand-rolled agent image. It is now IGNORED: the published agent
+                  image is the upstream NousResearch/hermes-agent s6 runtime, which is
+                  self-contained (see docs/runtime.md). Setting this has no effect.
+
+                  Deprecated: ignored since the upstream-image runtime (v0.1.18); scheduled
+                  for removal no earlier than v0.3.0 and 2027-01-01. See docs/deprecations.md.
                 properties:
                   extraAptPackages:
                     description: |-

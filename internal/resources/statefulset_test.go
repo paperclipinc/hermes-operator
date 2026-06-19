@@ -341,9 +341,9 @@ func TestBuildStatefulSet_RuntimeInitContainersNotAppended(t *testing.T) {
 	t.Parallel()
 	// The upstream s6 image is self-contained, so the operator-managed runtime-init
 	// chain (init-apt/init-uv/init-pip) is NO LONGER added to the StatefulSet even
-	// when runtime spec fields are set. The Build* helpers still exist and are
-	// covered directly in runtime_init_test.go.
+	// when the (now-deprecated, ignored) spec.runtime fields are set.
 	inst := minimalInstance()
+	//nolint:staticcheck // SA1019: deliberately exercises the deprecated, ignored spec.runtime to prove it's a no-op.
 	inst.Spec.Runtime = hermesv1.RuntimeSpec{
 		UV:               hermesv1.UVSpec{Enabled: Ptr(true)},
 		ExtraPipPackages: []string{"polars"},
@@ -409,6 +409,7 @@ func TestBuildStatefulSet_NoUVCacheVolume(t *testing.T) {
 	// mount on the StatefulSet even when UV is enabled — the agent's runtime lives
 	// in the upstream image.
 	inst := minimalInstance()
+	//nolint:staticcheck // SA1019: deliberately exercises the deprecated, ignored spec.runtime to prove it's a no-op.
 	inst.Spec.Runtime = hermesv1.RuntimeSpec{UV: hermesv1.UVSpec{Enabled: Ptr(true)}}
 	sts := BuildStatefulSet(inst, nil)
 	for _, v := range sts.Spec.Template.Spec.Volumes {
@@ -422,6 +423,7 @@ func TestBuildStatefulSet_NoUVCacheVolume(t *testing.T) {
 func TestBuildStatefulSet_IdempotentWithRuntimeGatewaysHoncho(t *testing.T) {
 	t.Parallel()
 	inst := minimalInstance()
+	//nolint:staticcheck // SA1019: deliberately exercises the deprecated, ignored spec.runtime to prove it's a no-op.
 	inst.Spec.Runtime = hermesv1.RuntimeSpec{UV: hermesv1.UVSpec{Enabled: Ptr(true)}}
 	inst.Spec.Gateways = hermesv1.GatewaysSpec{
 		Telegram: hermesv1.TelegramGatewaySpec{

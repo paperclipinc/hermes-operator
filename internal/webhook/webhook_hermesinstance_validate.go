@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"reflect"
 
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -257,6 +258,12 @@ func validateCommon(inst *hermesv1.HermesInstance) (admission.Warnings, error) {
 
 	if inst.Spec.Config.Raw != nil && inst.Spec.Config.ConfigMapRef != nil && inst.Spec.Config.MergeMode == "" {
 		warns = append(warns, "spec.config.raw and spec.config.configMapRef are both set without spec.config.mergeMode; defaults to 'replace' (Raw wins)")
+	}
+
+	// Deprecated (v0.1.18): spec.runtime is ignored — the agent image is the
+	// self-contained upstream runtime, so there is no init-container Python build.
+	if !reflect.DeepEqual(inst.Spec.Runtime, hermesv1.RuntimeSpec{}) {
+		warns = append(warns, "spec.runtime is deprecated and ignored: the agent image is the self-contained upstream NousResearch/hermes-agent runtime (no init-container build). Remove spec.runtime; it is scheduled for removal no earlier than v0.3.0 and 2027-01-01. See docs/deprecations.md.")
 	}
 
 	if inst.Spec.SelfConfigure.Enabled != nil && *inst.Spec.SelfConfigure.Enabled {

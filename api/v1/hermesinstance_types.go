@@ -155,9 +155,15 @@ type HermesInstanceSpec struct {
 	// +optional
 	Migration MigrationSpec `json:"migration,omitempty"`
 
-	// Runtime controls the agent's Python toolchain and OS-level dependencies.
-	// All fields default to the values that match the operator's published
-	// ghcr.io/paperclipinc/hermes-agent image.
+	// Runtime configured the agent's Python toolchain and OS-level dependencies
+	// for the old hand-rolled agent image. It is now IGNORED: the published agent
+	// image is the upstream NousResearch/hermes-agent s6 runtime, which ships its
+	// own Python env, browser, node, and dependencies (see docs/runtime.md), so
+	// the operator no longer builds a runtime via init containers. Setting this
+	// has no effect.
+	//
+	// Deprecated: ignored since the upstream-image runtime (v0.1.18); scheduled
+	// for removal no earlier than v0.3.0 and 2027-01-01. See docs/deprecations.md.
 	// +optional
 	Runtime RuntimeSpec `json:"runtime,omitempty"`
 
@@ -1170,7 +1176,12 @@ type HermesInstanceList struct {
 	Items           []HermesInstance `json:"items"`
 }
 
-// RuntimeSpec controls Python/uv runtime concerns for the agent container.
+// RuntimeSpec controlled Python/uv runtime concerns for the old hand-rolled agent
+// image's init-container build.
+//
+// Deprecated: ignored since the upstream-image runtime (v0.1.18); the upstream
+// agent image is self-contained. Scheduled for removal no earlier than v0.3.0 and
+// 2027-01-01. See docs/deprecations.md.
 type RuntimeSpec struct {
 	// Python is informational only: the agent image's Python version is fixed
 	// at build time. Setting this does NOT pull a different interpreter; it

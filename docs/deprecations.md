@@ -171,12 +171,9 @@ deprecated surface:
 
 ## Active deprecations
 
-There are no active deprecations as of v1.0.0. The table header below is
-maintained for the next contributor.
-
 | Surface | Type | Deprecated in | Replaced by | Earliest removal | Status |
 |---|---|---|---|---|---|
-| _(none)_ |: |: |: |: |: |
+| `spec.runtime` (`RuntimeSpec`: `python`/`uv`/`apt`/`pip`) | API field | v0.1.18 | n/a — the agent image is the self-contained upstream runtime (no init-container build); see [runtime.md](runtime.md) | v0.3.0 / 2027-01-01 | Ignored |
 
 ## Historical removals
 
