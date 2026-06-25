@@ -44,7 +44,7 @@ jobs:
         run: mkdocs build --strict -f docs-site/mkdocs.yml
       - name: Upload built site as artifact
         if: github.event_name == 'pull_request'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: docs-preview-${{ github.event.pull_request.number }}
           path: docs-site/site/
