@@ -12,7 +12,7 @@ jobs:
       contents: read
       packages: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: docker/setup-buildx-action@v4
       # Multi-arch builds for releases happen in release.yaml via
       # docker/build-push-action (uses Go cross-compile under
