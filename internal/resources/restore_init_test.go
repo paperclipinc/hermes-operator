@@ -32,7 +32,7 @@ func TestBuildRestoreInitContainer_NameAndImage(t *testing.T) {
 	c := BuildRestoreInitContainer(restoreInstance())
 	require.NotNil(t, c)
 	assert.Equal(t, "init-restore", c.Name)
-	assert.Equal(t, "restic/restic:0.16.4", c.Image)
+	assert.Equal(t, ResticImage, c.Image)
 }
 
 func TestBuildRestoreInitContainer_EmbedsSnapshotKey(t *testing.T) {

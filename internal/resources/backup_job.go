@@ -12,7 +12,7 @@ import (
 
 // ResticImage is the pinned default snapshot-tool image. Mirrors
 // internal/controller.ResticImage (duplicated to keep this package import-cycle free).
-const ResticImage = "restic/restic:0.16.4"
+const ResticImage = "docker.io/restic/restic:0.16.4"
 
 // BackupJobOpts captures the inputs the controller passes to the builder.
 type BackupJobOpts struct {

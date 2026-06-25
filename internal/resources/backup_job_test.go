@@ -40,7 +40,7 @@ func TestBuildBackupOneShotJob_PinnedImageAndNames(t *testing.T) {
 	assert.Equal(t, "agents", job.Namespace)
 	require.Len(t, job.Spec.Template.Spec.Containers, 1)
 	c := job.Spec.Template.Spec.Containers[0]
-	assert.Equal(t, "restic/restic:0.16.4", c.Image)
+	assert.Equal(t, ResticImage, c.Image)
 	assert.Equal(t, corev1.PullIfNotPresent, c.ImagePullPolicy)
 }
 

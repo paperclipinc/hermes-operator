@@ -19,7 +19,7 @@ type S3Creds struct {
 }
 
 // ResticImage is the pinned default snapshot-tool image. Override via spec.backup.image.
-const ResticImage = "restic/restic:0.16.4"
+const ResticImage = "docker.io/restic/restic:0.16.4"
 
 // ReadS3CredsFromSecret loads S3_ACCESS_KEY_ID + S3_SECRET_ACCESS_KEY from a Secret.
 func ReadS3CredsFromSecret(ctx context.Context, c client.Client, namespace, name string) (*S3Creds, error) {
