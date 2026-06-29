@@ -13,7 +13,7 @@ jobs:
     steps:
       # Mint a short-lived token (~1h) from the paperclip-release-bot App.
       # Avoids long-lived PATs that the paperclipinc org policy blocks.
-      - uses: actions/create-github-app-token@v1
+      - uses: actions/create-github-app-token@v3
         id: app-token
         with:
           app-id: ${{ vars.RELEASE_BOT_APP_ID }}
