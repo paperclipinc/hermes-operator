@@ -1,6 +1,9 @@
 image:
   repository: ghcr.io/paperclipinc/hermes-operator
-  tag: 0.1.18
+  # Leave empty to track the chart's appVersion. The release workflow publishes
+  # v-prefixed image tags, so _helpers.tpl falls back to "v<appVersion>".
+  # Pinning a bare version here yields an unpullable reference (see #113).
+  tag: ""
   pullPolicy: IfNotPresent
 logLevel: info
 createRBAC: true
@@ -23,10 +26,11 @@ webhook:
     issuerName: hermes-operator-selfsigned
   caBundle: ''
   servingCertSecretName: hermes-operator-webhook-server-cert
-agentImage:
-  repository: ghcr.io/paperclipinc/hermes-agent
-  tag: v0.13.0
-  pullPolicy: IfNotPresent
+# NOTE: there is deliberately no agentImage default here. The agent image is
+# chosen per-instance via HermesInstance.spec.image, and the CRD requires an
+# explicit tag or digest (pinning a floating tag can silently pull a broken
+# upstream build). A chart-level default was vestigial — nothing rendered it —
+# and advertised an unpublished tag. See #113.
 honchoImage:
   repository: ghcr.io/plastic-labs/honcho
   tag: 0.1.0

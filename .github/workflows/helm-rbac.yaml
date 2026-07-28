@@ -20,3 +20,11 @@ jobs:
       - uses: actions/checkout@v7
       - run: sudo snap install yq
       - run: make sync-bundle-rbac-check
+
+  chart-image-tags:
+    name: Chart Image Tags Resolve
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: azure/setup-helm@v5
+      - run: bash hack/check-chart-image-tags.sh
