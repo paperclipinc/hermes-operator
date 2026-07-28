@@ -13,6 +13,12 @@ app.kubernetes.io/name: {{ include "hermes-operator.fullname" . }}
 {{- end -}}
 
 {{- define "hermes-operator.image" -}}
-{{- $tag := default (printf "v%s" .Chart.AppVersion) .Values.image.tag -}}
+{{- /*
+Fall back to the chart's appVersion, normalised to the v-prefixed form the
+release workflow publishes. appVersion is written bare by release-please in
+Chart.yaml but a packaged chart may carry it v-prefixed, so strip any existing
+"v" before adding one - otherwise the tag renders as "vv0.1.19".
+*/ -}}
+{{- $tag := default (printf "v%s" (trimPrefix "v" .Chart.AppVersion)) .Values.image.tag -}}
 {{- printf "%s:%s" .Values.image.repository $tag -}}
 {{- end -}}

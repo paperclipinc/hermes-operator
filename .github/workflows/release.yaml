@@ -164,9 +164,13 @@ jobs:
         run: |
           CHART_VERSION="${{ github.ref_name }}"
           CHART_VERSION="${CHART_VERSION#v}"
+          # appVersion must be the bare version, matching what release-please
+          # writes into Chart.yaml. The chart templates re-add the "v" to reach
+          # the published image tag; passing the v-prefixed ref here produced
+          # "vv<version>" (see #113).
           helm package charts/hermes-operator \
             --version "${CHART_VERSION}" \
-            --app-version "${{ github.ref_name }}"
+            --app-version "${CHART_VERSION}"
           PUSH_OUT=$(helm push "hermes-operator-${CHART_VERSION}.tgz" oci://ghcr.io/paperclipinc/charts 2>&1)
           echo "${PUSH_OUT}"
           DIGEST=$(echo "${PUSH_OUT}" | awk '/Digest:/ {print $2}')
