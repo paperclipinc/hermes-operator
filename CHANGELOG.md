@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.20](https://github.com/paperclipinc/hermes-operator/compare/v0.1.19...v0.1.20) (2026-07-28)
+
+
+### Bug Fixes
+
+* **chart:** stop rendering a doubled v in the operator image tag ([#131](https://github.com/paperclipinc/hermes-operator/issues/131)) ([7a724e5](https://github.com/paperclipinc/hermes-operator/commit/7a724e5976a9cb9297bc9a2d85c7e69ae72a23fe))
+
 ## [0.1.19](https://github.com/paperclipinc/hermes-operator/compare/v0.1.18...v0.1.19) (2026-07-28)
 
 
