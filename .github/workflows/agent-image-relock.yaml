@@ -18,9 +18,9 @@ on:
   workflow_dispatch:
     inputs:
       hermes_version:
-        description: "hermes-agent release tag to lock (e.g. v0.13.0)"
+        description: "hermes-agent release tag to lock (e.g. v0.16.0)"
         required: true
-        default: "v0.13.0"
+        default: "v0.16.0"
         type: string
 
 permissions:
