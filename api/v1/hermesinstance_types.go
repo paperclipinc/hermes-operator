@@ -847,6 +847,17 @@ type SchedulingSpec struct {
 	Affinity *corev1.Affinity `json:"affinity,omitempty"`
 	// +optional
 	PriorityClassName string `json:"priorityClassName,omitempty"`
+
+	// RuntimeClassName selects the RuntimeClass the instance pod runs under,
+	// so an agent executing model-driven code can be placed on a sandboxed
+	// runtime (gVisor "runsc", Kata) instead of the cluster default.
+	//
+	// The named RuntimeClass must already exist in the cluster; an unknown name
+	// leaves the pod unschedulable. Empty means the cluster default runtime.
+	// +kubebuilder:validation:MaxLength=253
+	// +kubebuilder:validation:Pattern=`^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$`
+	// +optional
+	RuntimeClassName string `json:"runtimeClassName,omitempty"`
 }
 
 // InstanceSkill: Plan 3 fills the runtime semantics. The field exists here so

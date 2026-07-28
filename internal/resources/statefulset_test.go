@@ -196,6 +196,30 @@ func TestBuildStatefulSet_Scheduling(t *testing.T) {
 	assert.NotNil(t, podSpec.Affinity)
 }
 
+func TestBuildStatefulSet_RuntimeClassName(t *testing.T) {
+	t.Parallel()
+	inst := minimalInstance()
+	inst.Spec.Scheduling.RuntimeClassName = "gvisor"
+
+	podSpec := BuildStatefulSet(inst, nil).Spec.Template.Spec
+
+	if assert.NotNil(t, podSpec.RuntimeClassName) {
+		assert.Equal(t, "gvisor", *podSpec.RuntimeClassName)
+	}
+}
+
+// Unset must render nil, not a pointer to "". An empty RuntimeClassName is not
+// "cluster default" — it names a RuntimeClass with an empty name, which the API
+// server rejects.
+func TestBuildStatefulSet_RuntimeClassNameUnsetIsNil(t *testing.T) {
+	t.Parallel()
+	inst := minimalInstance()
+
+	podSpec := BuildStatefulSet(inst, nil).Spec.Template.Spec
+
+	assert.Nil(t, podSpec.RuntimeClassName)
+}
+
 func TestBuildStatefulSet_TopologySpread(t *testing.T) {
 	t.Parallel()
 	inst := minimalInstance()

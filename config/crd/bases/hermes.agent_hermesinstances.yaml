@@ -5602,8 +5602,10 @@ spec:
                 description: |-
                   Runtime configured the agent's Python toolchain and OS-level dependencies
                   for the old hand-rolled agent image. It is now IGNORED: the published agent
-                  image is the upstream NousResearch/hermes-agent s6 runtime, which is
-                  self-contained (see docs/runtime.md). Setting this has no effect.
+                  image is the upstream NousResearch/hermes-agent s6 runtime, which ships its
+                  own Python env, browser, node, and dependencies (see docs/runtime.md), so
+                  the operator no longer builds a runtime via init containers. Setting this
+                  has no effect.
 
                   Deprecated: ignored since the upstream-image runtime (v0.1.19); scheduled
                   for removal no earlier than v0.3.0 and 2027-01-01. See docs/deprecations.md.
@@ -6645,6 +6647,17 @@ spec:
                     type: object
                   priorityClassName:
                     type: string
+                  runtimeClassName:
+                    description: |-
+                      RuntimeClassName selects the RuntimeClass the instance pod runs under,
+                      so an agent executing model-driven code can be placed on a sandboxed
+                      runtime (gVisor "runsc", Kata) instead of the cluster default.
+
+                      The named RuntimeClass must already exist in the cluster; an unknown name
+                      leaves the pod unschedulable. Empty means the cluster default runtime.
+                    maxLength: 253
+                    pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
+                    type: string
                   tolerations:
                     items:
                       description: |-
@@ -7437,16 +7450,15 @@ spec:
                 default: false
                 description: |-
                   ShareProcessNamespace enables PID namespace sharing between all containers
-                  in the pod. When true (the default), the infrastructure (pause) container
-                  becomes PID 1 and reaps zombie processes, preventing accumulation of defunct
-                  helper processes (git, plugins, shells) spawned under the agent entrypoint
-                  when it does not call waitpid().
+                  in the pod. Defaults to false: the upstream hermes-agent image runs under
+                  s6-overlay, whose /init must be PID 1 (s6-overlay-suexec aborts otherwise),
+                  and s6 already reaps zombies non-blocking on SIGCHLD — so sharing the process
+                  namespace (which makes the pause container PID 1) is both incompatible and
+                  unnecessary.
 
                   Security note: enabling this lets every container in the pod see and signal
                   every other container's processes. A compromised sidecar could send signals
-                  to the agent and vice versa. Set to false to keep per-container PID isolation;
-                  you are then responsible for reaping zombies (e.g. by baking tini or dumb-init
-                  into the image).
+                  to the agent and vice versa. Leave false to keep per-container PID isolation.
                 type: boolean
               sidecars:
                 description: |-
