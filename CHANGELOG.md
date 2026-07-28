@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.19](https://github.com/paperclipinc/hermes-operator/compare/v0.1.18...v0.1.19) (2026-07-28)
+
+
+### Features
+
+* **scheduling:** add spec.scheduling.runtimeClassName ([#123](https://github.com/paperclipinc/hermes-operator/issues/123)) ([4462cb7](https://github.com/paperclipinc/hermes-operator/commit/4462cb7179effefa4f458297ce3b1f3afb582507))
+
+
+### Bug Fixes
+
+* **chart:** render pullable default image tags ([#122](https://github.com/paperclipinc/hermes-operator/issues/122)) ([88445b1](https://github.com/paperclipinc/hermes-operator/commit/88445b1972610aafd8bd0992233458c3db421354))
+
 ## [0.1.18](https://github.com/paperclipinc/hermes-operator/compare/v0.1.17...v0.1.18) (2026-06-19)
 
 
