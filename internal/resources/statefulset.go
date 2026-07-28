@@ -203,6 +203,7 @@ func BuildStatefulSet(inst *hermesv1.HermesInstance, extraInits []corev1.Contain
 		Tolerations:                   inst.Spec.Scheduling.Tolerations,
 		Affinity:                      inst.Spec.Scheduling.Affinity,
 		PriorityClassName:             inst.Spec.Scheduling.PriorityClassName,
+		RuntimeClassName:              runtimeClassName(inst),
 		TopologySpreadConstraints:     inst.Spec.Availability.TopologySpreadConstraints,
 		ServiceAccountName:            ServiceAccountNameFor(inst),
 		Containers:                    []corev1.Container{c},
@@ -342,6 +343,17 @@ func shareProcessNamespace(inst *hermesv1.HermesInstance) *bool {
 		return inst.Spec.ShareProcessNamespace
 	}
 	return Ptr(false)
+}
+
+// runtimeClassName maps the spec field onto the pod's optional
+// RuntimeClassName. Unset must stay nil rather than a pointer to "": an empty
+// string is not the cluster default, it is a RuntimeClass whose name is empty,
+// which the API server rejects.
+func runtimeClassName(inst *hermesv1.HermesInstance) *string {
+	if inst.Spec.Scheduling.RuntimeClassName == "" {
+		return nil
+	}
+	return Ptr(inst.Spec.Scheduling.RuntimeClassName)
 }
 
 func imageRef(inst *hermesv1.HermesInstance) string {
