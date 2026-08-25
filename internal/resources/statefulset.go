@@ -79,8 +79,12 @@ func BuildStatefulSet(inst *hermesv1.HermesInstance, extraInits []corev1.Contain
 			// HERMES_HOME on the upstream image is /opt/data (the persistent volume).
 			{Name: "data", MountPath: "/opt/data"},
 			{
-				Name:      "config",
-				MountPath: "/opt/data/config.yaml",
+				Name: "config",
+				// Mount the operator-rendered config as Hermes' immutable managed scope.
+				// The writable user config remains on the data PVC at
+				// /opt/data/config.yaml so runtime commands such as /sethome can persist
+				// user-owned state without replacing the managed configuration.
+				MountPath: "/etc/hermes/config.yaml",
 				SubPath:   "config.yaml",
 				ReadOnly:  true,
 			},

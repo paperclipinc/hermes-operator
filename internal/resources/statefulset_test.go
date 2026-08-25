@@ -109,13 +109,17 @@ func TestBuildStatefulSet_VolumesAndMounts(t *testing.T) {
 	sts := BuildStatefulSet(minimalInstance(), nil)
 	c := sts.Spec.Template.Spec.Containers[0]
 
-	mountNames := map[string]string{}
+	mountsByName := map[string]corev1.VolumeMount{}
 	for _, m := range c.VolumeMounts {
-		mountNames[m.Name] = m.MountPath
+		mountsByName[m.Name] = m
+		assert.NotEqual(t, "/opt/data/config.yaml", m.MountPath,
+			"runtime config must remain writable on the data PVC")
 	}
-	assert.Equal(t, "/opt/data", mountNames["data"], "PVC mounted at HERMES_HOME (/opt/data)")
-	assert.Equal(t, "/opt/data/config.yaml", mountNames["config"], "configmap subPath at config.yaml")
-	assert.Equal(t, "/tmp", mountNames["tmp"], "writable /tmp")
+	assert.Equal(t, "/opt/data", mountsByName["data"].MountPath, "PVC mounted at HERMES_HOME (/opt/data)")
+	assert.Equal(t, "/etc/hermes/config.yaml", mountsByName["config"].MountPath,
+		"operator config is mounted as Hermes managed scope")
+	assert.True(t, mountsByName["config"].ReadOnly, "managed config must be immutable")
+	assert.Equal(t, "/tmp", mountsByName["tmp"].MountPath, "writable /tmp")
 }
 
 func minimalInstance() *hermesv1.HermesInstance {

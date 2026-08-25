@@ -34,7 +34,11 @@ the PVC) is **gone**. Only mutable state lives on the volume.
 
 Persistent state lives at **`/opt/data`**, the PVC mount, and `HERMES_HOME` is
 set to `/opt/data`. (The previous runtime used `/home/hermes/.hermes`.) The
-rendered `config.yaml` is mounted read-only at `/opt/data/config.yaml`.
+operator-rendered `config.yaml` is mounted read-only at
+`/etc/hermes/config.yaml`, Hermes' managed-scope location. The user/runtime
+configuration remains writable and persistent at `/opt/data/config.yaml` so
+commands such as `/sethome` can save state. Hermes merges the managed scope over
+the runtime file per leaf, so declarative operator values remain authoritative.
 
 ## Security posture and the SCC tradeoff
 
