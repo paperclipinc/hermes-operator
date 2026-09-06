@@ -333,6 +333,19 @@ type ResourcesSpec struct {
 	// Limits is the resource-limits map.
 	// +optional
 	Limits corev1.ResourceList `json:"limits,omitempty"`
+
+	// ApplyOperatorDefaults controls the operator's built-in fallback for the
+	// agent container. When requests or limits are left unset, the operator
+	// fills that side in so an agent executing model-driven code cannot run
+	// unbounded and starve its node. Unset means true.
+	//
+	// Set false to keep a side genuinely unbounded, for example a long-lived
+	// instance whose working set is known to exceed the default limits and
+	// which would otherwise be OOM-killed after an operator upgrade.
+	// Whichever side you set explicitly is used verbatim either way; this flag
+	// only governs the side you leave unset.
+	// +optional
+	ApplyOperatorDefaults *bool `json:"applyOperatorDefaults,omitempty"`
 }
 
 // ToContainerResourceRequirements converts to a corev1.ResourceRequirements,

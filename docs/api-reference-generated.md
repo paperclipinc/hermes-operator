@@ -1089,6 +1089,9 @@ _Appears in:_
 - [HermesClusterDefaultsSpec](#hermesclusterdefaultsspec)
 - [HermesInstanceSpec](#hermesinstancespec)
 
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `applyOperatorDefaults` _boolean_ | ApplyOperatorDefaults controls the operator's built-in fallback for the<br />agent container. When requests or limits are left unset, the operator<br />fills that side in so an agent executing model-driven code cannot run<br />unbounded and starve its node. Unset means true.<br />Set false to keep a side genuinely unbounded, for example a long-lived<br />instance whose working set is known to exceed the default limits and<br />which would otherwise be OOM-killed after an operator upgrade.<br />Whichever side you set explicitly is used verbatim either way; this flag<br />only governs the side you leave unset. |  | Optional: \{\} <br /> |
 
 
 #### RipgrepSpec
