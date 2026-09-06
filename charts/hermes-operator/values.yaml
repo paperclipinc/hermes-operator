@@ -26,14 +26,13 @@ webhook:
     issuerName: hermes-operator-selfsigned
   caBundle: ''
   servingCertSecretName: hermes-operator-webhook-server-cert
-# NOTE: there is deliberately no agentImage default here. The agent image is
-# chosen per-instance via HermesInstance.spec.image, and the CRD requires an
-# explicit tag or digest (pinning a floating tag can silently pull a broken
-# upstream build). A chart-level default was vestigial — nothing rendered it —
-# and advertised an unpublished tag. See #113.
-honchoImage:
-  repository: ghcr.io/plastic-labs/honcho
-  tag: 0.1.0
+# NOTE: there are deliberately no agentImage or honchoImage defaults here.
+# Both images are chosen per-instance on the HermesInstance: the agent via
+# spec.image (the CRD requires an explicit tag or digest, because pinning a
+# floating tag can silently pull a broken upstream build), and Honcho via
+# spec.profileStore.honcho.image, which carries its own CRD-level default.
+# Chart-level blocks for either were vestigial: nothing rendered them, and the
+# agentImage one advertised an unpublished tag. See #113 and #128.
 gatewayEgressEndpoints:
   telegram:
     - api.telegram.org

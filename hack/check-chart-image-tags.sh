@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Assert that every image reference the chart renders at its own defaults is
-# actually pullable from the registry.
+# Assert that every image reference the chart renders at its own defaults, and
+# every operator image reference in the OLM bundle CSV, is well formed, tracks
+# the current appVersion, and is actually pullable from the registry.
 #
 # Regression guard for #113, which had two distinct failure modes:
 #
@@ -9,7 +10,7 @@
 #      install rendered ghcr.io/...:0.1.18 and hit ImagePullBackOff.
 #   2. After (1) was fixed by falling back to the chart's appVersion, the
 #      release job packaged the chart with a v-prefixed --app-version while the
-#      template added its own "v" — shipping ghcr.io/...:vv0.1.19.
+#      template added its own "v", shipping ghcr.io/...:vv0.1.19.
 #
 # (2) is why this script checks the *packaged* chart as well as the working
 # tree: they can render different tags, and only the packaged one is published.
@@ -50,7 +51,7 @@ check_ref() {
   # Shape check first, and strictly. The operator image is published as exactly
   # v<semver>. Anything else is a rendering bug, and checking the shape rather
   # than only registry existence means it fails even for a version that has not
-  # been published yet — which is when these bugs are actually introduced.
+  # been published yet, which is when these bugs are actually introduced.
   # Catches both the bare "0.1.18" and the doubled "vv0.1.19".
   if [[ "$repo" == "$OPERATOR_REPO" ]]; then
     if [[ ! "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
@@ -87,7 +88,7 @@ check_ref() {
   if [[ "$code" == "200" ]]; then
     echo "  OK   $ref"
   else
-    echo "  FAIL $ref (HTTP $code — tag does not resolve)"
+    echo "  FAIL $ref (HTTP $code, tag does not resolve)"
     fail=1
   fi
 }
@@ -103,7 +104,7 @@ check_all() {
   local label="$1" chart="$2" refs
   refs="$(render_refs "$chart")"
   if [[ -z "$refs" ]]; then
-    echo "ERROR: no image references found in ${label} — check the grep." >&2
+    echo "ERROR: no image references found in ${label}. Check the grep." >&2
     exit 1
   fi
   echo "Checking ${label}:"
@@ -131,13 +132,104 @@ for av in "${APP_VERSION}" "v${APP_VERSION}"; do
   rm -rf "$pkgdir"
 done
 
+# ---------------------------------------------------------------------------
+# OLM bundle CSV (#129).
+#
+# The CSV carries the operator image in three places plus the CSV name, and
+# release-please historically bumped only $.spec.version, so all four drifted
+# years behind (containerImage sat at v0.1.10, the deployment and relatedImages
+# entries at v0.1.0 while the release was v0.1.18). `make bundle-build` and
+# `catalog-build` publish the in-tree CSV verbatim, so the drift shipped.
+#
+# They are now kept current by release-please's *generic* updater, driven by an
+# inline `# x-release-please-version` marker. The generic updater rewrites the
+# semver inside the line and leaves the rest alone, which is what preserves the
+# leading "v". The yaml/jsonpath updater must NOT be pointed at these fields:
+# it replaces the whole value with a bare version, which both breaks the pull
+# (short-name resolution in the OperatorHub kiwi test) and stops
+# operatorhub-submit.yaml's `:v[0-9]+\.[0-9]+\.[0-9]+` sed from matching.
+#
+# So this checks three things per reference: the marker is present (otherwise
+# the next release silently leaves it behind), the value is exactly
+# v<appVersion>, and the tag resolves.
+CSV="bundle/manifests/hermes-operator.clusterserviceversion.yaml"
+
+echo
+echo "Checking OLM bundle CSV (${CSV}):"
+
+if [[ ! -f "$CSV" ]]; then
+  echo "ERROR: ${CSV} not found." >&2
+  exit 1
+fi
+
+# Every line naming the operator image, plus the CSV name line.
+csv_lines="$(grep -nE "ghcr\.io/paperclipinc/hermes-operator:|^  name: hermes-operator\." "$CSV" || true)"
+
+if [[ -z "$csv_lines" ]]; then
+  echo "ERROR: no operator image or CSV name lines found in ${CSV}. Check the grep." >&2
+  exit 1
+fi
+
+expected_refs=0
+while IFS= read -r line; do
+  lineno="${line%%:*}"
+  body="${line#*:}"
+
+  if [[ "$body" != *"x-release-please-version"* ]]; then
+    echo "  FAIL ${CSV}:${lineno} is missing the '# x-release-please-version' marker"
+    echo "       (${body#"${body%%[![:space:]]*}"})"
+    fail=1
+    continue
+  fi
+
+  if [[ "$body" =~ ^[[:space:]]*name:[[:space:]]*hermes-operator\.(v[^[:space:]#]+) ]]; then
+    got="${BASH_REMATCH[1]}"
+    if [[ "$got" != "v${APP_VERSION}" ]]; then
+      echo "  FAIL ${CSV}:${lineno} CSV name is hermes-operator.${got}, expected hermes-operator.v${APP_VERSION}"
+      fail=1
+    else
+      echo "  OK   ${CSV}:${lineno} name hermes-operator.${got}"
+    fi
+    continue
+  fi
+
+  ref="$(sed -E 's/.*(ghcr\.io\/paperclipinc\/hermes-operator:[^[:space:]#]+).*/\1/' <<<"$body")"
+  if [[ "$ref" == "$body" ]]; then
+    echo "  FAIL ${CSV}:${lineno} could not parse an image reference"
+    fail=1
+    continue
+  fi
+  expected_refs=$((expected_refs + 1))
+  check_ref "$ref"
+done <<<"$csv_lines"
+
+# The three references are containerImage, relatedImages and the manager
+# deployment. Fewer means one was renamed or dropped and is no longer guarded.
+if [[ "$expected_refs" -lt 3 ]]; then
+  echo "  FAIL expected at least 3 operator image references in the CSV, found ${expected_refs}"
+  fail=1
+fi
+
+# operatorhub-submit.yaml rewrites the CSV with these two patterns. If the
+# in-tree spelling ever stops matching them, the submitted bundle silently
+# keeps the in-tree version instead of the released one.
+for pat in "hermes-operator\.v[0-9]\+\.[0-9]\+\.[0-9]\+" "ghcr.io/paperclipinc/hermes-operator:v[0-9]\+\.[0-9]\+\.[0-9]\+"; do
+  if ! grep -q "$pat" "$CSV"; then
+    echo "  FAIL no line in ${CSV} matches the operatorhub-submit sed pattern: ${pat}"
+    fail=1
+  else
+    echo "  OK   operatorhub-submit sed pattern matches: ${pat}"
+  fi
+done
+
 if [[ "$fail" -ne 0 ]]; then
   echo
-  echo "One or more chart default image tags are wrong." >&2
+  echo "One or more default image tags are wrong." >&2
   echo "The release workflow publishes exactly v<version>, so the chart must" >&2
-  echo "render that — in the working tree AND when packaged. See the header." >&2
+  echo "render that, in the working tree AND when packaged, and the OLM bundle" >&2
+  echo "CSV must carry the same. See the header." >&2
   exit 1
 fi
 
 echo
-echo "All chart default image tags resolve."
+echo "All chart and bundle default image tags resolve."
