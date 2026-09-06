@@ -32,6 +32,8 @@ spec:
 
 `protectedKeys` are gobwas/glob patterns matched against the dotted JSON path of any `patchConfig` key. A patch that touches a protected path is rejected with `phase=Denied` and reason `ProtectedPath`.
 
+`*` matches within one path segment, `?` matches a single character in one segment, and `**` crosses segments. `**` is not the shell globstar: written between two separators it matches at least one character, so `provider.**.token` covers `provider.gateways.telegram.token` but not `provider.token`. To protect both, use the brace alternative `provider.{**.,}token`.
+
 ## Creating a HermesSelfConfig
 
 ### Add a skill
