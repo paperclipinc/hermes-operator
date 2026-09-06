@@ -144,14 +144,22 @@ done
 # They are now kept current by release-please's *generic* updater, driven by an
 # inline `# x-release-please-version` marker. The generic updater rewrites the
 # semver inside the line and leaves the rest alone, which is what preserves the
-# leading "v". The yaml/jsonpath updater must NOT be pointed at these fields:
-# it replaces the whole value with a bare version, which both breaks the pull
-# (short-name resolution in the OperatorHub kiwi test) and stops
-# operatorhub-submit.yaml's `:v[0-9]+\.[0-9]+\.[0-9]+` sed from matching.
+# leading "v". The yaml/jsonpath updater must NOT be pointed at this file at
+# all, for two independent reasons:
 #
-# So this checks three things per reference: the marker is present (otherwise
-# the next release silently leaves it behind), the value is exactly
-# v<appVersion>, and the tag resolves.
+#   1. It replaces the whole value with a bare version, which breaks the pull
+#      (short-name resolution in the OperatorHub kiwi test) and stops
+#      operatorhub-submit.yaml's `:v[0-9]+\.[0-9]+\.[0-9]+` sed from matching.
+#   2. It round-trips the document through a YAML parse and re-emit, which
+#      DROPS the `# x-release-please-version` comments. Observed on release PR
+#      #152: the yaml updater bumped $.spec.version, stripped every marker, and
+#      the generic updater then found nothing to bump, leaving all four image
+#      references frozen at the previous release. `spec.version` therefore
+#      carries a marker too and is bumped generically like the rest.
+#
+# So this checks: the marker is present on every versioned line (otherwise the
+# next release silently leaves it behind), the value matches appVersion, the
+# tag resolves, and no yaml updater is aimed at this file.
 CSV="bundle/manifests/hermes-operator.clusterserviceversion.yaml"
 
 echo
@@ -163,7 +171,7 @@ if [[ ! -f "$CSV" ]]; then
 fi
 
 # Every line naming the operator image, plus the CSV name line.
-csv_lines="$(grep -nE "ghcr\.io/paperclipinc/hermes-operator:|^  name: hermes-operator\." "$CSV" || true)"
+csv_lines="$(grep -nE "ghcr\.io/paperclipinc/hermes-operator:|^  name: hermes-operator\.|^  version: [0-9]" "$CSV" || true)"
 
 if [[ -z "$csv_lines" ]]; then
   echo "ERROR: no operator image or CSV name lines found in ${CSV}. Check the grep." >&2
@@ -179,6 +187,17 @@ while IFS= read -r line; do
     echo "  FAIL ${CSV}:${lineno} is missing the '# x-release-please-version' marker"
     echo "       (${body#"${body%%[![:space:]]*}"})"
     fail=1
+    continue
+  fi
+
+  if [[ "$body" =~ ^[[:space:]]*version:[[:space:]]*([^[:space:]#]+) ]]; then
+    got="${BASH_REMATCH[1]}"
+    if [[ "$got" != "${APP_VERSION}" ]]; then
+      echo "  FAIL ${CSV}:${lineno} spec.version is ${got}, expected ${APP_VERSION}"
+      fail=1
+    else
+      echo "  OK   ${CSV}:${lineno} spec.version ${got}"
+    fi
     continue
   fi
 
@@ -221,6 +240,14 @@ for pat in "hermes-operator\.v[0-9]\+\.[0-9]\+\.[0-9]\+" "ghcr.io/paperclipinc/h
     echo "  OK   operatorhub-submit sed pattern matches: ${pat}"
   fi
 done
+
+# A yaml/jsonpath updater aimed at the CSV silently strips the markers above on
+# the next release PR, so assert release-please is not configured with one.
+if python3 hack/check-release-please-csv-updater.py release-please-config.json "$CSV"; then
+  echo "  OK   release-please uses only the generic updater for the CSV"
+else
+  fail=1
+fi
 
 if [[ "$fail" -ne 0 ]]; then
   echo
