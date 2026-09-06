@@ -84,12 +84,30 @@ Seeds initial files and directories into `~/.hermes` on first start. Nested path
 
 ### spec.resources
 
-Sets CPU/memory requests and limits on the agent container. Defaults are intentionally absent at the schema level: the defaulting webhook fills them from `HermesClusterDefaults` when available; otherwise the pod inherits namespace-level `LimitRange` defaults.
+Sets CPU/memory requests and limits on the agent container.
+
+Resolution order, highest first: this block, then `HermesClusterDefaults.spec.resources` (folded in by the defaulting webhook), then the operator's built-in floor. Requests and limits resolve independently, so a spec that sets only one side keeps it verbatim and picks up the built-in for the other. A block you set is used as written, never key-merged.
+
+The built-in floor is:
+
+```yaml
+requests:
+  cpu: 500m
+  memory: 512Mi
+limits:
+  cpu: "2"
+  memory: 4Gi
+```
+
+It exists because an agent container executing model-driven code should not run unbounded: it can starve its node, and a `resources: {}` pod is BestEffort, the kubelet's first eviction candidate. The limits are generous because the shipped agent image bundles a browser stack (Playwright/Chromium) whose working set dwarfs the idle agent.
+
+Set `applyOperatorDefaults: false` to keep the unset side genuinely unbounded, for instance where a known working set exceeds the limits above. Namespace-level `LimitRange` defaults only apply to a side left unbounded that way.
 
 | Field | Type | Default | Description |
 |---|---|---|---|
-| `spec.resources.requests` | `corev1.ResourceList` | `nil` | Resource requests map (e.g. `cpu: 100m`, `memory: 128Mi`). |
-| `spec.resources.limits` | `corev1.ResourceList` | `nil` | Resource limits map (e.g. `cpu: 500m`, `memory: 512Mi`). |
+| `spec.resources.requests` | `corev1.ResourceList` | operator floor above | Resource requests map (e.g. `cpu: 100m`, `memory: 128Mi`). |
+| `spec.resources.limits` | `corev1.ResourceList` | operator floor above | Resource limits map (e.g. `cpu: 500m`, `memory: 512Mi`). |
+| `spec.resources.applyOperatorDefaults` | `*bool` | `nil` (treated as `true`) | Set `false` to skip the built-in floor for whichever side is unset. |
 
 ### spec.security
 
@@ -551,12 +569,13 @@ Defaults the defaultable subset of `NetworkingSpec`.
 
 ### hcd spec.resources
 
-Same schema as `HermesInstance.spec.resources`. Provides cluster-wide default resource requests and limits when the instance leaves `spec.resources` nil.
+Same schema as `HermesInstance.spec.resources`. Provides cluster-wide default resource requests and limits when the instance leaves `spec.resources` nil, and sits between the instance and the operator's built-in floor.
 
 | Field | Type | Default | Description |
 |---|---|---|---|
 | `spec.resources.requests` | `corev1.ResourceList` | `nil` | Default resource requests (e.g. `cpu: 100m`, `memory: 128Mi`). |
 | `spec.resources.limits` | `corev1.ResourceList` | `nil` | Default resource limits (e.g. `cpu: 500m`, `memory: 512Mi`). |
+| `spec.resources.applyOperatorDefaults` | `*bool` | `nil` | Cluster-wide opt-out from the operator's built-in floor. Instances that set it themselves win. |
 
 ### HermesClusterDefaults status
 
