@@ -96,6 +96,7 @@ nav:
       - Self-Configuration: selfconfig.md
       - Platform Gateways Runbook: runbook-platform-gateways.md
   - Migration and Compatibility:
+      - Upgrade Notes: upgrade-notes.md
       - Migration: migration.md
       - API Versioning: api-versioning.md
       - Supported Versions: supported-versions.md
