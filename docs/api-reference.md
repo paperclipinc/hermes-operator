@@ -103,6 +103,8 @@ It exists because an agent container executing model-driven code should not run 
 
 Set `applyOperatorDefaults: false` to keep the unset side genuinely unbounded, for instance where a known working set exceeds the limits above. Namespace-level `LimitRange` defaults only apply to a side left unbounded that way.
 
+This floor arrived in 0.2.0 and changes the rendered pod for instances that previously left `spec.resources` unset. See [Upgrade Notes](upgrade-notes.md#020).
+
 | Field | Type | Default | Description |
 |---|---|---|---|
 | `spec.resources.requests` | `corev1.ResourceList` | operator floor above | Resource requests map (e.g. `cpu: 100m`, `memory: 128Mi`). |
