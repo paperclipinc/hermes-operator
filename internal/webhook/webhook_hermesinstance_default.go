@@ -65,6 +65,9 @@ func ApplyClusterDefaults(inst *hermesv1.HermesInstance, hcd *hermesv1.HermesClu
 	if inst.Spec.Resources.Limits == nil {
 		inst.Spec.Resources.Limits = hcd.Spec.Resources.Limits
 	}
+	if inst.Spec.Resources.ApplyOperatorDefaults == nil {
+		inst.Spec.Resources.ApplyOperatorDefaults = hcd.Spec.Resources.ApplyOperatorDefaults
+	}
 
 	if inst.Spec.Security.RBAC.Annotations == nil {
 		inst.Spec.Security.RBAC.Annotations = hcd.Spec.Security.ServiceAccount.Annotations
