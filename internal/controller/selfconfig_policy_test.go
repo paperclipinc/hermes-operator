@@ -86,3 +86,36 @@ func TestCheckProtectedPaths(t *testing.T) {
 		assert.Error(t, err)
 	})
 }
+
+// The super-wildcard crosses separators but is not the shell "globstar": a
+// `**` written between two separators matches at least one character, so
+// `a.**.b` does not cover `a.b`. Pinned here because protectedKeys is a deny
+// list: a pattern that quietly stops matching widens what a self-config may
+// touch.
+func TestCheckProtectedPathsSuperWildcard(t *testing.T) {
+	protected := []string{"provider.**.token"}
+
+	t.Run("crosses separators", func(t *testing.T) {
+		raw := []byte(`{"provider":{"gateways":{"telegram":{"token":"x"}}}}`)
+		hit, err := CheckProtectedPaths(raw, protected)
+		assert.NoError(t, err)
+		assert.Equal(t, "provider.gateways.telegram.token", hit)
+	})
+	t.Run("does not match the empty middle segment", func(t *testing.T) {
+		raw := []byte(`{"provider":{"token":"x"}}`)
+		hit, err := CheckProtectedPaths(raw, protected)
+		assert.NoError(t, err)
+		assert.Empty(t, hit, "`a.**.b` is not a globstar; use `a.{**.,}b` to also cover `a.b`")
+	})
+	t.Run("brace alternative covers both", func(t *testing.T) {
+		both := []string{"provider.{**.,}token"}
+		for _, raw := range [][]byte{
+			[]byte(`{"provider":{"token":"x"}}`),
+			[]byte(`{"provider":{"gateways":{"telegram":{"token":"x"}}}}`),
+		} {
+			hit, err := CheckProtectedPaths(raw, both)
+			assert.NoError(t, err)
+			assert.NotEmpty(t, hit)
+		}
+	})
+}

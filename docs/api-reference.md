@@ -622,7 +622,7 @@ spec:
 
 - `enabled: false` (or unset) → every SelfConfig is `Denied` with reason `selfconfig disabled on parent`.
 - `allowedActions` is the closed set of permitted mutation categories.
-- `protectedKeys` are glob patterns matched against the dotted JSON path of `patchConfig` (gobwas/glob, `.` is the segment separator).
+- `protectedKeys` are glob patterns matched against the dotted JSON path of `patchConfig` (gobwas/glob, `.` is the segment separator). `**` crosses segments but is not a globstar: `a.**.b` does not match `a.b`; write `a.{**.,}b` for that.
 
 ### Field-manager contract
 
