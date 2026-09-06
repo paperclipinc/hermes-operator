@@ -66,7 +66,9 @@ func CheckAllowedActions(requested, allowed []hermesv1.SelfConfigAction) []herme
 
 // CheckProtectedPaths walks the JSON merge patch and returns the first dotted
 // path that matches any pattern in `protected`. Patterns support glob syntax
-// via gobwas/glob with '.' as the path separator.
+// via gobwas/glob with '.' as the path separator. Note that `**` between two
+// separators matches at least one character, so `a.**.b` does not match `a.b`;
+// write `a.{**.,}b` to cover the empty case.
 // Returns ("", nil) if no path matches. Returns "", err on JSON parse failure
 // or invalid pattern.
 func CheckProtectedPaths(patch []byte, protected []string) (string, error) {
@@ -78,7 +80,7 @@ func CheckProtectedPaths(patch []byte, protected []string) (string, error) {
 		return "", fmt.Errorf("invalid JSON merge patch: %w", err)
 	}
 
-	globs := make([]glob.Glob, 0, len(protected))
+	globs := make([]*glob.Pattern, 0, len(protected))
 	for _, p := range protected {
 		g, err := glob.Compile(p, '.')
 		if err != nil {
