@@ -9,6 +9,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      # Pinned one minor behind the rest of CI on purpose. golangci-lint
+      # v2.12.2 is built against Go 1.26 and cannot typecheck the 1.27
+      # standard library: it fails on math/rand/v2 with "method must have no
+      # type parameters". Linting under 1.26 still type-checks our code
+      # correctly, since go.mod declares go 1.26.0 as the language version.
+      # Move this to 1.27 once golangci-lint ships a 1.27 build.
       - uses: actions/setup-go@v7
         with: { go-version: "1.26" }
       - uses: golangci/golangci-lint-action@v9
@@ -22,7 +28,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-go@v7
-        with: { go-version: "1.26" }
+        with: { go-version: "1.27" }
       - name: Run tests (k8s ${{ matrix.k8s }})
         env:
           ENVTEST_K8S_VERSION: ${{ matrix.k8s }}.0
@@ -56,7 +62,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-go@v7
-        with: { go-version: "1.26" }
+        with: { go-version: "1.27" }
       - name: Regenerate api-reference-generated.md
         run: make api-docs
       - name: Verify no drift
