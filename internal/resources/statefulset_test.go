@@ -143,6 +143,85 @@ func TestBuildStatefulSet_HonorsResources(t *testing.T) {
 	assert.Equal(t, resource.MustParse("512Mi"), c.Resources.Limits[corev1.ResourceMemory])
 }
 
+// An instance that says nothing about resources must not render
+// `resources: {}`. A BestEffort agent container executing model-driven code can
+// starve its node and is the kubelet's first eviction candidate (#124).
+func TestBuildStatefulSet_DefaultResourcesWhenUnset(t *testing.T) {
+	t.Parallel()
+	sts := BuildStatefulSet(minimalInstance(), nil)
+	c := sts.Spec.Template.Spec.Containers[0]
+
+	assert.Equal(t, resource.MustParse("500m"), c.Resources.Requests[corev1.ResourceCPU])
+	assert.Equal(t, resource.MustParse("512Mi"), c.Resources.Requests[corev1.ResourceMemory])
+	assert.Equal(t, resource.MustParse("2"), c.Resources.Limits[corev1.ResourceCPU])
+	assert.Equal(t, resource.MustParse("4Gi"), c.Resources.Limits[corev1.ResourceMemory])
+}
+
+// Requests and limits default independently: setting one side must not drag in
+// the operator value for the keys the user did set, and must not suppress the
+// default on the side left unset.
+func TestBuildStatefulSet_DefaultResourcesPerSide(t *testing.T) {
+	t.Parallel()
+
+	t.Run("requests set, limits defaulted", func(t *testing.T) {
+		inst := minimalInstance()
+		inst.Spec.Resources.Requests = corev1.ResourceList{
+			corev1.ResourceCPU: resource.MustParse("50m"),
+		}
+		c := BuildStatefulSet(inst, nil).Spec.Template.Spec.Containers[0]
+
+		assert.Equal(t, resource.MustParse("50m"), c.Resources.Requests[corev1.ResourceCPU])
+		_, hasMem := c.Resources.Requests[corev1.ResourceMemory]
+		assert.False(t, hasMem, "an explicit requests block is used verbatim, not key-merged")
+		assert.Equal(t, resource.MustParse("4Gi"), c.Resources.Limits[corev1.ResourceMemory])
+	})
+
+	t.Run("limits set, requests defaulted", func(t *testing.T) {
+		inst := minimalInstance()
+		inst.Spec.Resources.Limits = corev1.ResourceList{
+			corev1.ResourceMemory: resource.MustParse("8Gi"),
+		}
+		c := BuildStatefulSet(inst, nil).Spec.Template.Spec.Containers[0]
+
+		assert.Equal(t, resource.MustParse("8Gi"), c.Resources.Limits[corev1.ResourceMemory])
+		assert.Equal(t, resource.MustParse("500m"), c.Resources.Requests[corev1.ResourceCPU])
+	})
+}
+
+// The opt-out exists so an instance whose working set exceeds the default
+// limits is not OOM-killed by an operator upgrade.
+func TestBuildStatefulSet_ApplyOperatorDefaultsFalse(t *testing.T) {
+	t.Parallel()
+	inst := minimalInstance()
+	inst.Spec.Resources.ApplyOperatorDefaults = Ptr(false)
+	c := BuildStatefulSet(inst, nil).Spec.Template.Spec.Containers[0]
+
+	assert.Nil(t, c.Resources.Requests)
+	assert.Nil(t, c.Resources.Limits)
+}
+
+// Explicitly true is the same as unset.
+func TestBuildStatefulSet_ApplyOperatorDefaultsTrue(t *testing.T) {
+	t.Parallel()
+	inst := minimalInstance()
+	inst.Spec.Resources.ApplyOperatorDefaults = Ptr(true)
+	c := BuildStatefulSet(inst, nil).Spec.Template.Spec.Containers[0]
+
+	assert.Equal(t, resource.MustParse("500m"), c.Resources.Requests[corev1.ResourceCPU])
+	assert.Equal(t, resource.MustParse("4Gi"), c.Resources.Limits[corev1.ResourceMemory])
+}
+
+// The package-level defaults are shared, so a builder that handed them out
+// directly would let one instance's mutation leak into every other instance.
+func TestBuildStatefulSet_DefaultResourcesAreNotAliased(t *testing.T) {
+	t.Parallel()
+	first := BuildStatefulSet(minimalInstance(), nil).Spec.Template.Spec.Containers[0]
+	first.Resources.Limits[corev1.ResourceMemory] = resource.MustParse("1Mi")
+
+	second := BuildStatefulSet(minimalInstance(), nil).Spec.Template.Spec.Containers[0]
+	assert.Equal(t, resource.MustParse("4Gi"), second.Resources.Limits[corev1.ResourceMemory])
+}
+
 func TestBuildStatefulSet_OverridesSecurityContexts(t *testing.T) {
 	t.Parallel()
 	inst := minimalInstance()

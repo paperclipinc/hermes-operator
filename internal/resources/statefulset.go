@@ -5,6 +5,7 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
@@ -114,8 +115,9 @@ func BuildStatefulSet(inst *hermesv1.HermesInstance, extraInits []corev1.Contain
 		},
 	}
 
-	// Set resources from spec
-	c.Resources = inst.Spec.Resources.ToContainerResourceRequirements()
+	// Set resources from spec, falling back to the operator defaults for
+	// whichever side the spec leaves unset.
+	c.Resources = agentResources(inst)
 
 	// Set probe overrides
 	if inst.Spec.Probes.Liveness != nil {
@@ -343,6 +345,52 @@ func shareProcessNamespace(inst *hermesv1.HermesInstance) *bool {
 		return inst.Spec.ShareProcessNamespace
 	}
 	return Ptr(false)
+}
+
+// Built-in resource floor for the agent container. `spec.resources` is
+// optional, so before #124 a rendered instance carried `resources: {}` and the
+// container ran unbounded in the BestEffort QoS class. That is the wrong
+// default for a workload that executes model-driven code: one runaway instance
+// can starve every other pod on its node, and BestEffort is the first thing the
+// kubelet evicts under pressure.
+//
+// The requests are deliberately modest. The limits are deliberately generous:
+// the shipped agent image bundles a browser stack (Playwright/Chromium), whose
+// working set dwarfs the idle agent, so a tight memory limit would OOM-kill
+// real instances on upgrade rather than catch runaways.
+var (
+	defaultAgentRequests = corev1.ResourceList{
+		corev1.ResourceCPU:    resource.MustParse("500m"),
+		corev1.ResourceMemory: resource.MustParse("512Mi"),
+	}
+	defaultAgentLimits = corev1.ResourceList{
+		corev1.ResourceCPU:    resource.MustParse("2"),
+		corev1.ResourceMemory: resource.MustParse("4Gi"),
+	}
+)
+
+// agentResources resolves the agent container's resources. Precedence, highest
+// first: the instance's own spec.resources, then HermesClusterDefaults (already
+// folded into the instance by the defaulting webhook), then the operator
+// built-ins above.
+//
+// Requests and limits are resolved independently, matching the granularity
+// ApplyClusterDefaults already uses: a spec that sets only requests keeps those
+// verbatim and picks up the default limits. spec.resources.applyOperatorDefaults
+// = false opts out of the built-ins for whichever side is unset, leaving it
+// genuinely unbounded.
+func agentResources(inst *hermesv1.HermesInstance) corev1.ResourceRequirements {
+	out := inst.Spec.Resources.ToContainerResourceRequirements()
+	if inst.Spec.Resources.ApplyOperatorDefaults != nil && !*inst.Spec.Resources.ApplyOperatorDefaults {
+		return out
+	}
+	if out.Requests == nil {
+		out.Requests = defaultAgentRequests.DeepCopy()
+	}
+	if out.Limits == nil {
+		out.Limits = defaultAgentLimits.DeepCopy()
+	}
+	return out
 }
 
 // runtimeClassName maps the spec field onto the pod's optional

@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -83,4 +84,48 @@ func TestDefaulter_NoClusterDefaultsIsNotAnError(t *testing.T) {
 	err := d.Default(context.Background(), inst)
 	assert.NoError(t, err, "missing HermesClusterDefaults is allowed")
 	_ = apierrors.IsNotFound(nil)
+}
+
+// The operator's built-in resource floor (#124) has to be overridable for a
+// whole cluster, not just per instance, so applyOperatorDefaults propagates
+// from HermesClusterDefaults the same way requests and limits do.
+func TestApplyClusterDefaults_ResourcesAndOptOut(t *testing.T) {
+	t.Parallel()
+	falseVal := false
+	hcd := &hermesv1.HermesClusterDefaults{
+		ObjectMeta: metav1.ObjectMeta{Name: "cluster"},
+		Spec: hermesv1.HermesClusterDefaultsSpec{
+			Resources: hermesv1.ResourcesSpec{
+				Requests:              corev1.ResourceList{corev1.ResourceCPU: resource.MustParse("250m")},
+				ApplyOperatorDefaults: &falseVal,
+			},
+		},
+	}
+
+	t.Run("fills an instance that says nothing", func(t *testing.T) {
+		inst := &hermesv1.HermesInstance{ObjectMeta: metav1.ObjectMeta{Name: "demo"}}
+		ApplyClusterDefaults(inst, hcd)
+		assert.Equal(t, resource.MustParse("250m"), inst.Spec.Resources.Requests[corev1.ResourceCPU])
+		if assert.NotNil(t, inst.Spec.Resources.ApplyOperatorDefaults) {
+			assert.False(t, *inst.Spec.Resources.ApplyOperatorDefaults)
+		}
+	})
+
+	t.Run("never overrides the instance", func(t *testing.T) {
+		trueVal := true
+		inst := &hermesv1.HermesInstance{
+			ObjectMeta: metav1.ObjectMeta{Name: "demo"},
+			Spec: hermesv1.HermesInstanceSpec{
+				Resources: hermesv1.ResourcesSpec{
+					Requests:              corev1.ResourceList{corev1.ResourceCPU: resource.MustParse("1")},
+					ApplyOperatorDefaults: &trueVal,
+				},
+			},
+		}
+		ApplyClusterDefaults(inst, hcd)
+		assert.Equal(t, resource.MustParse("1"), inst.Spec.Resources.Requests[corev1.ResourceCPU])
+		if assert.NotNil(t, inst.Spec.Resources.ApplyOperatorDefaults) {
+			assert.True(t, *inst.Spec.Resources.ApplyOperatorDefaults)
+		}
+	})
 }
