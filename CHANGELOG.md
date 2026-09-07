@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.2.0](https://github.com/paperclipinc/hermes-operator/compare/v0.1.20...v0.2.0) (2026-09-06)
+
+
+### ⚠ BREAKING CHANGES
+
+* **upgrade:** since #151, instances that leave `spec.resources` unset render CPU and memory requests and limits on the agent container instead of running unbounded. An instance whose working set exceeds 4Gi of memory, or that relied on bursting past 2 CPUs, will be OOM-killed or throttled after this upgrade. Set `spec.resources` explicitly, or `spec.resources.applyOperatorDefaults: false`, before upgrading such an instance. Clusters relying on a namespace LimitRange to supply these values should note that the operator now wins over the LimitRange default. See docs/upgrade-notes.md.
+
+### Features
+
+* **resources:** give the agent container a default request/limit floor ([#151](https://github.com/paperclipinc/hermes-operator/issues/151)) ([35100b1](https://github.com/paperclipinc/hermes-operator/commit/35100b152a3024e1a9ec0c93d5e000c4f633191f))
+
+
+### Bug Fixes
+
+* **bundle:** keep the OLM CSV operator image refs on the current release ([#150](https://github.com/paperclipinc/hermes-operator/issues/150)) ([7a9bbab](https://github.com/paperclipinc/hermes-operator/commit/7a9bbab132b0b5ba57d84731e1ce8c46515e5ef3))
+* **release:** bump the OLM CSV generically, the yaml updater drops the markers ([#153](https://github.com/paperclipinc/hermes-operator/issues/153)) ([14d41d2](https://github.com/paperclipinc/hermes-operator/commit/14d41d247069e9f6abc2c1dc145fc7e073b508e6))
+
+
+### Documentation
+
+* **upgrade:** add upgrade notes, starting with the agent resource floor ([#154](https://github.com/paperclipinc/hermes-operator/issues/154)) ([f2528e3](https://github.com/paperclipinc/hermes-operator/commit/f2528e3852f79168155a786a4f68c8e867354f30))
+
 ## [0.1.20](https://github.com/paperclipinc/hermes-operator/compare/v0.1.19...v0.1.20) (2026-07-28)
 
 
